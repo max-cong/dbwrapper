@@ -32,12 +32,12 @@ namespace heartBeat
 {
 class heartBeat : public gene::gene
 {
-public:
+  public:
     typedef std::function<void()> ping_f;
     typedef std::function<void(void)> hbSuccCb;
     typedef std::function<void(int)> hbLostCb;
     heartBeat() = delete;
-    heartBeat(std::shared_ptr<Loop> loopIn) : _loop(loopIn), _success(false), _interval(5000), _retryNum(5)
+    heartBeat(std::shared_ptr<Loop> loopIn) : _success(false), _interval(5000), _retryNum(5), _tManager(loopIn)
     {
         __LOG(debug, "start heartBeat, this is :" << (void *)this);
     }
@@ -132,8 +132,7 @@ public:
         return ret;
     }
 
-private:
-    std::weak_ptr<loop::loop> _loop;
+  private:
     uint32_t _interval;
 
     hbSuccCb _hbSuccCb;
@@ -141,5 +140,6 @@ private:
 
     std::atomic<bool> _success;
     std::atomic<unsigned int> _retryNum;
+    std::shared_ptr<TimerManager> _tManager;
 };
 } // namespace heartBeat
