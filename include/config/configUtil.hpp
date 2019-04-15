@@ -25,10 +25,10 @@
  */
 #include "dbwrapper.hpp"
 #include "config/config_center.hpp"
-namespace config
+namespace configCenter
 {
 // Property names
 const std::string PROP_HOST = "host"; // the remote host IP or FQDN
 const std::string DEFAULT_HOST = "127.0.0.1";
 
-} // namespace config
+} // namespace configCenter
