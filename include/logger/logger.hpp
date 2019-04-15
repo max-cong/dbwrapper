@@ -32,76 +32,79 @@
 #include <string>   // std::string
 #include <iostream> // std::cout
 #include <sstream>  // std::ostringstream
-
+#include <array>
+#include <atomic>
+#include <memory>
+#define MAX_LOG_BUFFER 1000
 typedef std::basic_ostream<char> tostream;
 typedef std::basic_istream<char> tistream;
 typedef std::basic_ostringstream<char> tostringstream;
 typedef std::basic_istringstream<char> tistringstream;
 
-class logger_iface
+class loggerIface
 {
-public:
-  //! log level
-  enum class log_level
-  {
-    error = 0,
-    warn = 1,
-    info = 2,
-    debug = 3
-  };
+  public:
+	//! log level
+	enum class logLevel
+	{
+		error = 0,
+		warn = 1,
+		info = 2,
+		debug = 3
+	};
 
-public:
-  logger_iface(void) = default;
-  virtual ~logger_iface(void) = default;
+  public:
+	loggerIface() = default;
+	virtual ~loggerIface() = default;
 
-  logger_iface(const logger_iface &) = default;
-  logger_iface &operator=(const logger_iface &) = default;
+	loggerIface(const loggerIface &) = default;
+	loggerIface &operator=(const loggerIface &) = default;
 
-public:
-  virtual void set_log_level(logger_iface::log_level level) = 0;
-  virtual void debug(const std::string &msg, const std::string &file, std::size_t line) = 0;
-  virtual void info(const std::string &msg, const std::string &file, std::size_t line) = 0;
-  virtual void warn(const std::string &msg, const std::string &file, std::size_t line) = 0;
-  virtual void error(const std::string &msg, const std::string &file, std::size_t line) = 0;
+  public:
+	virtual void set_logLevel(loggerIface::logLevel level) = 0;
+	virtual void debug(const std::string &msg, const std::string &file, std::size_t line) = 0;
+	virtual void info(const std::string &msg, const std::string &file, std::size_t line) = 0;
+	virtual void warn(const std::string &msg, const std::string &file, std::size_t line) = 0;
+	virtual void error(const std::string &msg, const std::string &file, std::size_t line) = 0;
+	virtual void dump() = 0;
 };
 
-class logger : public logger_iface
+class logger : public loggerIface
 {
-public:
-  logger(logger_iface::log_level level = logger_iface::log_level::info);
-  ~logger(void) = default;
+  public:
+	logger(loggerIface::logLevel level = loggerIface::logLevel::info);
+	~logger() = default;
 
-  logger(const logger &) = default;
-  logger &operator=(const logger &) = default;
+	logger(const logger &) = default;
+	logger &operator=(const logger &) = default;
 
-public:
-  void set_log_level(logger_iface::log_level level);
-  void debug(const std::string &msg, const std::string &file, std::size_t line);
-  void info(const std::string &msg, const std::string &file, std::size_t line);
-  void warn(const std::string &msg, const std::string &file, std::size_t line);
-  void error(const std::string &msg, const std::string &file, std::size_t line);
+  public:
+	void set_logLevel(loggerIface::logLevel level);
+	void debug(const std::string &msg, const std::string &file, std::size_t line);
+	void info(const std::string &msg, const std::string &file, std::size_t line);
+	void warn(const std::string &msg, const std::string &file, std::size_t line);
+	void error(const std::string &msg, const std::string &file, std::size_t line);
 
-private:
-  logger_iface::log_level m_level;
-  std::mutex m_mutex;
+  private:
+	loggerIface::logLevel _logLevel;
 };
 
 void debug(const std::string &msg, const std::string &file, std::size_t line);
 void info(const std::string &msg, const std::string &file, std::size_t line);
 void warn(const std::string &msg, const std::string &file, std::size_t line);
 void error(const std::string &msg, const std::string &file, std::size_t line);
-void set_log_level(logger_iface::log_level level);
+void set_logLevel(loggerIface::logLevel level);
 
 #define __LOGGING_ENABLED
+
 #ifdef __LOGGING_ENABLED
-#define __LOG(level, msg)                          \
-                                                   \
-  {                                                \
-    tostringstream var;                            \
-    var << "[fuction:" << __func__ << "] " << msg; \
-    level(var.str(), __FILE__, __LINE__);          \
-  }
+#define __LOG(level, msg)                              \
+                                                       \
+	{                                                  \
+		tostringstream var;                            \
+		var << "[fuction:" << __func__ << "] " << msg; \
+		level(var.str(), __FILE__, __LINE__);          \
+	}
 #else
 #define __LOG(level, msg)
-
 #endif /* __LOGGING_ENABLED */

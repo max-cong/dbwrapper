@@ -26,12 +26,13 @@
 #include <atomic>
 #include <functional>
 #include "translib/timerManager.h"
-#include "translib/timer.h"
 #include "logger/logger.hpp"
-//template <typename instype>
-#include "common/util.hpp"
-#include "config/config_util.hpp"
-class heartbeat : public genetic_gene_void_p
+
+#include "configCenter/configCenter.hpp"
+
+namespace heartBeat
+{
+class heartbeat : public gene::gene
 {
   public:
     typedef std::function<void()> ping_f;
@@ -92,7 +93,7 @@ class heartbeat : public genetic_gene_void_p
                 }
                 //onHeartbeatLost();
             }
-            
+
             {
                 unsigned int tmp_num = _num_to_reconnect;
                 __LOG(debug, "_num_to_reconnect is : " << tmp_num);
@@ -142,3 +143,4 @@ class heartbeat : public genetic_gene_void_p
     std::atomic<bool> _success;
     std::atomic<unsigned int> _num_to_reconnect;
 };
+} // namespace heartBeat
