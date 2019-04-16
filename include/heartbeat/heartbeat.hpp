@@ -30,12 +30,12 @@
 
 namespace heartBeat
 {
-class heartBeat : public gene::gene
+class heartBeat : public gene::gene, public std::enable_shared_from_this<heartBeat>
 {
   public:
-    typedef std::function<void()> ping_f;
+    typedef std::function<void(std::shared_ptr<heartBeat>)> ping_f;
     typedef std::function<void(void)> hbSuccCb;
-    typedef std::function<void(int)> hbLostCb;
+    typedef std::function<void(void)> hbLostCb;
     heartBeat() = delete;
     heartBeat(std::shared_ptr<Loop> loopIn) : _success(false), _interval(5000), _retryNum(5), _tManager(loopIn)
     {
@@ -54,7 +54,7 @@ class heartBeat : public gene::gene
         __LOG(debug, "onHeartbeatLost");
         if (_hbLostCb)
         {
-            _hbLostCb(400);
+            _hbLostCb();
         }
     }
     void onHeartbeatSuccess()
@@ -66,7 +66,7 @@ class heartBeat : public gene::gene
         }
     }
 
-    void start(ping_f fun)
+    void start()
     {
 
         // first we need to regard the heart beat is success
@@ -76,11 +76,19 @@ class heartBeat : public gene::gene
         // the worest case is to detect APP not avaliable net heart beat
         set_hb_success(true);
         __LOG(debug, "start heartBeat!");
-        _timer->startForever(_interval, [fun, this]() {
-            if (this->get_hb_success())
+
+        auto timer = _tManager->getTimer();
+        if (!timer)
+        {
+            __LOG(error, "[heartbeat] get timer fail");
+            return;
+        }
+        auto this_sptr = shared_from_this();
+        timer->startForever(_interval, [this_sptr]() {
+            if (this_sptr->get_hb_success())
             {
                 onHeartbeatSuccess();
-                _retryNum = config_center<void *>::instance()->get_properties_fields(get_genetic_gene(), dbw::PROP_HB_LOST_NUM, dbw::DEFAULT_HB_LOST_NUM);
+                _retryNum = configCenter::configCenter::instance()->get_properties_fields(get_genetic_gene(), configCenter::PROP_HB_LOST_NUM, configCenter::DEFAULT_HB_LOST_NUM);
             }
             else
             {
@@ -89,31 +97,27 @@ class heartBeat : public gene::gene
                 {
                     _retryNum = 0;
                 }
-                //onHeartbeatLost();
             }
 
-            {
-                unsigned int tmp_num = _retryNum;
-                __LOG(debug, "_retryNum is : " << tmp_num);
-            }
             // set heartBeat status false, if hb success, it will set to true
             set_hb_success(false);
-            int _tmp_num = _retryNum;
-            if (_tmp_num < 1)
+
+            if (_retryNum < 1)
             {
-                _retryNum = config_center<void *>::instance()->get_properties_fields(get_genetic_gene(), dbw::PROP_HB_LOST_NUM, dbw::DEFAULT_HB_LOST_NUM);
+                _retryNum = configCenter::configCenter::instance()->get_properties_fields(get_genetic_gene(), configCenter::PROP_HB_LOST_NUM, configCenter::DEFAULT_HB_LOST_NUM);
                 onHeartbeatLost();
             }
+
             __LOG(debug, "call ping function : " << typeid(fun).name());
-            if (fun)
+            if (this_sptr->getPingCb())
             {
-                fun();
+                (this_sptr->getPingCb())(this_sptr);
             }
         });
     }
     bool stop()
     {
-        _timer->stop();
+        _tManager->stop();
         return true;
     }
 
@@ -121,6 +125,8 @@ class heartBeat : public gene::gene
     uint32_t getInterval() { return _interval; }
     void setHbSuccCb(hbSuccCb cb) { _hbSuccCb = cb; }
     void setHbLostCb(hbLostCb cb) { _hbLostCb = cb; }
+    void setPingCb(ping_f cb) { _pingCb = cb; }
+    ping_f getPingCb() { return _pingCb; }
 
     void set_hb_success(bool success)
     {
@@ -137,6 +143,7 @@ class heartBeat : public gene::gene
 
     hbSuccCb _hbSuccCb;
     hbLostCb _hbLostCb;
+    ping_f _pingCb;
 
     std::atomic<bool> _success;
     std::atomic<unsigned int> _retryNum;

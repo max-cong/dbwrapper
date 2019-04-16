@@ -27,7 +27,7 @@
 #include <algorithm>
 enum class ret_status : std::uint32_t
 {
-    SUCCESS,
+    SUCCESS = 0,
     FAIL,
     NO_ENTRY,
     FIRST_ENTRY
@@ -40,6 +40,7 @@ class LB_strategy
     // Interface
     virtual std::pair<LB_OBJ, ret_status> get_obj(int index = 0) = 0;
     virtual bool init() = 0;
+    virtual ret_status update() = 0;
 
     void set_no_avaliable_cb(std::function<void()> cb)
     {
@@ -49,7 +50,6 @@ class LB_strategy
     {
         _first_avaliable_cb = cb;
     }
-
 
     std::pair<LB_OBJ, ret_status> get_obj_with_index(unsigned int index)
     {
@@ -72,8 +72,7 @@ class LB_strategy
         }
         return std::make_pair(obj, ret_status::SUCCESS);
     }
-    // son need re-write this function
-    virtual ret_status update() = 0;
+
     // common function
     virtual ret_status add_obj(LB_OBJ obj, unsigned int weight = 0)
     {
@@ -144,7 +143,6 @@ class LB_strategy
 #endif
         return update();
     }
-
 
     unsigned int get_weight(LB_OBJ obj)
     {
@@ -276,13 +274,13 @@ class LB_strategy
             }
         }
         unsigned int _avaliable_obj_after = get_avaliable_obj().size();
-        
+
         __LOG(debug, "_avaliable_obj_before is : " << _avaliable_obj_before << ", _avaliable_obj_after is :" << _avaliable_obj_after << ", inactive obj size is : " << _inactive_obj_vector.size());
         //if (_avaliable_obj_before > 0 && _avaliable_obj_after == 0)
         if (!_avaliable_obj_after)
         {
             __LOG(error, "no avaliable obj!");
-           
+
             if (_no_avaliable_cb)
             {
                 _no_avaliable_cb();
@@ -347,5 +345,4 @@ class LB_strategy
 
     std::function<void()> _no_avaliable_cb;
     std::function<void()> _first_avaliable_cb;
-
 };

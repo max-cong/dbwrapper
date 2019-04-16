@@ -30,5 +30,6 @@ namespace configCenter
 // Property names
 const std::string PROP_HOST = "host"; // the remote host IP or FQDN
 const std::string DEFAULT_HOST = "127.0.0.1";
-
+const std::string DEFAULT_HB_LOST_NUM = "DEFAULT_HB_LOST_NUM";
+const std::string PROP_HB_LOST_NUM = "PROP_HB_LOST_NUM";
 } // namespace configCenter

@@ -1,160 +1,100 @@
 #pragma once
-
-/*
- * Copyright (c) 2016-20017 Max Cong <savagecm@qq.com>
- * this code can be found at https://github.com/maxcong001/connection_manager
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
- * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
- * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
- * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
- * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
- * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
- * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */
-#pragma once
 #include <string>
 #include <map>
-#include <unordered_map>
 #include <functional>
-#include <iostream>
-#include <utility>
-#include <mutex>
-#include <tuple>
-#include <thread>
+#include "function_traits.hpp"
 
-class id_center
+class messageBus
 {
   public:
-    static id_center *instance()
+    template <typename Function>
+    void register_handler(std::string const &name, const Function &f)
     {
-        static auto ins = new id_center();
-        return ins;
+        using std::placeholders::_1;
+        using std::placeholders::_2;
+
+        this->invokers_[name] = {std::bind(&invoker<Function>::apply, f, _1, _2)};
     }
 
-    int getUniqueID()
+    template <typename T, typename... Args>
+    T call(const std::string &name, Args &&... args)
     {
-        return (uniqueID_atomic++);
+        auto it = invokers_.find(name);
+        if (it == invokers_.end())
+            return {};
+
+        auto args_tuple = std::make_tuple(std::forward<Args>(args)...);
+
+        char data[sizeof(std::tuple<Args...>)];
+        std::tuple<Args...> *tp = new (data) std::tuple<Args...>;
+        *tp = args_tuple;
+
+        T t;
+        it->second(tp, &t);
+        return t;
+    }
+
+    template <typename... Args>
+    void call_void(const std::string &name, Args &&... args)
+    {
+        auto it = invokers_.find(name);
+        if (it == invokers_.end())
+            return;
+
+        auto args_tuple = std::make_tuple(std::forward<Args>(args)...);
+        it->second(&args_tuple, nullptr);
     }
 
   private:
-    std::atomic<int> uniqueID_atomic;
-};
-
-template <typename OBJ,typename IND = std::string>
-class message_bus
-{
-  public:
-    message_bus() { bus_thread_id = std::this_thread::get_id(); }
-
-    static message_bus<OBJ> *instance()
+    template <typename Function>
+    struct invoker
     {
-        static auto ins = new message_bus<OBJ>();
-        return ins;
-    }
+        static inline void apply(const Function &func, void *bl, void *result)
+        {
+            using tuple_type = typename function_traits<Function>::tuple_type;
+            const tuple_type *tp = static_cast<tuple_type *>(bl);
 
-    typedef std::function<void(void *, void *)> handler_f;
-    int register_handler(std::string const name, void *t, handler_f f)
-    {
-        if (bus_thread_id != std::this_thread::get_id())
-        {
-            std::lock_guard<std::mutex> lck(mtx);
+            call(func, *tp, result);
         }
-        int id = (id_center::instance())->getUniqueID();
-        (this->invokers_).emplace(name, std::make_tuple(f, t, id));
-        __LOG(debug, "regist handler for " << name << " id is : " << id);
-        return id;
-    }
 
-    void register_handler(std::string const name, void *t, handler_f f, int id)
-    {
-        if (bus_thread_id != std::this_thread::get_id())
+        template <typename F, typename... Args>
+        static typename std::enable_if<std::is_void<typename std::result_of<F(Args...)>::type>::value>::type
+        call(const F &f, const std::tuple<Args...> &tp, void *)
         {
-            std::lock_guard<std::mutex> lck(mtx);
+            call_helper(f, std::make_index_sequence<sizeof...(Args)>{}, tp);
         }
-        (this->invokers_).emplace(name, std::make_tuple(f, t, id));
-        __LOG(debug, "regist handler for " << name);
-    }
 
-    void call(const std::string name, void *message, int id)
-    {
-        __LOG(debug, "call topic with name : " << name << " message_p is " << (void *)message);
-        if (bus_thread_id != std::this_thread::get_id())
+        template <typename F, typename... Args>
+        static typename std::enable_if<!std::is_void<typename std::result_of<F(Args...)>::type>::value>::type
+        call(const F &f, const std::tuple<Args...> &tp, void *result)
         {
-            std::lock_guard<std::mutex> lck(mtx);
+            auto r = call_helper(f, std::make_index_sequence<sizeof...(Args)>{}, tp);
+            *(decltype(r) *)result = r;
         }
-        auto it = invokers_.begin();
-        while (it != invokers_.end())
-        {
-            if (!name.compare(it->first))
-            {
-                auto save = it;
-                ++save;
-                handler_f cb;
-                void *obj;
-                int _id;
-                std::tie(cb, obj, _id) = it->second;
-                __LOG(debug, "find topic : " << it->first << " id is : " << id << " _id is : " << _id);
-                if (id == _id)
-                {
-                    __LOG(debug, "find topic : " << it->first << " and call callback. id is : " << id << " _id is : " << _id);
-                    cb((void *)obj, message);
-                    return;
-                }
-                it = save;
-            }
-            else
-            {
-                it++;
-            }
-        }
-    }
 
-    void remove_handler(std::string const name, void *t, int id)
-    {
-        __LOG(warn, "remove_handler " << name);
-        if (bus_thread_id != std::this_thread::get_id())
+        template <typename F, size_t... I, typename... Args>
+        static auto call_helper(const F &f, const std::index_sequence<I...> &, const std::tuple<Args...> &tup)
         {
-            std::lock_guard<std::mutex> lck(mtx);
+            return f(std::get<I>(tup)...);
         }
-        auto it = invokers_.begin();
-        while (it != invokers_.end())
-        {
-            if (!name.compare(it->first))
-            {
-                auto save = it;
-                ++save;
-                __LOG(debug, "find topic : " << it->first);
-
-                if (std::get<1>(it->second) == t && std::get<2>(it->second) == id)
-                {
-                    __LOG(debug, "erase one topic : " << it->first);
-                    invokers_.erase(it);
-                }
-                it = save;
-            }
-            else
-            {
-                it++;
-            }
-        }
-    }
+    };
 
   private:
-    std::unordered_multimap<std::string, std::tuple<handler_f, void *, int>> invokers_;
-    std::mutex mtx;
-    std::thread::id bus_thread_id;
+    std::map<std::string, std::function<void(void *, void *)>> invokers_;
 };
+
+/*
+void test_messge_bus()
+{
+	messageBus bus;
+	bus.register_handler("test", [](int a, int b) { return a + b; });
+	bus.register_handler("void", [] { std::cout << "void" << std::endl; });
+	bus.register_handler("str", [](int a, const std::string& b) { return std::to_string(a) + b; });
+	bus.register_handler("ptr", [](const char* data, int size) { std::cout << data <<" "<<size<< std::endl; });
+	auto r = bus.call<int>("test", 1, 2);
+	std::cout << r << std::endl;
+	auto s = bus.call<std::string>("str", 1, std::string("test"));
+	bus.call_void("void");
+	bus.call_void("ptr", "test", 4);
+}
+*/

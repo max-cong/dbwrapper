@@ -32,7 +32,7 @@ namespace configCenter
 {
 // note: the shared_instance of this class will live until system gone
 using cfgPropMap = std::unordered_map<std::string, std::string>;
-template <typename cfgKeyType_t>
+template <typename cfgKeyType_t = void *>
 class configCenter
 {
 public:

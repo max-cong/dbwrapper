@@ -28,15 +28,12 @@
 #include "revert_discrete_probability_distribution.hpp"
 #include "round_robbin.hpp"
 
-class LB_Factory
+class lbsFactory
 {
   public:
-    LB_Factory(){};
-    virtual ~LB_Factory(){};
-    virtual bool init()
-    {
-        return true;
-    }
+    lbsFactory(){};
+    virtual ~lbsFactory(){};
+
     template <typename LB_OBJ>
     static std::shared_ptr<LB_strategy<LB_OBJ>> create(std::string name)
     {
