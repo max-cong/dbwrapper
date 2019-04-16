@@ -5,10 +5,11 @@
 #include <memory>
 namespace anySaver
 {
+// note: the shared_instance of this class will live until system gone
 template <typename keyType_t>
 class anySaver
 {
-  public:
+public:
     anySaver() {}
     virtual ~anySaver() {}
     static std::shared_prt<anySaver<keyType_t>> instance()
@@ -106,7 +107,7 @@ class anySaver
         }
     }
 
-  private:
+private:
     std::unordered_map<keyType_t, std::unordered_map<std::string, dbw::Any>> _anySaver;
     std::mutex _mutex;
 };

@@ -25,46 +25,44 @@
  */
 #include <atomic>
 #include <functional>
-#include "translib/timerManager.h"
+#include "timer/timerManager.h"
 #include "logger/logger.hpp"
-
-#include "configCenter/configCenter.hpp"
 
 namespace heartBeat
 {
-class heartbeat : public gene::gene
+class heartBeat : public gene::gene
 {
-  public:
+public:
     typedef std::function<void()> ping_f;
-    typedef std::function<void(void)> hb_success_cb;
-    typedef std::function<void(int)> hb_lost_cb;
-    heartbeat(translib::Timer::ptr_p timer)
+    typedef std::function<void(void)> hbSuccCb;
+    typedef std::function<void(int)> hbLostCb;
+    heartBeat() = delete;
+    heartBeat(std::shared_ptr<Loop> loopIn) : _loop(loopIn), _success(false), _interval(5000), _retryNum(5)
     {
-        __LOG(debug, "start heartbeat, this is :" << (void *)this);
-        _timer = timer;
-        interval = 5000;
-        _success = false;
-        _num_to_reconnect = config_center<void *>::instance()->get_properties_fields(get_genetic_gene(), dbw::PROP_HB_LOST_NUM, dbw::DEFAULT_HB_LOST_NUM);
+        __LOG(debug, "start heartBeat, this is :" << (void *)this);
     }
-    ~heartbeat()
+    ~heartBeat()
     {
-        __LOG(debug, "[heartbeat] ~heartbeat, this is : " << (void *)this);
+        __LOG(debug, "[heartBeat] ~heartBeat, this is : " << (void *)this);
         _timer->stop();
+    }
+    bool init()
+    {
     }
     void onHeartbeatLost()
     {
         __LOG(debug, "onHeartbeatLost");
-        if (l_cb)
+        if (_hbLostCb)
         {
-            l_cb(400);
+            _hbLostCb(400);
         }
     }
     void onHeartbeatSuccess()
     {
         __LOG(debug, "onHeartbeatSuccess");
-        if (s_cb)
+        if (_hbSuccCb)
         {
-            s_cb();
+            _hbSuccCb();
         }
     }
 
@@ -77,33 +75,33 @@ class heartbeat : public gene::gene
         // as the connection may not set up yet
         // the worest case is to detect APP not avaliable net heart beat
         set_hb_success(true);
-        __LOG(debug, "start heartbeat!");
-        _timer->startForever(interval, [fun, this]() {
+        __LOG(debug, "start heartBeat!");
+        _timer->startForever(_interval, [fun, this]() {
             if (this->get_hb_success())
             {
                 onHeartbeatSuccess();
-                _num_to_reconnect = config_center<void *>::instance()->get_properties_fields(get_genetic_gene(), dbw::PROP_HB_LOST_NUM, dbw::DEFAULT_HB_LOST_NUM);
+                _retryNum = config_center<void *>::instance()->get_properties_fields(get_genetic_gene(), dbw::PROP_HB_LOST_NUM, dbw::DEFAULT_HB_LOST_NUM);
             }
             else
             {
-                _num_to_reconnect--;
-                if (_num_to_reconnect < 1)
+                _retryNum--;
+                if (_retryNum < 1)
                 {
-                    _num_to_reconnect = 0;
+                    _retryNum = 0;
                 }
                 //onHeartbeatLost();
             }
 
             {
-                unsigned int tmp_num = _num_to_reconnect;
-                __LOG(debug, "_num_to_reconnect is : " << tmp_num);
+                unsigned int tmp_num = _retryNum;
+                __LOG(debug, "_retryNum is : " << tmp_num);
             }
-            // set heartbeat status false, if hb success, it will set to true
+            // set heartBeat status false, if hb success, it will set to true
             set_hb_success(false);
-            int _tmp_num = _num_to_reconnect;
+            int _tmp_num = _retryNum;
             if (_tmp_num < 1)
             {
-                _num_to_reconnect = config_center<void *>::instance()->get_properties_fields(get_genetic_gene(), dbw::PROP_HB_LOST_NUM, dbw::DEFAULT_HB_LOST_NUM);
+                _retryNum = config_center<void *>::instance()->get_properties_fields(get_genetic_gene(), dbw::PROP_HB_LOST_NUM, dbw::DEFAULT_HB_LOST_NUM);
                 onHeartbeatLost();
             }
             __LOG(debug, "call ping function : " << typeid(fun).name());
@@ -119,10 +117,10 @@ class heartbeat : public gene::gene
         return true;
     }
 
-    void set_interval(uint32_t iv) { interval = iv; }
-    uint32_t get_interval() { return interval; }
-    void set_hb_success_cb(hb_success_cb cb) { s_cb = cb; }
-    void set_hb_lost_cb(hb_lost_cb cb) { l_cb = cb; }
+    void setInterval(uint32_t iv) { _interval = iv; }
+    uint32_t getInterval() { return _interval; }
+    void setHbSuccCb(hbSuccCb cb) { _hbSuccCb = cb; }
+    void setHbLostCb(hbLostCb cb) { _hbLostCb = cb; }
 
     void set_hb_success(bool success)
     {
@@ -134,13 +132,14 @@ class heartbeat : public gene::gene
         return ret;
     }
 
-  private:
-    uint32_t interval;
-    translib::Timer::ptr_p _timer;
-    hb_success_cb s_cb;
-    hb_lost_cb l_cb;
+private:
+    std::weak_ptr<loop::loop> _loop;
+    uint32_t _interval;
+
+    hbSuccCb _hbSuccCb;
+    hbLostCb _hbLostCb;
 
     std::atomic<bool> _success;
-    std::atomic<unsigned int> _num_to_reconnect;
+    std::atomic<unsigned int> _retryNum;
 };
 } // namespace heartBeat

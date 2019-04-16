@@ -24,79 +24,110 @@
  */
 
 #pragma once
-#include "loop.h"
+
 #include <memory>
 
-namespace translib
+namespace timer
 {
 
-class Loop;
-class Timer
+
+class timer
 {
-  public:
+public:
 	/** @brief callback fuction */
 	typedef std::function<void()> Handler;
 	typedef std::function<int(void *, int)> CBHandler;
-	typedef std::shared_ptr<Timer> ptr_p;
+	typedef std::shared_ptr<timer> ptr_p;
 
-  public:
-	Timer(std::shared_ptr<Loop> loop);
-	virtual ~Timer();
+public:
+	timer() = delete;
+	timer(std::shared_ptr<Loop> loop) : _loop(loop),
+										_event(NULL),
+										_interval(0),
+										_round(1),
+										_curRound(0),
+										_handler(NULL),
 
-	/**
-	 * @brief start timer for several times
-	 * @param interval ms
-	 * @param round 
-	 * @param handler callback function
-	 */
-	bool startRounds(uint32_t interval, uint64_t round, translib::Timer::Handler handler);
+										_tid(0),
+										_isRunning(false)
 
-	/**
-	 * @brief 
-	 * @param interval ms
-	 * @param handler callback fuction
-	 */
-	bool startOnce(uint32_t interval, translib::Timer::Handler handler);
+	{
+	}
+	virtual ~timer() { stop(); }
+	void setTid(unsigned long tid)
+	{
+		_tid = tid;
+	}
+	unsigned long getTid()
+	{
+		return _tid;
+	}
+	bool startRounds(uint32_t interval, uint64_t round, timer::timer::Handler handler)
+	{
+		if (NULL != _event)
+		{
+			__LOG(error, "_event is not NULL, the timer is running, please stop first then start");
+			return false;
+		}
+		if (_loop.expired())
+		{
+			__LOG(error, "loop is invalid!");
+			return false;
+		}
 
-	/**
-	 * @brief 
-	 * @param interval ms
-	 * @param handler callback function
-	 */
-	bool startForever(uint32_t interval, translib::Timer::Handler handler);
+		auto _event_base = (_loop.lock())->ev();
+		if (!_event_base)
+		{
+			__LOG(warn, "event base is not valid!");
+			return false;
+		}
 
-	/**
-	 * @brief 
-	 * @param after ms
-	 * @param interval ms
-	 * @param round 
-	 * @param handler callback function
-	 */
+		_event = event_new((_loop.lock())->ev(), -1, (round > 1) ? EV_PERSIST : 0, eventHandler, this);
+		if (NULL == _event)
+		{
+			__LOG(error, "event is invalid");
+			return false;
+		}
+
+		struct timeval tv = {};
+		evutil_timerclear(&tv);
+		tv.tv_sec = interval / 1000;
+		tv.tv_usec = interval % 1000 * 1000;
+
+		if (0 != event_add(_event, &tv))
+		{
+			__LOG(error, "event add return fail");
+			reset();
+			return false;
+		}
+
+		_interval = interval;
+		_round = round;
+		_curRound = 0;
+		_handler = handler;
+		setIsRunning(true);
+		return true;
+	}
+	bool startOnce(uint32_t interval, timer::timer::Handler handler)
+	{
+		return startRounds(interval, 1, handler);
+	}
+	// note: this is not true forever
+	bool startForever(uint32_t interval, timer::timer::Handler handler)
+	{
+		return startRounds(interval, uint32_t(-1), handler);
+	}
 	bool startAfter(
 		uint32_t after,
 		uint32_t interval,
 		uint64_t round,
-		translib::Timer::Handler handler);
-	/**
-	 * @brief this is for adapt some wrapper function, if the callback return -1, then stop the timer.
-	 * @param interval ms
-	 * @param handler callback function
-	 * @param userData bring back while callback is called
-	 */
-
-	bool startCB(uint32_t interval, translib::Timer::CBHandler handler, void *userData, int tid)
+		timer::timer::Handler handler)
 	{
-		_tid = tid;
-		_userData = userData;
-		_CBHandler = handler;
-		return startForever(interval, [this] {
-			int ret = _CBHandler(_userData, _tid);
-			if (ret == -1)
-			{
-				this->stop();
-			}
+		return startOnce(after, [=]() {
+			startRounds(interval, round, handler);
 		});
 	}
+
 	/** get timer interval */
 	inline uint32_t interval() const
 	{
@@ -109,52 +140,54 @@ class Timer
 		return _round;
 	}
 
-	/** get current round */
-	inline uint64_t curRound() const
+	bool getIsRunning()
 	{
-		return _curRound;
+		return _isRunning;
 	}
-
-	/** finished? */
-	inline bool isFinished() const
+	void setIsRunning(bool _running)
 	{
-		return _curRound >= _round;
-	}
-	bool get_is_running()
-	{
-		return _is_running && !isFinished();
-	}
-	void set_is_running(bool _restarting)
-	{
-		_is_running = _restarting;
+		_isRunning = _running;
 	}
 	void stop()
 	{
-		_is_running = false;
-		reset();
+		if (NULL != _event)
+		{
+			event_free(_event);
+			_event = NULL;
+			_curRound = 0;
+			_round = 0;
+		}
+		setIsRunning(false);
 	}
 	std::shared_ptr<Loop> get_loop()
 	{
-		return _loop;
+		return _loop.lock();
 	}
 
-  private:
-	void reset();
-	static void eventHandler(evutil_socket_t fd, short events, void *ctx);
+private:
+	// note: we expect we will not face the scanrio:
+	// this handler is called but the timer obj is distroyed.
+	// when the timer dis-truct, should stop all the handler
+	static void eventHandler(evutil_socket_t fd, short events, void *ctx)
+	{
+		timer *timer = (timer *)ctx;
+		timer->_curRound++;
+		if (timer->_curRound >= timer->_round)
+		{
+			timer->stop();
+		}
+		timer->_handler();
+	}
 
-  private:
-	std::shared_ptr<Loop> _loop;
+private:
+	std::weak_ptr<loop::loop> _loop;
 	struct event *_event;
 	uint32_t _interval; //ms
 	uint64_t _round;
 	uint64_t _curRound;
-	translib::Timer::Handler _handler;
-	// actually we could capture the userdata and callback, but just left it here,
-	// in case we need to get the user data and callback
-	void *_userData;
-	translib::Timer::CBHandler _CBHandler;
-	int _tid;
-	bool _is_running;
+	timer::timer::Handler _handler;
+	unsigned long _tid;
+	bool _isRunning;
 };
 
-} /* namespace translib */
+} // namespace timer

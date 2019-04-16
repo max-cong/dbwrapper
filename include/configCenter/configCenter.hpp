@@ -30,11 +30,12 @@
 
 namespace configCenter
 {
+// note: the shared_instance of this class will live until system gone
 using cfgPropMap = std::unordered_map<std::string, std::string>;
 template <typename cfgKeyType_t>
 class configCenter
 {
-  public:
+public:
 	configCenter() {}
 	virtual ~configCenter() {}
 	static std::shared_ptr<configCenter<cfgKeyType_t>> instance()

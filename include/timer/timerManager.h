@@ -24,59 +24,69 @@
  */
 
 #pragma once
-
 #include "loop.h"
 #include "timer.h"
 #include <unordered_map>
-#include <map>
+
 #include <atomic>
 #include <thread>
 #include <algorithm>
 #include "logger/logger.hpp"
-namespace translib
+namespace timer
 {
-class Loop;
-class Timer;
-#define AUDIT_TIMER 5000
 class TimerManager
 {
-  public:
-	TimerManager(std::shared_ptr<Loop> loop_in) : uniqueID_atomic(0), t_map(), _loop(loop_in)
+public:
+	TimerManager() = delete;
+	TimerManager(std::shared_ptr<Loop> loopIn) : _uniqueIDAtomic(0), _timerMap(), _loop(loopIn)
 	{
 	}
-	~TimerManager()
+	virtual ~TimerManager()
 	{
-	}
-	bool init()
-	{
-		getTimer()->startForever(AUDIT_TIMER, [this] {
-			auditTimer();
-		});
-		return true;
 	}
 	bool stop()
 	{
-		std::lock_guard<std::mutex> lck(mtx);
-		t_map.clear();
+		std::lock_guard<std::mutex> lck(_tMutex);
+		_timerMap.clear();
 		return true;
 	}
-
-	Timer::ptr_p getTimer(int *timerID = NULL);
-	bool killTimer(int timerID);
-	bool auditTimer();
-
-	std::mutex mtx;
-
-  protected:
-  private:
-	int getUniqueID()
+	timer::ptr_p getTimer()
 	{
-		return (uniqueID_atomic++);
+		unsigned long tid = getUniqueID();
+		if(_loop.expired())
+		{
+			__LOG(error, "loop is invalid!");
+			return nullptr;
+		}
+		timer::ptr_p tmp_ptr(new timer(_loop.lock()));
+		tmp_ptr->setTid(tid);
+		{
+			std::lock_guard<std::mutex> lck(_tMutex);
+			//_timerMap.emplace(tid, tmp_ptr);
+			_timerMap[tid] = tmp_ptr;
+		}
+		return tmp_ptr
+	}
+	bool killTimer(unsigned long timerID)
+	{
+		std::lock_guard<std::mutex> lck(_tMutex);
+		_timerMap.erase(timerID);
+		return true;
+	}
+	bool killTimer(timer::ptr_p timer_sptr)
+	{
+		killTimer(timer_sptr.getTid());
 	}
 
-	std::atomic<int> uniqueID_atomic;
-	std::map<int, Timer::ptr_p> t_map;
-	std::shared_ptr<Loop> _loop;
+protected:
+private:
+	unsigned long getUniqueID()
+	{
+		return (_uniqueIDAtomic++);
+	}
+	std::mutex _tMutex;
+	std::atomic<unsigned long> _uniqueIDAtomic;
+	std::unordered_map<unsigned long, timer::ptr_p> _timerMap;
+	std::weak_ptr<loop::loop> _loop;
 };
-
-} /* namespace translib */
+} // namespace timer
