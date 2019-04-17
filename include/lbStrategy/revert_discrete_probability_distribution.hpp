@@ -29,7 +29,7 @@
 #include <utility> // for pair
 
 template <typename DIST_OBJ>
-class RDPD : public LB_strategy<DIST_OBJ>
+class RDPD : public lbStrategy<DIST_OBJ>
 {
   public:
     RDPD() : _gen(_rd())
@@ -40,13 +40,13 @@ class RDPD : public LB_strategy<DIST_OBJ>
         return true;
     }
     // note: there is no lock here
-    std::pair<DIST_OBJ, ret_status> get_obj(int index = 0) override
+    std::pair<DIST_OBJ, retStatus> get_obj(int index = 0) override
     {
         std::lock_guard<std::recursive_mutex> lck(this->_mutex);
         DIST_OBJ obj;
         if (this->_obj_vector.empty())
         {
-            return std::make_pair(obj, ret_status::NO_ENTRY);
+            return std::make_pair(obj, retStatus::NO_ENTRY);
         }
         try
         {
@@ -62,12 +62,12 @@ class RDPD : public LB_strategy<DIST_OBJ>
         catch (const std::out_of_range &oor)
         {
             __LOG(error, "Out of Range error: " << oor.what());
-            return std::make_pair(obj, ret_status::FAIL);
+            return std::make_pair(obj, retStatus::FAIL);
         }
-        return std::make_pair(obj, ret_status::SUCCESS);
+        return std::make_pair(obj, retStatus::SUCCESS);
     }
 
-    ret_status update() override
+    retStatus update() override
     {
      
             std::lock_guard<std::recursive_mutex> lck(this->_mutex);
@@ -117,11 +117,11 @@ class RDPD : public LB_strategy<DIST_OBJ>
         _dist.param(second_dist.param());
         if (!vector_size)
         {
-            return ret_status::SUCCESS;
+            return retStatus::SUCCESS;
         }
         else
         {
-            return ret_status::NO_ENTRY;
+            return retStatus::NO_ENTRY;
         }
     }
 

@@ -24,54 +24,41 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "loadbalance_strategy/load_balance_strategy.hpp"
 template <typename LB_OBJ>
-class round_robbin : public LB_strategy<LB_OBJ>
+class roundRobbin : public lbStrategy<LB_OBJ>
 {
   public:
-    round_robbin() : _index(0)
+    roundRobbin() : _index(0)
     {
         _max_index = 0;
     }
-    ~round_robbin() {}
+    ~roundRobbin() {}
     // note: there is no lock here
-    std::pair<LB_OBJ, ret_status> get_obj(int index = 0) override
+    std::pair<LB_OBJ, retStatus> get_obj() override
     {
-        LB_OBJ obj;
+
         if (this->_obj_vector.empty())
         {
-            return std::make_pair(obj, ret_status::NO_ENTRY);
+            LB_OBJ obj;
+            return std::make_pair(obj, retStatus::NO_ENTRY);
         }
         try
         {
-            if (_index < _max_index)
-            {
-            }
-            else
-            {
-                _index = 0;
-            }
-            if (index == 0)
-            {
-                obj = std::get<0>(this->_obj_vector.at(_index));
-            }
-            else
-            {
-                obj = std::get<0>(this->_obj_vector.at(index % _max_index));
-            }
             _index++;
+            return std::make_pair(std::get<0>(this->_obj_vector.at(index % _max_index)));
         }
         catch (const std::out_of_range &oor)
         {
             __LOG(error, "Out of Range error: " << oor.what());
-            return std::make_pair(obj, ret_status::FAIL);
+            LB_OBJ obj;
+            return std::make_pair(obj, retStatus::FAIL);
         }
-        return std::make_pair(obj, ret_status::SUCCESS);
+        return std::make_pair(obj, retStatus::SUCCESS);
     }
 
     // for round robbin, if the weight is 0, that mean we should delete the obj
     // the default weight is 10;
-    virtual ret_status add_obj(LB_OBJ obj, unsigned int weight = 10)
+    virtual retStatus add_obj(LB_OBJ obj, unsigned int weight = 10)
     {
         return this->update_obj(obj, weight);
     }
@@ -81,14 +68,66 @@ class round_robbin : public LB_strategy<LB_OBJ>
         return true;
     }
 
-    ret_status update() override
+    retStatus update() override
     {
         std::lock_guard<std::recursive_mutex> lck(this->_mutex);
-        _max_index = LB_strategy<LB_OBJ>::_obj_vector.size();
-        return ret_status::SUCCESS;
+        _max_index = b<LB_OBJ>::_obj_vector.size();
+        return retStatus::SUCCESS;
     }
 
   private:
     std::atomic<unsigned int> _index;
     std::atomic<unsigned int> _max_index;
 };
+
+#include <iostream>
+#include <map>
+
+struct PrivateData
+{
+  public:
+    PrivateData(unsigned int mn) : magic_number(mn) {}
+    unsigned int magic_number;
+    static bool release() {}
+};
+int main()
+{
+    PrivateData a(1);
+    PrivateData b(2);
+    PrivateData c(3);
+    PrivateData d(4);
+    PrivateData e(5);
+
+    std::multimap<int, struct PrivateData *> dict{
+        {2, (struct PrivateData *)&a},
+        {2, (struct PrivateData *)&b},
+        {2, (struct PrivateData *)&c},
+        {4, (struct PrivateData *)&d},
+        {3, (struct PrivateData *)&e}};
+
+    auto range = dict.equal_range(2);
+
+    for (auto i = range.first; i != range.second; ++i)
+    {
+        if (i != dict.end())
+        {
+            std::cout << "end" << std::endl;
+        }
+        else
+        {
+            std::cout << "not end" << std::endl;
+        }
+        std::cout << "data is : " << (void *)i->second << std::endl;
+        if (i->second == (struct PrivateData *)&b)
+        {
+            std::cout << "find !!!!!!!!!" << (struct PrivateData *)i->second << std::endl;
+            dict.erase(i);
+        }
+        std::cout << i->first << ": " << i->second << '\n';
+    }
+    std::cout << "kfjlsajflajl" << std::endl;
+    for (auto it : dict)
+    {
+        std::cout << it.first << ": " << it.second << '\n';
+    }
+}

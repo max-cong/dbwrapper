@@ -25,22 +25,23 @@
  */
 #include "logger/logger.hpp"
 #include <algorithm>
-enum class ret_status : std::uint32_t
+enum class retStatus : std::uint32_t
 {
     SUCCESS = 0,
     FAIL,
     NO_ENTRY,
     FIRST_ENTRY
 };
+// note: this is not thread safe
 template <typename LB_OBJ>
-class LB_strategy
+class lbStrategy
 {
   public:
-    virtual ~LB_strategy() {}
+    virtual ~lbStrategy() {}
     // Interface
-    virtual std::pair<LB_OBJ, ret_status> get_obj(int index = 0) = 0;
+    virtual std::pair<LB_OBJ, retStatus> get_obj() = 0;
     virtual bool init() = 0;
-    virtual ret_status update() = 0;
+    virtual retStatus update() = 0;
 
     void set_no_avaliable_cb(std::function<void()> cb)
     {
@@ -51,15 +52,13 @@ class LB_strategy
         _first_avaliable_cb = cb;
     }
 
-    std::pair<LB_OBJ, ret_status> get_obj_with_index(unsigned int index)
+    std::pair<LB_OBJ, retStatus> get_obj_with_index(unsigned int index)
     {
-        std::lock_guard<std::recursive_mutex> lck(_mutex);
-
         LB_OBJ obj;
-        if (!_obj_vector.size())
+        if (_obj_vector.empty())
         {
             __LOG(warn, "there is no entry here!");
-            return std::make_pair(obj, ret_status::NO_ENTRY);
+            return std::make_pair(obj, retStatus::NO_ENTRY);
         }
         try
         {
@@ -68,67 +67,49 @@ class LB_strategy
         catch (const std::out_of_range &oor)
         {
             __LOG(error, "Out of Range error: " << oor.what());
-            return std::make_pair(obj, ret_status::FAIL);
+            return std::make_pair(obj, retStatus::FAIL);
         }
-        return std::make_pair(obj, ret_status::SUCCESS);
+        return std::make_pair(obj, retStatus::SUCCESS);
     }
 
     // common function
-    virtual ret_status add_obj(LB_OBJ obj, unsigned int weight = 0)
+    virtual retStatus add_obj(LB_OBJ obj, unsigned int weight = 0)
     {
         __LOG(debug, "now add one object!");
         return update_obj(obj, weight);
     }
 
-    std::vector<std::pair<LB_OBJ, unsigned int>> get_avaliable_obj()
-    {
-        {
-            std::vector<std::pair<LB_OBJ, unsigned int>> _tmp_list;
-            std::lock_guard<std::recursive_mutex> lck(_mutex);
-            for (auto it : _obj_vector)
-            {
-                if (std::get<1>(it) > 0)
-                {
-                    _tmp_list.push_back(it);
-                }
-            }
-            return _tmp_list;
-        }
-    }
-    ret_status del_obj(LB_OBJ obj)
+    retStatus del_obj(LB_OBJ obj)
     {
         unsigned int _avaliable_obj_before = get_avaliable_obj().size();
-        // note: there should only have one obj in the vector!!
-        {
-            std::lock_guard<std::recursive_mutex> lck(_mutex);
 
-            for (auto it = _obj_vector.begin(); it != _obj_vector.end();)
-            //for (auto it : _obj_vector)
+        for (auto it = _obj_vector.begin(); it != _obj_vector.end();)
+        //for (auto it : _obj_vector)
+        {
+            if (std::get<0>(*it) == obj)
             {
-                if (std::get<0>(*it) == obj)
-                {
-                    __LOG(warn, "now delete one object from _obj_vector");
-                    it = _obj_vector.erase(it);
-                }
-                else
-                {
-                    it++;
-                }
+                __LOG(warn, "now delete one object from _obj_vector");
+                it = _obj_vector.erase(it);
             }
-            for (auto it = _inactive_obj_vector.begin(); it != _inactive_obj_vector.end();)
-            //for (auto it : _obj_vector)
+            else
             {
-                if ((*it) == obj)
-                {
-                    __LOG(warn, "now delete one object from _inactive_obj_vector");
-                    it = _inactive_obj_vector.erase(it);
-                }
-                else
-                {
-                    it++;
-                }
+                it++;
             }
         }
+        for (auto it = _inactive_obj_vector.begin(); it != _inactive_obj_vector.end();)
+        //for (auto it : _obj_vector)
+        {
+            if ((*it) == obj)
+            {
+                __LOG(warn, "now delete one object from _inactive_obj_vector");
+                it = _inactive_obj_vector.erase(it);
+            }
+            else
+            {
+                it++;
+            }
+        }
+
         __LOG(warn, " size of _obj_vector is : " << _obj_vector.size() << ", size of _inactive_obj_vector is : " << _inactive_obj_vector.size());
         unsigned int _avaliable_obj_after = get_avaliable_obj().size();
 #if 0
@@ -157,7 +138,7 @@ class LB_strategy
         return 0;
     }
 
-    ret_status update_obj(LB_OBJ obj, unsigned int weight = 0, bool need_delete = false, bool no_refresh = true)
+    retStatus update_obj(LB_OBJ obj, unsigned int weight = 0, bool need_delete = false, bool no_refresh = true)
     {
         __LOG(debug, " update obj is called, weight is : " << weight);
         unsigned int _avaliable_obj_before = get_avaliable_obj().size();
@@ -218,11 +199,11 @@ class LB_strategy
                 }
                 if (!_avaliable_obj_after)
                 {
-                    return ret_status::NO_ENTRY;
+                    return retStatus::NO_ENTRY;
                 }
                 else
                 {
-                    return ret_status::SUCCESS;
+                    return retStatus::SUCCESS;
                 }
             }
 
@@ -298,14 +279,14 @@ class LB_strategy
         return update();
     }
 
-    virtual ret_status inc_weight(LB_OBJ obj, unsigned int weight)
+    virtual retStatus inc_weight(LB_OBJ obj, unsigned int weight)
     {
         unsigned int _weight = 0;
         _weight = get_weight(obj);
         _weight += weight;
         return update_obj(obj, _weight);
     }
-    virtual ret_status dec_weight(LB_OBJ obj, unsigned int weight)
+    virtual retStatus dec_weight(LB_OBJ obj, unsigned int weight)
     {
         unsigned int _weight = 0;
         _weight = get_weight(obj);
@@ -337,6 +318,22 @@ class LB_strategy
         _inactive_obj_vector.clear();
         update();
         return true;
+    }
+
+    std::vector<std::pair<LB_OBJ, unsigned int>> get_avaliable_obj()
+    {
+        {
+            std::vector<std::pair<LB_OBJ, unsigned int>> _tmp_list;
+            std::lock_guard<std::recursive_mutex> lck(_mutex);
+            for (auto it : _obj_vector)
+            {
+                if (std::get<1>(it) > 0)
+                {
+                    _tmp_list.push_back(it);
+                }
+            }
+            return _tmp_list;
+        }
     }
 
     std::vector<std::pair<LB_OBJ, unsigned int>> _obj_vector;

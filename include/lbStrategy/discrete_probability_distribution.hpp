@@ -28,7 +28,7 @@
 #include <mutex>
 
 template <typename DIST_OBJ>
-class DPD : public LB_strategy<DIST_OBJ>
+class DPD : public lbStrategy<DIST_OBJ>
 {
   public:
     DPD() : _gen(_rd())
@@ -40,13 +40,13 @@ class DPD : public LB_strategy<DIST_OBJ>
     }
     // note: there is no lock here
     // for performance, please check the return code during usage
-    std::pair<DIST_OBJ, ret_status> get_obj(int index = 0) override
+    std::pair<DIST_OBJ, retStatus> get_obj(int index = 0) override
     {
         DIST_OBJ obj;
         if (this->_obj_vector.empty())
         {
             __LOG(warn, "there is no object to get!");
-            return std::make_pair(obj, ret_status::NO_ENTRY);
+            return std::make_pair(obj, retStatus::NO_ENTRY);
         }
         try
         {
@@ -55,7 +55,7 @@ class DPD : public LB_strategy<DIST_OBJ>
             if (_rand_num == 0)
             {
                 // if the radom number is 0, that means there is no avaliable entry
-                return std::make_pair(obj, ret_status::NO_ENTRY);
+                return std::make_pair(obj, retStatus::NO_ENTRY);
             }
             if (index == 0)
             {
@@ -72,12 +72,12 @@ class DPD : public LB_strategy<DIST_OBJ>
         catch (const std::out_of_range &oor)
         {
             __LOG(error, "Out of Range error: " << oor.what());
-            return std::make_pair(obj, ret_status::FAIL);
+            return std::make_pair(obj, retStatus::FAIL);
         }
-        return std::make_pair(obj, ret_status::SUCCESS);
+        return std::make_pair(obj, retStatus::SUCCESS);
     }
 
-    ret_status update() override
+    retStatus update() override
     {
         int vector_size = 0;
 
@@ -106,11 +106,11 @@ class DPD : public LB_strategy<DIST_OBJ>
         _dist.reset();
         if (!vector_size)
         {
-            return ret_status::NO_ENTRY;
+            return retStatus::NO_ENTRY;
         }
         else
         {
-            return ret_status::SUCCESS;
+            return retStatus::SUCCESS;
         }
     } 
 
