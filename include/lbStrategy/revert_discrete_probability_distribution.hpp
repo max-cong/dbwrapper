@@ -27,7 +27,10 @@
 #include <random>
 #include <mutex>
 #include <utility> // for pair
-
+#include <algorithm>
+#include <iostream>
+#include <vector>
+#include <cmath>
 template <typename DIST_OBJ>
 class RDPD : public lbStrategy<DIST_OBJ>
 {
@@ -42,7 +45,7 @@ class RDPD : public lbStrategy<DIST_OBJ>
     // note: there is no lock here
     std::pair<DIST_OBJ, retStatus> get_obj(int index = 0) override
     {
-        std::lock_guard<std::recursive_mutex> lck(this->_mutex);
+
         DIST_OBJ obj;
         if (this->_obj_vector.empty())
         {
@@ -69,60 +72,30 @@ class RDPD : public lbStrategy<DIST_OBJ>
 
     retStatus update() override
     {
-     
-            std::lock_guard<std::recursive_mutex> lck(this->_mutex);
-        
+
         int vector_size = this->_obj_vector.size();
         if (!vector_size)
         {
             __LOG(debug, "this->_obj_vector is empty!");
-            // to do : need to return here?
+            return std::make_pair(obj, retStatus::NO_ENTRY);
         }
         std::vector<double> init_list;
-        //std::array<double, 10000> init_list;
-        unsigned int max_weight = 0;
-        unsigned int min_weight = std::get<1>(this->_obj_vector[0]);
-        for (int i = 0; i < vector_size; i++)
+        unsigned int max_weight = std::get<1>(*std::max_element(_obj_vector.begin(), _obj_vector.end()));
+        unsigned int min_weight = std::get<1>(*std::min_element(_obj_vector.begin(), _obj_vector.end()));
+
+        if (max_weight != min_weight)
         {
-            unsigned int tmp_weight = std::get<1>(this->_obj_vector[i]);
-            if (tmp_weight > max_weight)
-            {
-                max_weight = tmp_weight;
-            }
-            if (tmp_weight < min_weight)
-            {
-                min_weight = tmp_weight;
-            }
-        }
-        for (int i = 0; i < vector_size; i++)
-        {
-            if (max_weight == min_weight)
-            {
-                init_list.push_back(1);
-            }
-            else
+            for (int i = 0; i < vector_size; i++)
             {
                 unsigned int tmp_weight = max_weight - std::get<1>(this->_obj_vector[i]);
                 init_list.push_back(tmp_weight);
             }
         }
-#if 0
-        __LOG(debug, "weight is :");
-        for (auto it : init_list)
-        {
-            __LOG(debug, "--> " << it);
-        }
-#endif
+
         std::discrete_distribution<int> second_dist(init_list.begin(), init_list.end());
         _dist.param(second_dist.param());
-        if (!vector_size)
-        {
-            return retStatus::SUCCESS;
-        }
-        else
-        {
-            return retStatus::NO_ENTRY;
-        }
+
+        return retStatus::SUCCESS;
     }
 
     std::random_device _rd;

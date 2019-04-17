@@ -23,35 +23,56 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#include "load_balance_strategy.hpp"
-#include "discrete_probability_distribution.hpp"
-#include "revert_discrete_probability_distribution.hpp"
-#include "round_robbin.hpp"
+#include "service_discovery.hpp"
+#include "common/util.hpp"
+#include "config/config_util.hpp"
+#include "service_discovery/DNS/dns.hpp"
+#include "service_discovery/ETCD/ETCD_INT/etcd_int.hpp"
+#include "service_discovery/ETCD/ETCD_L4TD/etcd_l4td.hpp"
+#include "service_discovery/UNIX_SOCKET/unix_socket.hpp"
 
-class LB_Factory
+using namespace dbw;
+class service_discovery_factory : public genetic_gene_void_p
 {
   public:
-    LB_Factory(){};
-    virtual ~LB_Factory(){};
-    virtual bool init()
+    service_discovery_factory(std::shared_ptr<translib::TimerManager> timer = nullptr){};
+    virtual ~service_discovery_factory(){};
+
+    static std::string get_mode(void *gen)
     {
-        return true;
+       
+        return name;
     }
-    template <typename LB_OBJ>
-    static std::shared_ptr<lbStrategy<LB_OBJ>> create(std::string name)
+    template <typename connInfo>
+    static std::shared_ptr<service_discovery<connInfo>> create(std::shared_ptr<translib::TimerManager> timer, void *gen)
     {
-        std::shared_ptr<lbStrategy<LB_OBJ>> ret = nullptr;
-        if (!name.compare("DPD"))
+        std::shared_ptr<service_discovery<connInfo>> ret = nullptr;
+        std::string name = get_mode(gen);
+
+        if (!name.compare("DNS"))
         {
-            ret = std::dynamic_pointer_cast<lbStrategy<LB_OBJ>>(std::make_shared<DPD<LB_OBJ>>());
+            ret = std::make_shared<dns_service_discovery>(timer);
+            if (ret)
+            {
+                ret->set_genetic_gene(gen);
+            }
+            else
+            {
+                __LOG(error, "create service discovery obj fail!");
+            }
         }
-        else if (!name.compare("RDPD"))
+ 
+        else if (!name.compare("unix_socket"))
         {
-            ret = std::dynamic_pointer_cast<lbStrategy<LB_OBJ>>(std::make_shared<RDPD<LB_OBJ>>());
-        }
-        else if (!name.compare("RR"))
-        {
-            ret = std::dynamic_pointer_cast<lbStrategy<LB_OBJ>>(std::make_shared<round_robbin<LB_OBJ>>());
+            ret = std::make_shared<unix_socket_service_discovery>(timer);
+            if (ret)
+            {
+                ret->set_genetic_gene(gen);
+            }
+            else
+            {
+                __LOG(error, "create service discovery obj fail!");
+            }
         }
         else
         {

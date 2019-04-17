@@ -37,7 +37,7 @@ class roundRobbin : public lbStrategy<LB_OBJ>
     std::pair<LB_OBJ, retStatus> get_obj() override
     {
 
-        if (this->_obj_vector.empty())
+        if (this->_obj_vector.empty() || !_max_index)
         {
             LB_OBJ obj;
             return std::make_pair(obj, retStatus::NO_ENTRY);
@@ -70,64 +70,11 @@ class roundRobbin : public lbStrategy<LB_OBJ>
 
     retStatus update() override
     {
-        std::lock_guard<std::recursive_mutex> lck(this->_mutex);
-        _max_index = b<LB_OBJ>::_obj_vector.size();
+        _max_index = _obj_vector.size();
         return retStatus::SUCCESS;
     }
 
   private:
-    std::atomic<unsigned int> _index;
-    std::atomic<unsigned int> _max_index;
+    unsigned int _index;
+    unsigned int _max_index;
 };
-
-#include <iostream>
-#include <map>
-
-struct PrivateData
-{
-  public:
-    PrivateData(unsigned int mn) : magic_number(mn) {}
-    unsigned int magic_number;
-    static bool release() {}
-};
-int main()
-{
-    PrivateData a(1);
-    PrivateData b(2);
-    PrivateData c(3);
-    PrivateData d(4);
-    PrivateData e(5);
-
-    std::multimap<int, struct PrivateData *> dict{
-        {2, (struct PrivateData *)&a},
-        {2, (struct PrivateData *)&b},
-        {2, (struct PrivateData *)&c},
-        {4, (struct PrivateData *)&d},
-        {3, (struct PrivateData *)&e}};
-
-    auto range = dict.equal_range(2);
-
-    for (auto i = range.first; i != range.second; ++i)
-    {
-        if (i != dict.end())
-        {
-            std::cout << "end" << std::endl;
-        }
-        else
-        {
-            std::cout << "not end" << std::endl;
-        }
-        std::cout << "data is : " << (void *)i->second << std::endl;
-        if (i->second == (struct PrivateData *)&b)
-        {
-            std::cout << "find !!!!!!!!!" << (struct PrivateData *)i->second << std::endl;
-            dict.erase(i);
-        }
-        std::cout << i->first << ": " << i->second << '\n';
-    }
-    std::cout << "kfjlsajflajl" << std::endl;
-    for (auto it : dict)
-    {
-        std::cout << it.first << ": " << it.second << '\n';
-    }
-}

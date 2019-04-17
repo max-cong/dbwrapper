@@ -50,22 +50,13 @@ class DPD : public lbStrategy<DIST_OBJ>
         }
         try
         {
-            // should 0 to sizeof _obj_vector
-            int _rand_num = _dist(_gen);
-            if (_rand_num == 0)
-            {
-                // if the radom number is 0, that means there is no avaliable entry
-                return std::make_pair(obj, retStatus::NO_ENTRY);
-            }
             if (index == 0)
             {
-                // if _rand_num is not 0, it will start from 1
-                obj = std::get<0>(this->_obj_vector.at(_rand_num - 1));
+                int _rand_num = _dist(_gen);
+                obj = std::get<0>(this->_obj_vector.at(_rand_num));
             }
             else
             {
-                std::lock_guard<std::recursive_mutex> lck(this->_mutex);
-                // add lock here, as we need to count the sizeof vector
                 obj = std::get<0>(this->_obj_vector.at(index % ((this->_obj_vector).size())));
             }
         }
@@ -79,21 +70,13 @@ class DPD : public lbStrategy<DIST_OBJ>
 
     retStatus update() override
     {
-        int vector_size = 0;
-
-        std::lock_guard<std::recursive_mutex> lck(this->_mutex);
-
-        vector_size = this->_obj_vector.size();
+        int vector_size = this->_obj_vector.size();
         if (!vector_size)
         {
             __LOG(debug, "this->_obj_vector is empty!");
-            // to do : need to return here?
+            return retStatus::NO_ENTRY;
         }
         std::vector<double> init_list;
-        // as if all the weight is 0, it will always return 0, add 0 to stub it,
-        // then we will get from 1, if we get 0, then there is no entry
-        init_list.push_back(0);
-        //std::array<double, 10000> init_list;
         __LOG(debug, "weight is :");
         for (int i = 0; i < vector_size; i++)
         {
@@ -104,15 +87,8 @@ class DPD : public lbStrategy<DIST_OBJ>
         auto _param = second_dist.param();
         _dist.param(_param);
         _dist.reset();
-        if (!vector_size)
-        {
-            return retStatus::NO_ENTRY;
-        }
-        else
-        {
-            return retStatus::SUCCESS;
-        }
-    } 
+        return retStatus::SUCCESS;
+    }
 
     std::random_device _rd;
     std::mt19937 _gen;

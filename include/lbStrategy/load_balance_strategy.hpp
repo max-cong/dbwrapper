@@ -112,22 +112,21 @@ class lbStrategy
 
         __LOG(warn, " size of _obj_vector is : " << _obj_vector.size() << ", size of _inactive_obj_vector is : " << _inactive_obj_vector.size());
         unsigned int _avaliable_obj_after = get_avaliable_obj().size();
-#if 0
-        //if (_avaliable_obj_before && !_avaliable_obj_after)
-        if (!_avaliable_obj_after)
+
+        if (_avaliable_obj_before && !_avaliable_obj_after)
         {
             if (_no_avaliable_cb)
             {
                 _no_avaliable_cb();
             }
         }
-#endif
+
         return update();
     }
 
     unsigned int get_weight(LB_OBJ obj)
     {
-        std::lock_guard<std::recursive_mutex> lck(_mutex);
+
         for (auto it : _obj_vector)
         {
             if (std::get<0>(it) == obj)
@@ -138,83 +137,56 @@ class lbStrategy
         return 0;
     }
 
-    retStatus update_obj(LB_OBJ obj, unsigned int weight = 0, bool need_delete = false, bool no_refresh = true)
+    retStatus update_obj(LB_OBJ obj, unsigned int weight = 0)
     {
         __LOG(debug, " update obj is called, weight is : " << weight);
         unsigned int _avaliable_obj_before = get_avaliable_obj().size();
+
+        if (!weight)
         {
-            std::lock_guard<std::recursive_mutex> lck(_mutex);
-            if (!weight)
+            // if the obj is in active list, remove it
+            for (auto it = _obj_vector.begin(); it != _obj_vector.end();)
             {
-                if (need_delete)
+                __LOG(debug, "loop _obj_vector");
+                if (std::get<0>(*it) == obj)
                 {
-                    del_obj(obj);
-                }
-                bool found = false;
-                for (auto it = _inactive_obj_vector.begin(); it != _inactive_obj_vector.end();)
-                {
-                    __LOG(debug, "loop inactive thread");
-                    if ((*it) == obj)
-                    {
-                        //it = _inactive_obj_vector.erase(it);
-                        __LOG(warn, "obj is in the inactive obj");
-                        found = true;
-                        it++;
-                    }
-                    else
-                    {
-                        it++;
-                    }
-                }
-                if (!found)
-                {
-                    _inactive_obj_vector.push_back(obj);
-                }
-
-                // if the obj is in active list, remove it
-                for (auto it = _obj_vector.begin(); it != _obj_vector.end();)
-                {
-                    __LOG(debug, "loop _obj_vector");
-                    if (std::get<0>(*it) == obj)
-                    {
-                        __LOG(debug, "found obj, erase it");
-                        // _obj_vector.push_back(*it);
-                        it = _obj_vector.erase(it);
-                    }
-                    else
-                    {
-                        it++;
-                    }
-                }
-
-                unsigned int _avaliable_obj_after = get_avaliable_obj().size();
-
-                if (!_avaliable_obj_after && no_refresh)
-                {
-                    __LOG(error, "no avaliable obj!");
-                    if (_no_avaliable_cb)
-                    {
-                        _no_avaliable_cb();
-                    }
-                }
-                if (!_avaliable_obj_after)
-                {
-                    return retStatus::NO_ENTRY;
+                    __LOG(debug, "found obj, erase it");
+                    it = _obj_vector.erase(it);
                 }
                 else
                 {
-                    return retStatus::SUCCESS;
+                    it++;
                 }
             }
 
-            // delte it form inactive vector
-
+            bool found = false;
             for (auto it = _inactive_obj_vector.begin(); it != _inactive_obj_vector.end();)
             {
                 __LOG(debug, "loop inactive thread");
                 if ((*it) == obj)
                 {
-
+                    //it = _inactive_obj_vector.erase(it);
+                    __LOG(warn, "obj is in the inactive obj");
+                    found = true;
+                    it++;
+                }
+                else
+                {
+                    it++;
+                }
+            }
+            if (!found)
+            {
+                _inactive_obj_vector.push_back(obj);
+            }
+        }
+        else // weight is not 0
+        {
+            for (auto it = _inactive_obj_vector.begin(); it != _inactive_obj_vector.end();)
+            {
+                __LOG(debug, "loop inactive thread");
+                if ((*it) == obj)
+                {
                     it = _inactive_obj_vector.erase(it);
                 }
                 else
@@ -222,52 +194,33 @@ class lbStrategy
                     it++;
                 }
             }
-            __LOG(warn, "delete one obj in the inactive obj, inactive obj size is : " << _inactive_obj_vector.size());
-            if (!_obj_vector.size())
-            {
-                __LOG(debug, "_obj_vector is empty, just add it, weight is : " << weight);
-                _obj_vector.push_back(std::make_pair(obj, weight));
-            }
-            else
-            {
-                bool found = false;
-                for (auto it = _obj_vector.begin(); it != _obj_vector.end();)
-                {
-                    __LOG(debug, "loop _obj_vector");
 
-                    if (std::get<0>(*it) == obj)
-                    {
-                        __LOG(debug, "found obj, erase it");
-                        // _obj_vector.push_back(*it);
-                        //it = _obj_vector.erase(it);
-                        found = true;
-                        it++;
-                    }
-                    else
-                    {
-                        it++;
-                    }
-                }
-                if (!found)
+            bool found = false;
+            for (auto it = _obj_vector.begin(); it != _obj_vector.end();)
+            {
+                __LOG(debug, "loop _obj_vector");
+                if (std::get<0>(*it) == obj)
                 {
-                    _obj_vector.push_back(std::make_pair(obj, weight));
+                    __LOG(debug, "found obj, erase it");
+                    it = _obj_vector.erase(it);
+                }
+                else
+                {
+                    it++;
                 }
             }
+            _obj_vector.push_back(std::make_pair(obj, weight));
         }
-        unsigned int _avaliable_obj_after = get_avaliable_obj().size();
 
         __LOG(debug, "_avaliable_obj_before is : " << _avaliable_obj_before << ", _avaliable_obj_after is :" << _avaliable_obj_after << ", inactive obj size is : " << _inactive_obj_vector.size());
-        //if (_avaliable_obj_before > 0 && _avaliable_obj_after == 0)
-        if (!_avaliable_obj_after)
+        unsigned int _avaliable_obj_after = get_avaliable_obj().size();
+        if (!_avaliable_obj_after && _avaliable_obj_before)
         {
-            __LOG(error, "no avaliable obj!");
-
             if (_no_avaliable_cb)
             {
                 _no_avaliable_cb();
             }
         }
-
         if (_avaliable_obj_before == 0 && _avaliable_obj_after > 0)
         {
             __LOG(debug, "first obj");
@@ -301,7 +254,6 @@ class lbStrategy
     // get all the object, include active and inactive
     virtual std::vector<std::pair<LB_OBJ, unsigned int>> get_all_obj()
     {
-        std::lock_guard<std::recursive_mutex> lck(_mutex);
         std::vector<std::pair<LB_OBJ, unsigned int>> ret;
         ret.insert(ret.begin(), _obj_vector.begin(), _obj_vector.end());
         for (auto it : _inactive_obj_vector)
@@ -313,7 +265,6 @@ class lbStrategy
     virtual bool clear_info()
     {
         __LOG(debug, "[clear info]--------------")
-        std::lock_guard<std::recursive_mutex> lck(_mutex);
         _obj_vector.clear();
         _inactive_obj_vector.clear();
         update();
@@ -322,18 +273,7 @@ class lbStrategy
 
     std::vector<std::pair<LB_OBJ, unsigned int>> get_avaliable_obj()
     {
-        {
-            std::vector<std::pair<LB_OBJ, unsigned int>> _tmp_list;
-            std::lock_guard<std::recursive_mutex> lck(_mutex);
-            for (auto it : _obj_vector)
-            {
-                if (std::get<1>(it) > 0)
-                {
-                    _tmp_list.push_back(it);
-                }
-            }
-            return _tmp_list;
-        }
+        return _obj_vector;
     }
 
     std::vector<std::pair<LB_OBJ, unsigned int>> _obj_vector;
