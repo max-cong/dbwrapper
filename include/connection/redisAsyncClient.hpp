@@ -1,19 +1,26 @@
 #include "util.hpp"
 #include "worker_task.hpp"
 
-class redis_async_client
+class redisAsyncClient
 {
-  public:
-    redis_async_client() = default;
-    void init()
+public:
+    redisAsyncClient() = default;
+    bool init()
     {
-        ins = task_manager::instance();
-        // add worker task
-        std::shared_ptr<task_base> worker_task_ptr_p = std::shared_ptr<worker_task>(new worker_task(std::string(WORKER001)));
-        ins->add_tasks(worker_task_ptr_p);
-        // init the task manager, this will start the manager task and HB
-        // no blocking API
-        ins->init(false);
+        _loop_sptr = std::make_shared<loop::loop>();
+        if (!_loop_sptr)
+        {
+            return false;
+        }
+        // start task
+        _task_sptr = std::make_shared<task>(_loop_sptr);
+        if (!_task_sptr)
+        {
+            return false;
+        }
+
+   
+        _loop_sptr.start();
     }
     bool put(std::string key, std::string value, void *usr_data, redisCallbackFn *fn)
     {
@@ -49,5 +56,6 @@ class redis_async_client
         ins->send2task(WORKER001, MSG_TYPE::TASK_REDIS_RAW, msg);
         return true;
     }
-    task_manager *ins;
+
+    std::shared_ptr<loop::loop> _loop_sptr;
 };

@@ -30,7 +30,6 @@
 namespace timer
 {
 
-
 class timer
 {
 public:
@@ -142,7 +141,7 @@ public:
 
 	bool getIsRunning()
 	{
-		return _isRunning;
+		return _isRunning && (_round > _curRound);
 	}
 	void setIsRunning(bool _running)
 	{

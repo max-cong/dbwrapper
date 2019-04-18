@@ -1,6 +1,6 @@
-#pragma once
 /*
  * Copyright (c) 2016-20017 Max Cong <savagecm@qq.com>
+ * this code can be found at https://github.com/maxcong001/connection_manager
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -23,52 +23,61 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+#pragma once
+const std::string CONN_INC = "CONN_INC";
+const std::string CONN_DEC = "CONN_DEC";
 
-class service_discovery_factory : public genetic_gene_void_p
+
+// connmanager
+template <typename DBConn>
+class connManager : public enable_shared_from_this<connManager<DBConn>>, gene::gene
 {
 public:
-    service_discovery_factory(){};
-    virtual ~service_discovery_factory(){};
-
-    static std::string get_mode()
+    connManager() = delete;
+    connManager(std::shared_ptr<loop::loop> loopIn) : _loop(loopIn)
     {
-        // to do
-        return name;
     }
-    template <typename connInfo>
-    static std::shared_ptr<service_discovery<connInfo>> create(std::shared_ptr<Loop> loopIn)
+    ~connManager()
     {
-        std::shared_ptr<service_discovery<connInfo>> ret = nullptr;
-        std::string name = get_mode();
-
-        if (!name.compare("DNS"))
-        {
-            ret = std::make_shared<dns_service_discovery>(loopIn);
-            if (ret)
-            {
-                ret->set_genetic_gene(get_genetic_gene());
-            }
-            else
-            {
-                __LOG(error, "create service discovery obj fail!");
-            }
-        }
-        else if (!name.compare("unix_socket"))
-        {
-            ret = std::make_shared<srvcUnixSocket>(loopIn);
-            if (ret)
-            {
-                ret->set_genetic_gene(get_genetic_gene());
-            }
-            else
-            {
-                __LOG(error, "create service discovery obj fail!");
-            }
-        }
-        else
-        {
-            __LOG(warn, "not support type!");
-        }
-        return ret;
     }
+
+    bool init()
+    {
+        // load balance related
+        _lbs_sptr = lbStrategy::lbsFactory<>::create("RR");
+        // message bus related
+        auto bus = messageBusHelper<DBConn>(get_genetic_gene()).getMessageBus();
+        auto self_sptr = std::get_shared_from_this();
+        bus->register_handler(CONN_DEC, [self_sptr](DBConn obj) {
+            self_sptr->getLbs()->del_obj(obj);
+        });
+        bus->register_handler(CONN_INC, [self_sptr](DBConn obj, unsigned int priority) {
+            self_sptr->getLbs()->add_obj(obj, priority);
+        });
+    }
+
+    void on_unavaliable() {}
+    void on_avaliable() {}
+
+    std::pair<LB_OBJ, lbStrategy::retStatus> get_conn()
+    {
+        return _lbs_sptr.get_obj();
+    }
+    bool add_conn(DBConn info)
+    {
+    }
+    bool del_conn(DBConn info);
+
+    std::shared_ptr<lbStrategy<DBConn>> getLbs()
+    {
+        return _lbs_sptr;
+    }
+    std::shared_prt<loop::loop> getLoop()
+    {
+        return _loop.lock();
+    }
+
+private:
+    std::weak_ptr<loop::loop> _loop;
+    std::shared_ptr<lbStrategy<DBConn>> _lbs_sptr;
 };

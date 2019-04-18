@@ -40,10 +40,10 @@
 #include <typeinfo>
 using boost::asio::ip::address;
 using namespace dbw;
-class dns_service_discovery : public service_discovery<conn_info>
+class dns_service_discovery : public service_discovery<connInfo>
 {
   public:
-    dns_service_discovery(std::shared_ptr<translib::TimerManager> timer_manager) : service_discovery<conn_info>(timer_manager)
+    dns_service_discovery(std::shared_ptr<translib::TimerManager> timer_manager) : service_discovery<connInfo>(timer_manager)
     {
         _dns_timer = _timer_manager->getTimer();
         _dns_ttl = 0;
@@ -85,7 +85,7 @@ class dns_service_discovery : public service_discovery<conn_info>
         connList _tmp_list;
         for (auto _tmp_host : ipList)
         {
-            auto ret = host2conn_info(_tmp_host);
+            auto ret = host2connInfo(_tmp_host);
             std::string _port = config_center<void *>::instance()->get_properties_fields(get_genetic_gene(), PROP_PORT, DEFAULT_PORT_STR);
             ret.first.port = _port;
 
@@ -209,7 +209,7 @@ class dns_service_discovery : public service_discovery<conn_info>
             try
             {
                 address addr(address::from_string(_host_iter));
-                conn_info _tmp_info;
+                connInfo _tmp_info;
                 if (addr.is_v4())
                 {
                     __LOG(debug, "the host in configuration is IPv4");

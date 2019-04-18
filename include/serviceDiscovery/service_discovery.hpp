@@ -31,33 +31,32 @@
 #include "translib/timer.h"
 #include "logger/logger.hpp"
 #include "service_discovery/util.hpp"
-
+// note: this is not thread safe. need to work with task
 template <typename connInfo>
-class service_discovery : public genetic_gene_void_p
+class service_discovery : public gene::gene
 {
-  public:
+public:
     typedef std::list<connInfo> connList;
     typedef std::function<connList()> getConnFun;
     typedef std::function<bool(connInfo)> onConnInfoChangeCb;
     typedef connInfo connInfo_type_t;
-
-    service_discovery<connInfo>(std::shared_ptr<translib::TimerManager> timer_manager = nullptr)
+    service_discovery<connInfo>() = delete;
+    service_discovery<connInfo>(std::shared_ptr<Loop> loopIn) : _timerManager(loop)
     {
         __LOG(debug, "[service_discovery] service_discovery");
-        _timer_manager = timer_manager;
-        _retriger_timer = timer_manager->getTimer();
+        _retrigerTimer = timer_manager->getTimer();
     }
 
     virtual ~service_discovery<connInfo>()
     {
-        _retriger_timer->stop();
+        _retrigerTimer->stop();
         __LOG(warn, "[service_discovery] ~service_discovery");
     }
     virtual bool init() = 0;
 
-    std::pair<conn_info, bool> host2conn_info(std::string host)
+    std::pair<connInfo, bool> host2connInfo(std::string host)
     {
-        conn_info _tmp_info;
+        connInfo _tmp_info;
         try
         {
             boost::asio::ip::address addr(boost::asio::ip::address::from_string(host));
@@ -92,26 +91,24 @@ class service_discovery : public genetic_gene_void_p
             onConnInfoDec(it);
         }
         _conn_list.clear();
-        //_tmp_conn_list.clear();
         return true;
     }
 
     // restart with init function, note : this will triger service discovery
     virtual bool restart()
     {
-        std::lock_guard<std::recursive_mutex> lck(_mutex);
         __LOG(warn, "[service_discovery] restart is called");
         stop();
         return init();
     }
     virtual bool retriger()
     {
-        __LOG(debug, "[retriger]");
-        if (!(_retriger_timer->get_is_running()))
+        __LOG(debug, "[service_discovery] [retriger]");
+        if (!(_retrigerTimer->getIsRunning()))
         {
             __LOG(debug, "retriger timer is finished, start a new timer");
             int _reconnect_interval = config_center<void *>::instance()->get_properties_fields(get_genetic_gene(), PROP_RECONN_INTERVAL, DEFAULT_CONN_TIMER);
-            _retriger_timer->startOnce(_reconnect_interval, [this]() {
+            _retrigerTimer->startOnce(_reconnect_interval, [this]() {
                 __LOG(error, "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!restart!!!!!!!!!!!!!!!!!!!!!!!!!");
                 this->restart();
             });
@@ -149,17 +146,14 @@ class service_discovery : public genetic_gene_void_p
     virtual void setConnInfoList(connList _list)
     {
 
-        //std::lock_guard<std::recursive_mutex> lck(_mutex);
-        //_tmp_conn_list.swap(_list);
-
         updateConnInfo(_list);
     }
     virtual void deleteConnInfo(connList _list)
     {
-        std::lock_guard<std::recursive_mutex> lck(_mutex);
+
         for (auto it : _list)
         {
-            _conn_list.remove_if([&it, this](conn_info _info) {
+            _conn_list.remove_if([&it, this](connInfo _info) {
                 if (it == _info)
                 {
                     onConnInfoDec(_info);
@@ -175,14 +169,13 @@ class service_discovery : public genetic_gene_void_p
 
     virtual bool updateConnInfo(connList update_list)
     {
-        std::lock_guard<std::recursive_mutex> lck(_mutex);
+
         __LOG(debug, "now try to get connection info ");
+
+        __LOG(debug, "dump update_list: ")
+        for (auto it : update_list)
         {
-            __LOG(debug, "dump update_list: ")
-            for (auto it : update_list)
-            {
-                __LOG(debug, "-- " << it.ip << " -- " << it.port << " --");
-            }
+            __LOG(debug, "-- " << it.ip << " -- " << it.port << " --");
         }
 
         if (update_list.empty())
@@ -191,29 +184,25 @@ class service_discovery : public genetic_gene_void_p
             _conn_list.clear();
             return true;
         }
-
+        // in the update lost but not in the conn list
         for (auto tmp : update_list)
         {
             if (std::find(std::begin(_conn_list), std::end(_conn_list), tmp) == _conn_list.end())
-            // if (_conn_list.find(tmp) == _conn_list.end())
             {
                 onConnInfoInc(tmp);
                 _conn_list.push_back(tmp);
                 __LOG(debug, "[service_discovery_base] now there is a new connection.");
-                //tmp.dump();
             }
             else
             {
                 __LOG(debug, "[service_discovery_base] connection info already in the local list");
-                //tmp.dump();
             }
         }
-
+        // in the connection list but not in the update list , to remove
         connList tmplist_not_in_tmp_list;
         for (auto tmp : _conn_list)
         {
             if (std::find(std::begin(update_list), std::end(update_list), tmp) == update_list.end())
-            //if (update_list.find(tmp) == update_list.end())
             {
                 onConnInfoDec(tmp);
                 __LOG(warn, "[service_discovery_base] now there is a connection to delete. info : " << tmp.ip);
@@ -226,7 +215,6 @@ class service_discovery : public genetic_gene_void_p
 
         for (auto to_rm : tmplist_not_in_tmp_list)
         {
-
             std::remove(_conn_list.begin(), _conn_list.end(), to_rm);
             __LOG(warn, "remove conn : " << to_rm.ip << ", now there are : " << _conn_list.size() << " connection");
         }
@@ -235,12 +223,10 @@ class service_discovery : public genetic_gene_void_p
     }
 
     connList _conn_list;
-    //connList _tmp_conn_list;
 
-    translib::Timer::ptr_p _retriger_timer;
-    std::shared_ptr<translib::TimerManager> _timer_manager;
+    timer::timer::ptr_p _retrigerTimer;
+    std::shared_ptr<timer::timerManager> _timerManager;
     onConnInfoChangeCb _cfgInc;
     onConnInfoChangeCb _cfgDec;
 
-    std::recursive_mutex _mutex;
 };
