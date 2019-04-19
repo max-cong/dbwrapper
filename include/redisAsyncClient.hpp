@@ -43,7 +43,7 @@ public:
     }
     bool add_conn(std::string ip, int port)
     {
-        TASK_REDIS_ADD_CONN add_cmd;
+        TASK_REDIS_ADD_CONN_BODY add_cmd;
         add_cmd.ip = ip;
         add_cmd.port = port;
         ins->send2task(task::taskMsgType::TASK_REDIS_ADD_CONN, add_cmd);
@@ -51,7 +51,7 @@ public:
     }
     bool send_format_raw_command(std::string command, void *usr_data, redisCallbackFn *fn)
     {
-        TASK_REDIS_FORMAT_RAW_MSG msg;
+        task::TASK_REDIS_FORMAT_RAW_MSG_BODY msg;
         msg.cb = fn;
         msg.body = command;
         msg.usr_data = usr_data;
@@ -60,7 +60,7 @@ public:
     }
     bool send_raw_command(std::string command, void *usr_data, redisCallbackFn *fn)
     {
-        TASK_REDIS_RAW_MSG msg;
+        task::TASK_REDIS_RAW_MSG_BODY msg;
         msg.cb = fn;
         msg.body = command;
         msg.usr_data = usr_data;
