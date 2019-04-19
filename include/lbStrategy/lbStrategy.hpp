@@ -26,6 +26,8 @@
 #include "logger/logger.hpp"
 #include <algorithm>
 #include <utility>
+namespace lbStrategy
+{
 enum class retStatus : std::uint32_t
 {
     SUCCESS = 0,
@@ -37,7 +39,7 @@ enum class retStatus : std::uint32_t
 template <typename LB_OBJ>
 class lbStrategy
 {
-  public:
+public:
     virtual ~lbStrategy() {}
     // Interface
     virtual std::pair<LB_OBJ, retStatus> get_obj() = 0;
@@ -284,3 +286,4 @@ class lbStrategy
     std::function<void()> _no_avaliable_cb;
     std::function<void()> _first_avaliable_cb;
 };
+} // namespace lbStrategy

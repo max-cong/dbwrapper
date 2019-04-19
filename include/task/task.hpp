@@ -1,7 +1,7 @@
 #pragma once
-#include <string>
+
 #include "gene/gene.hpp"
-#include "loop/loop.h"
+#include "loop/loop.hpp"
 #include "taskUtil.hpp"
 #include "evfdClient.hpp"
 #include "evfdServer.hpp"
@@ -9,9 +9,16 @@
 #include "heartbeat/heartbeat.hpp"
 #include "connManager/connManager.hpp"
 #include "util/dbwType.hpp"
+#include "util/defs.hpp"
+
+#include "hiredis/async.h"
+
+#include "taskUtil.hpp"
+#include <string>
 #include <memory>
 #include <list>
 #include <unistd.h>
+#include <sys/eventfd.h>
 namespace task
 {
 
@@ -45,7 +52,7 @@ public:
     }
     static void pingCallback(redisAsyncContext *c, void *r, void *privdata)
     {
-        redisReply *reply = r;
+        redisReply *reply = (redisReply *)r;
         if (reply == NULL)
         {
             if (c->errstr)
@@ -55,7 +62,7 @@ public:
             return;
         }
         printf("argv[%s]: %s\n", (char *)privdata, reply->str);
-        auto ctxSaver = contextSaver::instance();
+        auto ctxSaver = dbw::contextSaver<void *, std::shared_ptr<dbw::redisContext>>::instance();
         auto ctxRet = ctxSaver->get(c);
         if (std::get<1>(ctxRet))
         {
@@ -69,7 +76,7 @@ public:
     }
 
     // set the callback function for evnet coming
-    virtual bool on_message(taskMsg msg)
+    virtual bool on_message(taskMsg task_msg)
     {
         switch (task_msg.type)
         {
@@ -78,6 +85,16 @@ public:
             TASK_REDIS_FORMAT_RAW_MSG msg = dbw::DBW_ANY_CAST < TASK_REDIS_FORMAT_RAW_MSG(task_msg.body);
             __LOG(debug, "get command :\n"
                              << msg.body);
+
+            if (std::get<1>(conn) != lbStrategy::retStatus::SUCCESS)
+            {
+                return false;
+            }
+
+            auto conn = _connManager->get_conn();
+
+            redisAsyncContext *_context = std::get<0>(conn);
+
             redisAsyncFormattedCommand(_context, msg.cb, msg.usr_data, msg.body.c_str(), msg.body.size());
             break;
         }
@@ -87,6 +104,15 @@ public:
             TASK_REDIS_RAW_MSG msg = dbw::DBW_ANY_CAST<TASK_REDIS_RAW_MSG>(task_msg.body);
             __LOG(debug, "get command :\n"
                              << msg.body);
+
+            if (std::get<1>(conn) != lbStrategy::retStatus::SUCCESS)
+            {
+                return false;
+            }
+
+            auto conn = _connManager->get_conn();
+
+            redisAsyncContext *_context = std::get<0>(conn);
             redisAsyncCommand(_context, msg.cb, msg.usr_data, msg.body.c_str());
             break;
         }
@@ -103,9 +129,9 @@ public:
                 return false;
             }
 
-            std::shared_ptr<dbw::redisContext> rdsCtx = std::make_shared<dbw::redisContext>();
+            std::shared_ptr<(dbw::redisContext)> rdsCtx = std::make_shared<dbw::redisContext>();
             rdsCtx->_ctx = _context;
-            rdsCtx->_hb = std::make_shared<heartBeat::heartBeat>(get_loop());
+            rdsCtx->_hb = std::make_shared<(heartBeat::heartBeat)>(get_loop());
             rdsCtx->_hb->set_genetic_gene(get_genetic_gene());
             rdsCtx->_hb->setPingCb([_context](std::shared_ptr<heartBeat::heartBeat>) {
                 std::string pingMsg("PING");
@@ -196,7 +222,7 @@ public:
         }
         return true;
     }
-    bool sendMsg(taskMsgType type, dbw::DBW_ANY &&body)
+    bool sendMsg(taskMsgType type, DBW_ANY &&body)
     {
         taskMsg msg;
         msg.type = type;

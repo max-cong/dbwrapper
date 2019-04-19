@@ -24,13 +24,13 @@
  */
 
 #pragma once
-#include "loop.h"
-#include "timer.h"
+#include "loop/loop.hpp"
+#include "timer.hpp"
 #include <unordered_map>
-
 #include <atomic>
 #include <thread>
 #include <algorithm>
+#include <mutex>
 #include "logger/logger.hpp"
 namespace timer
 {
@@ -38,7 +38,7 @@ class TimerManager
 {
 public:
 	TimerManager() = delete;
-	TimerManager(std::shared_ptr<Loop> loopIn) : _uniqueIDAtomic(0), _timerMap(), _loop(loopIn)
+	TimerManager(std::shared_ptr<loop::loop> loopIn) : _uniqueIDAtomic(0), _timerMap(), _loop(loopIn)
 	{
 	}
 	virtual ~TimerManager()
@@ -65,7 +65,7 @@ public:
 			//_timerMap.emplace(tid, tmp_ptr);
 			_timerMap[tid] = tmp_ptr;
 		}
-		return tmp_ptr
+		return tmp_ptr;
 	}
 	bool killTimer(unsigned long timerID)
 	{
@@ -75,7 +75,7 @@ public:
 	}
 	bool killTimer(timer::ptr_p timer_sptr)
 	{
-		killTimer(timer_sptr.getTid());
+		killTimer(timer_sptr->getTid());
 	}
 
 protected:

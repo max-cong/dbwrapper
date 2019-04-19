@@ -1,3 +1,4 @@
+#pragma once
 /*
  * Copyright (c) 2016-20017 Max Cong <savagecm@qq.com>
  * this code can be found at https://github.com/maxcong001/connection_manager
@@ -23,7 +24,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#pragma once
+
 
 namespace connManager
 {

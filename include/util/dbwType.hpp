@@ -1,6 +1,5 @@
 #pragma once
-namespace dbw
-{
+
 #if 0//__cplusplus >= 201703L
 // use std::any
 #include <any>
@@ -14,5 +13,3 @@ namespace dbw
 
 
 
-
-} // namespace dbw

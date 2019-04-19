@@ -24,11 +24,12 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "lbStrategy.hpp"
-
+namespace lbStrategy
+{
 template <typename LB_OBJ>
 class roundRobbin : public lbStrategy<LB_OBJ>
 {
-  public:
+public:
     roundRobbin() : _index(0)
     {
         _max_index = 0;
@@ -75,7 +76,8 @@ class roundRobbin : public lbStrategy<LB_OBJ>
         return retStatus::SUCCESS;
     }
 
-  private:
+private:
     unsigned int _index;
     unsigned int _max_index;
 };
+} // namespace lbStrategy

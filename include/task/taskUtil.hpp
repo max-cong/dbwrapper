@@ -1,6 +1,7 @@
 #pragma once
 #include "hiredis/hiredis.h"
 #include "hiredis/async.h"
+#include "util/dbwType.hpp"
 #include <hiredis/adapters/libevent.h>
 #include <queue>
 namespace task
@@ -20,7 +21,7 @@ struct taskMsg
     std::uint32_t seq_id;
     std::string from;
     std::string to;
-    dbw::DBW_ANY body;
+    DBW_ANY body;
 };
 struct TASK_REDIS_ADD_CONN
 {

@@ -3,6 +3,7 @@
 #include <unordered_map>
 #include <mutex>
 #include <memory>
+#include <util/dbwType.hpp>
 #define ANY_SAVER_TASK "ANY_SAVER_TASK"
 namespace anySaver
 {
@@ -13,7 +14,7 @@ class anySaver
 public:
     anySaver() {}
     virtual ~anySaver() {}
-    static std::shared_prt<anySaver<keyType_t>> instance()
+    static std::shared_ptr<(anySaver<keyType_t>)> instance()
     {
         static std::shared_prt<anySaver<keyType_t>> ins(new anySaver<keyType_t>);
         return ins;

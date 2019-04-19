@@ -25,20 +25,24 @@
  */
 #include <atomic>
 #include <functional>
-#include "timer/timerManager.h"
+#include "timer/timerManager.hpp"
 #include "logger/logger.hpp"
+#include "gene/gene.hpp"
+#include "loop/loop.hpp"
+#include "configCenter/configCenter.hpp"
 #include <memory>
+#include <atomic>
 
 namespace heartBeat
 {
-class heartBeat : public gene::gene, public std::enable_shared_from_this<heartBeat>
+class heartBeat : public gene::gene<void *>, public std::enable_shared_from_this<heartBeat>
 {
-  public:
-    typedef std::function<void(std::shared_ptr<heartBeat>)> ping_f;
-    typedef std::function<void(void)> hbSuccCb;
-    typedef std::function<void(void)> hbLostCb;
+public:
+    using ping_f = std::function<void(std::shared_ptr<heartBeat>)>;
+    using hbSuccCb = std::function<void(void)>;
+    using hbLostCb = std::function<void(void)>;
     heartBeat() = delete;
-    heartBeat(std::shared_ptr<Loop> loopIn) : _success(false), _interval(5000), _retryNum(5), _tManager(loopIn)
+    heartBeat(std::shared_ptr<loop::loop> loopIn) : _success(false), _interval(5000), _retryNum(5), _tManager(loopIn)
     {
         __LOG(debug, "start heartBeat, this is :" << (void *)this);
     }
@@ -88,25 +92,25 @@ class heartBeat : public gene::gene, public std::enable_shared_from_this<heartBe
         timer->startForever(_interval, [this_sptr]() {
             if (this_sptr->get_hb_success())
             {
-                onHeartbeatSuccess();
-                _retryNum = configCenter::configCenter::instance()->get_properties_fields(get_genetic_gene(), configCenter::PROP_HB_LOST_NUM, configCenter::DEFAULT_HB_LOST_NUM);
+                this_sptr->onHeartbeatSuccess();
+                this_sptr->_retryNum = configCenter::configCenter::instance()->get_properties_fields(this_sptr->get_genetic_gene(), configCenter::PROP_HB_LOST_NUM, configCenter::DEFAULT_HB_LOST_NUM);
             }
             else
             {
-                _retryNum--;
-                if (_retryNum < 1)
+               this_sptr-> _retryNum--;
+                if (this_sptr->_retryNum < 1)
                 {
-                    _retryNum = 0;
+                    this_sptr->_retryNum = 0;
                 }
             }
 
             // set heartBeat status false, if hb success, it will set to true
-            set_hb_success(false);
+            this_sptr->set_hb_success(false);
 
-            if (_retryNum < 1)
+            if (this_sptr->_retryNum < 1)
             {
-                _retryNum = configCenter::configCenter::instance()->get_properties_fields(get_genetic_gene(), configCenter::PROP_HB_LOST_NUM, configCenter::DEFAULT_HB_LOST_NUM);
-                onHeartbeatLost();
+                this_sptr->_retryNum = configCenter::configCenter::instance()->get_properties_fields(this_sptr->get_genetic_gene(), configCenter::PROP_HB_LOST_NUM, configCenter::DEFAULT_HB_LOST_NUM);
+               this_sptr-> onHeartbeatLost();
             }
 
             __LOG(debug, "call ping function : " << typeid(fun).name());
@@ -139,7 +143,7 @@ class heartBeat : public gene::gene, public std::enable_shared_from_this<heartBe
         return ret;
     }
 
-  private:
+private:
     uint32_t _interval;
 
     hbSuccCb _hbSuccCb;
@@ -148,6 +152,6 @@ class heartBeat : public gene::gene, public std::enable_shared_from_this<heartBe
 
     std::atomic<bool> _success;
     std::atomic<unsigned int> _retryNum;
-    std::shared_ptr<TimerManager> _tManager;
+    std::shared_ptr<(timer::timerManager)> _tManager;
 };
 } // namespace heartBeat

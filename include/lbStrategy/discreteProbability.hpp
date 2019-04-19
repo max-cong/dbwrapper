@@ -26,11 +26,12 @@
 #include "lbStrategy.hpp"
 #include <random>
 #include <mutex>
-
+namespace lbStrategy
+{
 template <typename DIST_OBJ>
 class discreteProbability : public lbStrategy<DIST_OBJ>
 {
-  public:
+public:
     discreteProbability() : _gen(_rd())
     {
     }
@@ -94,3 +95,4 @@ class discreteProbability : public lbStrategy<DIST_OBJ>
     std::mt19937 _gen;
     std::discrete_distribution<int> _dist;
 };
+} // namespace lbStrategy

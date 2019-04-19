@@ -26,7 +26,7 @@
 #pragma once
 
 #include <memory>
-
+#include "loop/loop.hpp"
 namespace timer
 {
 
@@ -40,7 +40,7 @@ public:
 
 public:
 	timer() = delete;
-	timer(std::shared_ptr<Loop> loop) : _loop(loop),
+	timer(std::shared_ptr<loop::loop> loop) : _loop(loop),
 										_event(NULL),
 										_interval(0),
 										_round(1),
@@ -96,7 +96,7 @@ public:
 		if (0 != event_add(_event, &tv))
 		{
 			__LOG(error, "event add return fail");
-			reset();
+			//reset();
 			return false;
 		}
 
@@ -158,7 +158,7 @@ public:
 		}
 		setIsRunning(false);
 	}
-	std::shared_ptr<Loop> get_loop()
+	std::shared_ptr<loop::loop> get_loop()
 	{
 		return _loop.lock();
 	}
@@ -169,13 +169,13 @@ private:
 	// when the timer dis-truct, should stop all the handler
 	static void eventHandler(evutil_socket_t fd, short events, void *ctx)
 	{
-		timer *timer = (timer *)ctx;
-		timer->_curRound++;
-		if (timer->_curRound >= timer->_round)
+		timer *_timer = (timer *)ctx;
+		_timer->_curRound++;
+		if (_timer->_curRound >= _timer->_round)
 		{
-			timer->stop();
+			_timer->stop();
 		}
-		timer->_handler();
+		_timer->_handler();
 	}
 
 private:

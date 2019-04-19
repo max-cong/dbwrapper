@@ -1,6 +1,6 @@
-
+#pragma once
 #include "anySaver/anySaver.hpp"
-#include "loop/loop.h"
+#include "loop/loop.hpp"
 #include "hiredis/async.h"
 #include "redisCommand/redisCommand.hpp"
 #include "logger/logger.hpp"
@@ -23,7 +23,7 @@ public:
             return false;
         }
         // start task
-        _task_sptr = std::make_shared<task>(_loop_sptr);
+        _task_sptr = std::make_shared<task::task>(_loop_sptr);
         if (!_task_sptr)
         {
             return false;
@@ -31,7 +31,7 @@ public:
         // save task to any saver
         anySaver::anySaver<void *>::instance()->saveData(this, ANY_SAVER_TASK, _task_sptr);
 
-        _loop_sptr.start();
+        _loop_sptr->start(true);
     }
     bool put(std::string key, std::string value, void *usr_data, redisCallbackFn *fn)
     {
@@ -65,7 +65,7 @@ public:
         msg.body = command;
         msg.usr_data = usr_data;
         _task_sptr->sendMsg(task::taskMsgType::TASK_REDIS_RAW, msg);
-
-        std::shared_ptr<loop::loop> _loop_sptr;
-        std::shared_ptr<task::task> _task_sptr;
-    };
+    }
+    std::shared_ptr<loop::loop> _loop_sptr;
+    std::shared_ptr<task::task> _task_sptr;
+};

@@ -7,7 +7,7 @@ struct redisContext
 {
     redisAsyncContext *_ctx;
     std::shared_ptr<heartBeat::heartBeat> _hb;
-    std::shared_ptr<lbStrategy<redisAsyncContext *>> _lbs;
+    std::shared_ptr<lbStrategy::lbStrategy<redisAsyncContext *>> _lbs;
 };
 // this is singleton to save redisAsyncContext<->redisContext
 template <typename OBJ = void *, typename RDS_CTX = std::shared_ptr<redisContext>>

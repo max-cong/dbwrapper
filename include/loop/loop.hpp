@@ -26,21 +26,24 @@
 #pragma once
 #include <memory>
 #include <map>
+#include <mutex>
+#include <thread>
 #include <event2/event.h>
 #include <event2/thread.h>
+#include "logger/logger.hpp"
 namespace loop
 {
 enum class loopStatus : std::uint32_t
 {
 	statusInit = 0,
-	statusInit,
-	statusInit,
+	statusRunning,
+	statusFinished,
 	statisMax
 };
 std::ostream &operator<<(std::ostream &os, loopStatus status)
 {
 
-	os << ((status >= loopStatus::statusInit || status < loopStatus::statisMax) ? "UNDEFINED_STATUS" : (const std::string[]){"statusInit", "statusInit", "statusInit"}[status]);
+	os << ((status >= loopStatus::statusInit || status < loopStatus::statisMax) ? "UNDEFINED_STATUS" : ((const std::string[]){"statusInit", "statusRunning", "statusFinished"}[status]));
 	return os;
 }
 class loop : public std::enable_shared_from_this<loop>
@@ -57,14 +60,14 @@ public:
 			// note!!!! if you catch this exception
 			// please remember call the distructure function
 			// !!!!!!! this is important
-			throw std::logic_error(CREATE_EVENT_FAIL);
+			//throw std::logic_error(CREATE_EVENT_FAIL);
 		}
 	}
 	virtual ~loop()
 	{
 		std::unique_lock<std::mutex> lck(_sMutex, std::defer_lock);
 		lck.lock();
-		if (_thread && StatusFinished != _status)
+		if (_thread && loopStatus::statusFinished != _status)
 		{
 			_thread->join();
 		}
@@ -105,9 +108,9 @@ public:
 	{
 		std::unique_lock<std::mutex> lck(_sMutex, std::defer_lock);
 		lck.lock();
-		if (_status != StatusInit)
+		if (_status != loopStatus::statusInit)
 		{
-			__LOG(error, " conneciton status is not Init state, status is :" << loopStatus::toString(_status));
+			__LOG(error, " conneciton status is not Init state, status is :" << _status);
 			return false;
 		}
 		lck.unlock();
@@ -135,7 +138,7 @@ public:
 	{
 		std::unique_lock<std::mutex> lck(_sMutex, std::defer_lock);
 		lck.lock();
-		if (StatusFinished == _status)
+		if (loopStatus::statusFinished == _status)
 		{
 			return;
 		}
@@ -158,13 +161,13 @@ private:
 	{
 		std::unique_lock<std::mutex> lck(_sMutex, std::defer_lock);
 		lck.lock();
-		_status = StatusRunning;
+		_status = loopStatus::statusRunning;
 		lck.unlock();
 		onBeforeLoop();
 		event_base_loop(_base, 0);
 		onAfterLoop();
 		lck.lock();
-		_status = StatusFinished;
+		_status = loopStatus::statusFinished;
 	}
 
 private:

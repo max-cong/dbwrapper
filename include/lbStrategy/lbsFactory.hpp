@@ -26,9 +26,11 @@
 
 #include <memory>
 #include "lbStrategy.hpp"
+namespace lbStrategy
+{
 class lbsFactory
 {
-  public:
+public:
     lbsFactory(){};
     virtual ~lbsFactory(){};
 
@@ -55,3 +57,4 @@ class lbsFactory
         return ret;
     }
 };
+} // namespace lbStrategy

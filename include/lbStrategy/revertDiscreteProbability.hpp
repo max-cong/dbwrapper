@@ -31,10 +31,12 @@
 #include <iostream>
 #include <vector>
 #include <cmath>
+namespace lbStrategy
+{
 template <typename DIST_OBJ>
 class revertDiscreteProbability : public lbStrategy<DIST_OBJ>
 {
-  public:
+public:
     revertDiscreteProbability() : _gen(_rd())
     {
     }
@@ -102,3 +104,4 @@ class revertDiscreteProbability : public lbStrategy<DIST_OBJ>
     std::mt19937 _gen;
     std::discrete_distribution<int> _dist;
 };
+} // namespace lbStrategy
