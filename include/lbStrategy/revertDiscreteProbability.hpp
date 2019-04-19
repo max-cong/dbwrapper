@@ -23,15 +23,19 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#include "load_balance_strategy.hpp"
+#include "lbStrategy.hpp"
 #include <random>
 #include <mutex>
-
+#include <utility> // for pair
+#include <algorithm>
+#include <iostream>
+#include <vector>
+#include <cmath>
 template <typename DIST_OBJ>
-class DPD : public lbStrategy<DIST_OBJ>
+class revertDiscreteProbability : public lbStrategy<DIST_OBJ>
 {
   public:
-    DPD() : _gen(_rd())
+    revertDiscreteProbability() : _gen(_rd())
     {
     }
     virtual bool init()
@@ -39,21 +43,19 @@ class DPD : public lbStrategy<DIST_OBJ>
         return true;
     }
     // note: there is no lock here
-    // for performance, please check the return code during usage
     std::pair<DIST_OBJ, retStatus> get_obj(int index = 0) override
     {
+
         DIST_OBJ obj;
         if (this->_obj_vector.empty())
         {
-            __LOG(warn, "there is no object to get!");
             return std::make_pair(obj, retStatus::NO_ENTRY);
         }
         try
         {
             if (index == 0)
             {
-                int _rand_num = _dist(_gen);
-                obj = std::get<0>(this->_obj_vector.at(_rand_num));
+                obj = std::get<0>(this->_obj_vector.at(_dist(_gen)));
             }
             else
             {
@@ -70,23 +72,29 @@ class DPD : public lbStrategy<DIST_OBJ>
 
     retStatus update() override
     {
+
         int vector_size = this->_obj_vector.size();
         if (!vector_size)
         {
             __LOG(debug, "this->_obj_vector is empty!");
-            return retStatus::NO_ENTRY;
+            return std::make_pair(obj, retStatus::NO_ENTRY);
         }
         std::vector<double> init_list;
-        __LOG(debug, "weight is :");
-        for (int i = 0; i < vector_size; i++)
+        unsigned int max_weight = std::get<1>(*std::max_element(_obj_vector.begin(), _obj_vector.end()));
+        unsigned int min_weight = std::get<1>(*std::min_element(_obj_vector.begin(), _obj_vector.end()));
+
+        if (max_weight != min_weight)
         {
-            init_list.push_back(std::get<1>(this->_obj_vector[i]));
-            __LOG(debug, "--> " << std::get<1>(this->_obj_vector[i]));
+            for (int i = 0; i < vector_size; i++)
+            {
+                unsigned int tmp_weight = max_weight - std::get<1>(this->_obj_vector[i]);
+                init_list.push_back(tmp_weight);
+            }
         }
+
         std::discrete_distribution<int> second_dist(init_list.begin(), init_list.end());
-        auto _param = second_dist.param();
-        _dist.param(_param);
-        _dist.reset();
+        _dist.param(second_dist.param());
+
         return retStatus::SUCCESS;
     }
 

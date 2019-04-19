@@ -1,0 +1,48 @@
+# Generate shared library by default.
+SET(BUILD_SHARED_LIBS ON)
+
+# Set default install dir
+IF(NOT CMAKE_INSTALL_LIBDIR)
+	SET(CMAKE_INSTALL_LIBDIR lib)
+ENDIF()
+
+MESSAGE(STATUS "Installation path prefix: " ${CMAKE_INSTALL_PREFIX})
+MESSAGE(STATUS "Library installation directory: " ${CMAKE_INSTALL_LIBDIR})
+MESSAGE(STATUS "PROJECT_SOURCE_DIR:" ${PROJECT_SOURCE_DIR})
+
+# Where header files can be found.
+INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/include)
+
+
+
+file(GLOB_RECURSE SOURCES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.cpp *.c)
+
+
+ADD_LIBRARY (${PROJECT_NAME} SHARED ${SOURCES})
+
+# Set library version
+SET_TARGET_PROPERTIES(
+		${PROJECT_NAME}
+		PROPERTIES
+		SOVERSION ${M_VERSION_MAJOR}
+		VERSION ${M_VERSION}
+)
+
+LINK_DIRECTORIES(${PROJECT_SOURCE_DIR}/lib)
+TARGET_LINK_LIBRARIES(${PROJECT_NAME} pthread)
+
+
+# Install lib to /usr/local/lib by default
+INSTALL(
+		TARGETS ${PROJECT_NAME}
+		LIBRARY
+		DESTINATION ${CMAKE_INSTALL_LIBDIR}
+)
+
+# Install header files to /usr/local/include/${PROJECT_NAME}
+INSTALL(
+		DIRECTORY ${PROJECT_SOURCE_DIR}/include/
+		DESTINATION include/${PROJECT_NAME}
+)
+
+

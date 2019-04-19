@@ -27,6 +27,7 @@
 #include <functional>
 #include "timer/timerManager.h"
 #include "logger/logger.hpp"
+#include <memory>
 
 namespace heartBeat
 {

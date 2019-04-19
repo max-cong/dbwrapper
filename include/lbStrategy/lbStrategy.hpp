@@ -25,6 +25,7 @@
  */
 #include "logger/logger.hpp"
 #include <algorithm>
+#include <utility>
 enum class retStatus : std::uint32_t
 {
     SUCCESS = 0,

@@ -1,11 +1,17 @@
 #pragma once
+#include "hiredis/hiredis.h"
+#include "hiredis/async.h"
+#include <hiredis/adapters/libevent.h>
+#include <queue>
+namespace task
+{
 enum class taskMsgType : std::uint32_t
 {
-TASK_REDIS_FORMAT_RAW,
-TASK_REDIS_RAW,
+    TASK_REDIS_FORMAT_RAW,
+    TASK_REDIS_RAW,
 
-TASK_REDIS_ADD_CONN,
-TASK_REDIS_DEL_CONN,
+    TASK_REDIS_ADD_CONN,
+    TASK_REDIS_DEL_CONN,
     TASK_MSG_MAX
 };
 struct taskMsg
@@ -14,6 +20,25 @@ struct taskMsg
     std::uint32_t seq_id;
     std::string from;
     std::string to;
-    DBW_ANY body;
+    dbw::DBW_ANY body;
 };
-typedef std::queue<taskMsg> TASK_QUEUE;
+struct TASK_REDIS_ADD_CONN
+{
+std::string ip;
+unsigned short port;
+};
+
+struct TASK_REDIS_FORMAT_RAW_MSG
+{
+    redisCallbackFn *fn;
+    std::string body;
+    void *usr_data;
+};
+struct TASK_REDIS_RAW_MSG
+{
+    redisCallbackFn *fn;
+    std::string body;
+    void *usr_data;
+};
+using TASK_QUEUE = std::queue<taskMsg>;
+} // namespace task

@@ -23,82 +23,59 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#include "load_balance_strategy.hpp"
-#include <random>
-#include <mutex>
-#include <utility> // for pair
-#include <algorithm>
-#include <iostream>
-#include <vector>
-#include <cmath>
-template <typename DIST_OBJ>
-class RDPD : public lbStrategy<DIST_OBJ>
+#include "lbStrategy.hpp"
+
+template <typename LB_OBJ>
+class roundRobbin : public lbStrategy<LB_OBJ>
 {
   public:
-    RDPD() : _gen(_rd())
+    roundRobbin() : _index(0)
     {
+        _max_index = 0;
     }
-    virtual bool init()
-    {
-        return true;
-    }
+    ~roundRobbin() {}
     // note: there is no lock here
-    std::pair<DIST_OBJ, retStatus> get_obj(int index = 0) override
+    std::pair<LB_OBJ, retStatus> get_obj() override
     {
 
-        DIST_OBJ obj;
-        if (this->_obj_vector.empty())
+        if (this->_obj_vector.empty() || !_max_index)
         {
+            LB_OBJ obj;
             return std::make_pair(obj, retStatus::NO_ENTRY);
         }
         try
         {
-            if (index == 0)
-            {
-                obj = std::get<0>(this->_obj_vector.at(_dist(_gen)));
-            }
-            else
-            {
-                obj = std::get<0>(this->_obj_vector.at(index % ((this->_obj_vector).size())));
-            }
+            _index++;
+            return std::make_pair(std::get<0>(this->_obj_vector.at(index % _max_index)));
         }
         catch (const std::out_of_range &oor)
         {
             __LOG(error, "Out of Range error: " << oor.what());
+            LB_OBJ obj;
             return std::make_pair(obj, retStatus::FAIL);
         }
         return std::make_pair(obj, retStatus::SUCCESS);
     }
 
+    // for round robbin, if the weight is 0, that mean we should delete the obj
+    // the default weight is 10;
+    virtual retStatus add_obj(LB_OBJ obj, unsigned int weight = 10)
+    {
+        return this->update_obj(obj, weight);
+    }
+
+    virtual bool init()
+    {
+        return true;
+    }
+
     retStatus update() override
     {
-
-        int vector_size = this->_obj_vector.size();
-        if (!vector_size)
-        {
-            __LOG(debug, "this->_obj_vector is empty!");
-            return std::make_pair(obj, retStatus::NO_ENTRY);
-        }
-        std::vector<double> init_list;
-        unsigned int max_weight = std::get<1>(*std::max_element(_obj_vector.begin(), _obj_vector.end()));
-        unsigned int min_weight = std::get<1>(*std::min_element(_obj_vector.begin(), _obj_vector.end()));
-
-        if (max_weight != min_weight)
-        {
-            for (int i = 0; i < vector_size; i++)
-            {
-                unsigned int tmp_weight = max_weight - std::get<1>(this->_obj_vector[i]);
-                init_list.push_back(tmp_weight);
-            }
-        }
-
-        std::discrete_distribution<int> second_dist(init_list.begin(), init_list.end());
-        _dist.param(second_dist.param());
-
+        _max_index = _obj_vector.size();
         return retStatus::SUCCESS;
     }
 
-    std::random_device _rd;
-    std::mt19937 _gen;
-    std::discrete_distribution<int> _dist;
+  private:
+    unsigned int _index;
+    unsigned int _max_index;
 };

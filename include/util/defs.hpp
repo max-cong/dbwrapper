@@ -1,4 +1,6 @@
 #pragma once
+#include "lbStrategy/lbStrategy.hpp"
+#include "heartbeat/heartbeat.hpp"
 namespace dbw
 {
 struct redisContext

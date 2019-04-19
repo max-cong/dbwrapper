@@ -3,6 +3,7 @@
 #include <unordered_map>
 #include <mutex>
 #include <memory>
+#define ANY_SAVER_TASK "ANY_SAVER_TASK"
 namespace anySaver
 {
 // note: the shared_instance of this class will live until system gone

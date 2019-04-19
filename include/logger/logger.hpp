@@ -66,7 +66,7 @@ class loggerIface
 	virtual void info(const std::string &msg, const std::string &file, std::size_t line) = 0;
 	virtual void warn(const std::string &msg, const std::string &file, std::size_t line) = 0;
 	virtual void error(const std::string &msg, const std::string &file, std::size_t line) = 0;
-	virtual void dump() = 0;
+
 };
 
 class logger : public loggerIface

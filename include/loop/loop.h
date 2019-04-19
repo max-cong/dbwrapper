@@ -26,7 +26,8 @@
 #pragma once
 #include <memory>
 #include <map>
-
+#include <event2/event.h>
+#include <event2/thread.h>
 namespace loop
 {
 enum class loopStatus : std::uint32_t
@@ -35,15 +36,18 @@ enum class loopStatus : std::uint32_t
 	statusInit,
 	statusInit,
 	statisMax
+};
+std::ostream &operator<<(std::ostream &os, loopStatus status)
+{
 
-	static std::string toString(loopStatus status){
-		return (status >= statusInit || status < statisMax) ? "UNDEFINED_STATUS" : (const std::string[]){"statusInit", "statusInit", "statusInit"}[status];}
+	os << ((status >= loopStatus::statusInit || status < loopStatus::statisMax) ? "UNDEFINED_STATUS" : (const std::string[]){"statusInit", "statusInit", "statusInit"}[status]);
+	return os;
 }
 class loop : public std::enable_shared_from_this<loop>
 {
 public:
 	loop() : _base(NULL),
-			 _status(StatusInit)
+			 _status(loopStatus::statusInit)
 	{
 
 		evthread_use_pthreads();

@@ -1,24 +1,39 @@
 #pragma once
 
+#include <list>
+namespace redisCommand
+{
+
+enum class REDIS_MSG_TYPE : std::uint32_t
+{
+    TASK_REDIS_PUT,
+    TASK_REDIS_GET,
+    TASK_REDIS_DEL,
+    TASK_REDIS_ADD_CONN,
+    TASK_REDIS_DEL_CONN,
+    TASK_REDIS_PING,
+    TASK_REDIS_MAX
+
+};
 
 // interface form APP API to redis RSP message
 template <typename COMMAND_KEY = std::string, typename COMMAND_VALUE = std::string, typename COMMAND_ARGS = std::nullptr_t> // to do typename... COMMAND_ARGS>
-class redis_command
+class redisCommand
 {
     using List = std::list<std::string>;
 
-  public:
+public:
 #if __cplusplus >= 201703L
     using key_type = std::remove_const_t<std::remove_reference_t<COMMAND_KEY>>;
     using value_type = std::remove_const_t<std::remove_reference_t<COMMAND_VALUE>>;
 #endif
-    redis_command() = default;
+    redisCommand() = default;
 
-    static std::string get_format_command(MSG_TYPE type, COMMAND_KEY key, COMMAND_VALUE value, COMMAND_ARGS args = nullptr) // to do COMMAND_ARGS... args)
+    static std::string get_format_command(REDIS_MSG_TYPE type, COMMAND_KEY key, COMMAND_VALUE value, COMMAND_ARGS args = nullptr) // to do COMMAND_ARGS... args)
     {
         switch (type)
         {
-        case MSG_TYPE::TASK_REDIS_PUT:
+        case REDIS_MSG_TYPE::TASK_REDIS_PUT:
 #if __cplusplus >= 201703L
             if constexpr (detail::is_string_v<COMMAND_KEY>)
             {
@@ -53,15 +68,15 @@ class redis_command
             }
 #endif
             break;
-        case MSG_TYPE::TASK_REDIS_GET:
+        case REDIS_MSG_TYPE::TASK_REDIS_GET:
             break;
-        case MSG_TYPE::TASK_REDIS_DEL:
+        case REDIS_MSG_TYPE::TASK_REDIS_DEL:
             break;
-        case MSG_TYPE::TASK_REDIS_ADD_CONN:
+        case REDIS_MSG_TYPE::TASK_REDIS_ADD_CONN:
             break;
-        case MSG_TYPE::TASK_REDIS_DEL_CONN:
+        case REDIS_MSG_TYPE::TASK_REDIS_DEL_CONN:
             break;
-        case MSG_TYPE::TASK_REDIS_PING:
+        case REDIS_MSG_TYPE::TASK_REDIS_PING:
             break;
         default:
             __LOG(warn, "unsupport message type!");
@@ -84,3 +99,4 @@ class redis_command
         return buffer.str();
     }
 };
+} // namespace redisCommand

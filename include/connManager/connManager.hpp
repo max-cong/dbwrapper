@@ -24,9 +24,11 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #pragma once
+
+namespace connManager
+{
 const std::string CONN_INC = "CONN_INC";
 const std::string CONN_DEC = "CONN_DEC";
-
 
 // connmanager
 template <typename DBConn>
@@ -81,3 +83,4 @@ private:
     std::weak_ptr<loop::loop> _loop;
     std::shared_ptr<lbStrategy<DBConn>> _lbs_sptr;
 };
+} // namespace connManager

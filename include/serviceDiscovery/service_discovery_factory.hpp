@@ -24,7 +24,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-class service_discovery_factory : public genetic_gene_void_p
+class service_discovery_factory : public gene::gene
 {
 public:
     service_discovery_factory(){};

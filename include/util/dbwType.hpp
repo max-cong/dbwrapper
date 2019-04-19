@@ -1,7 +1,7 @@
 #pragma once
 namespace dbw
 {
-#if __cplusplus >= 201703L
+#if 0//__cplusplus >= 201703L
 // use std::any
 #include <any>
 #define DBW_ANY std::any

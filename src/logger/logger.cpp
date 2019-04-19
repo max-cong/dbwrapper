@@ -36,8 +36,7 @@ std::unique_ptr<loggerIface> _activeLogger(new logger(loggerIface::logLevel::err
 logger::logger(loggerIface::logLevel level)
     : _logLevel(level)
 {
-    _id = 0;
-    _buffer.fill(nullptr);
+  
 }
 void logger::set_logLevel(loggerIface::logLevel level)
 {

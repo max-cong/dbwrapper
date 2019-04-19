@@ -1,11 +1,24 @@
 #pragma once
+#include <string>
+#include "gene/gene.hpp"
+#include "loop/loop.h"
+#include "taskUtil.hpp"
+#include "evfdClient.hpp"
+#include "evfdServer.hpp"
+#include "util/defs.hpp"
+#include "heartbeat/heartbeat.hpp"
+#include "connManager/connManager.hpp"
+#include "util/dbwType.hpp"
+#include <memory>
+#include <list>
+#include <unistd.h>
 namespace task
 {
 
-class task : public gene::gene
+class task : public gene::gene<void *>
 {
 public:
-    task(std::shared_ptr<Loop> loopIn) : _loop(loopIn), _evfd(-1)
+    task(std::shared_ptr<loop::loop> loopIn) : _loop(loopIn), _evfd(-1)
     {
     }
     task() = delete;
@@ -43,7 +56,7 @@ public:
         }
         printf("argv[%s]: %s\n", (char *)privdata, reply->str);
         auto ctxSaver = contextSaver::instance();
-        auto ctxRet = ctxSaver->get(_context);
+        auto ctxRet = ctxSaver->get(c);
         if (std::get<1>(ctxRet))
         {
             auto rdxCtx = std::get<0>(ctxRet);
@@ -53,7 +66,6 @@ public:
         {
             // did not find redis context
         }
-       
     }
 
     // set the callback function for evnet coming
@@ -63,7 +75,7 @@ public:
         {
         case taskMsgType::TASK_REDIS_FORMAT_RAW:
         {
-            std::string msg = DBW_ANY_CAST<std::string>(task_msg.body);
+            TASK_REDIS_FORMAT_RAW_MSG msg = dbw::DBW_ANY_CAST < TASK_REDIS_FORMAT_RAW_MSG(task_msg.body);
             __LOG(debug, "get command :\n"
                              << msg.body);
             redisAsyncFormattedCommand(_context, msg.cb, msg.usr_data, msg.body.c_str(), msg.body.size());
@@ -72,7 +84,7 @@ public:
 
         case taskMsgType::TASK_REDIS_RAW:
         {
-            TASK_REDIS_RAW_MSG msg = DBW_ANY_CAST<TASK_REDIS_RAW_MSG>(task_msg.body);
+            TASK_REDIS_RAW_MSG msg = dbw::DBW_ANY_CAST<TASK_REDIS_RAW_MSG>(task_msg.body);
             __LOG(debug, "get command :\n"
                              << msg.body);
             redisAsyncCommand(_context, msg.cb, msg.usr_data, msg.body.c_str());
@@ -81,7 +93,7 @@ public:
 
         case taskMsgType::TASK_REDIS_ADD_CONN:
         {
-            add_conn_payload payload = DBW_ANY_CAST<add_conn_payload>(task_msg.body);
+            add_conn_payload payload = dbw::DBW_ANY_CAST<add_conn_payload>(task_msg.body);
             __LOG(error, "connect to : " << payload.ip << ":" << payload.port);
 
             redisAsyncContext *_context = redisAsyncConnect(payload.ip.c_str(), payload.port);
@@ -91,16 +103,16 @@ public:
                 return false;
             }
 
-            std::shared_ptr<redisContext> rdsCtx = std::make_shared<redisContext>();
+            std::shared_ptr<dbw::redisContext> rdsCtx = std::make_shared<dbw::redisContext>();
             rdsCtx->_ctx = _context;
             rdsCtx->_hb = std::make_shared<heartBeat::heartBeat>(get_loop());
             rdsCtx->_hb->set_genetic_gene(get_genetic_gene());
-            rdsCtx->_hb->setPingCb([_context](std::shared_ptr<heartBeat>) {
+            rdsCtx->_hb->setPingCb([_context](std::shared_ptr<heartBeat::heartBeat>) {
                 std::string pingMsg("PING");
                 redisAsyncCommand(_context, task::pingCallback, (void *)_context, pingMsg.c_str(), pingMsg.size());
             });
             rdsCtx->_lbs = _connManager->getLbs();
-            auto ctxSaver = contextSaver::instance();
+            auto ctxSaver = dbw::contextSaver::instance();
             ctxSaver->save(_context, rdsCtx);
 
             redisLibeventAttach(_context, get_loop());
@@ -171,7 +183,7 @@ public:
         }
     }
 
-    bool sendMsg(TASK_MSG &&msg)
+    bool sendMsg(taskMsg &&msg)
     {
         _taskQueue.emplace(msg);
         if (!_evfdClient)
@@ -184,17 +196,26 @@ public:
         }
         return true;
     }
-    bool sendMsgList(std::list<TASK_MSG> &&msgList)
+    bool sendMsg(taskMsgType type, dbw::DBW_ANY &&body)
+    {
+        taskMsg msg;
+        msg.type = type;
+        msg.body = body;
+
+        return sendMsg(std::move(msg));
+    }
+    bool sendMsgList(std::list<taskMsg> &&msgList)
     {
         if (!_evfdClient)
         {
             return false;
         }
+        std::size_t listSize = msgList.size();
         for (auto &&it : msgList)
         {
-            _taskQueue.emplace(msg);
+            _taskQueue.emplace(it);
         }
-        _evfdClient->send(msgList.size());
+        _evfdClient->send(listSize);
 
         return true;
     }
@@ -206,10 +227,10 @@ public:
 
     int _evfd;
     std::weak_ptr<loop::loop> _loop;
-    std::shared_ptr<task::evfdClient> _evfdClient;
-    std::shared_ptr<task::evfdServer> _evfdServer;
+    std::shared_ptr<evfdClient> _evfdClient;
+    std::shared_ptr<evfdServer> _evfdServer;
     TASK_QUEUE _taskQueue;
-    std::shared_ptr<connManager<redisAsyncContext *>> _connManager;
+    std::shared_ptr<connManager::connManager<redisAsyncContext *>> _connManager;
 };
 
 } // namespace task
