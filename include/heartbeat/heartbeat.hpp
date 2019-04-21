@@ -93,7 +93,7 @@ public:
             if (this_sptr->get_hb_success())
             {
                 this_sptr->onHeartbeatSuccess();
-                this_sptr->_retryNum = configCenter::configCenter::instance()->get_properties_fields(this_sptr->get_genetic_gene(), configCenter::PROP_HB_LOST_NUM, configCenter::DEFAULT_HB_LOST_NUM);
+                this_sptr->_retryNum = configCenter::configCenter<void*>::instance()->get_properties_fields(this_sptr->get_genetic_gene(), configCenter::PROP_HB_LOST_NUM, configCenter::DEFAULT_HB_LOST_NUM);
             }
             else
             {

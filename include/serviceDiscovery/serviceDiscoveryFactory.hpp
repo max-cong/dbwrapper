@@ -23,27 +23,36 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
-class service_discovery_factory : public gene::gene
+#include <string>
+#include <memory>
+#include "gene/gene.hpp"
+#include "serviceDiscovery/serviceDiscovery.hpp"
+#include "serviceDiscovery/DNS/sdDns.hpp"
+#include "serviceDiscovery/UNIX_SOCKET/sdUnixSocket.hpp"
+#include "loop/loop.hpp"
+#include "configCenter/configCenter.hpp"
+namespace serviceDiscovery
+{
+class serviceDiscoveryFactory : public gene::gene<void *>
 {
 public:
-    service_discovery_factory(){};
-    virtual ~service_discovery_factory(){};
+    serviceDiscoveryFactory(){};
+    virtual ~serviceDiscoveryFactory(){};
 
     static std::string get_mode()
     {
-        // to do
+        std::string name = configCenter::configCenter<void *>::instance()->get_properties_fields(get_genetic_gene(), configCenter::PROP_SERVICE_DISCOVERY_MODE, configCenter::DEFAULT_SERVICE_DISCOVERY_MODE);
         return name;
     }
     template <typename connInfo>
-    static std::shared_ptr<service_discovery<connInfo>> create(std::shared_ptr<Loop> loopIn)
+    static std::shared_ptr<serviceDiscovery<connInfo>> create(std::shared_ptr<loop::loop> loopIn)
     {
-        std::shared_ptr<service_discovery<connInfo>> ret = nullptr;
+        std::shared_ptr<serviceDiscovery<connInfo>> ret = nullptr;
         std::string name = get_mode();
 
         if (!name.compare("DNS"))
         {
-            ret = std::make_shared<dns_service_discovery>(loopIn);
+            ret = std::make_shared<sdDns>(loopIn);
             if (ret)
             {
                 ret->set_genetic_gene(get_genetic_gene());
@@ -55,7 +64,7 @@ public:
         }
         else if (!name.compare("unix_socket"))
         {
-            ret = std::make_shared<srvcUnixSocket>(loopIn);
+            ret = std::make_shared<sdUnixSocket>(loopIn);
             if (ret)
             {
                 ret->set_genetic_gene(get_genetic_gene());
@@ -72,3 +81,4 @@ public:
         return ret;
     }
 };
+} // namespace serviceDiscovery

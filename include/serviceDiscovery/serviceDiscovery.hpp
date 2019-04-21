@@ -27,33 +27,35 @@
 #include <list>
 #include <unordered_set>
 #include <algorithm>
-#include "translib/timerManager.h"
-#include "translib/timer.h"
+
 #include "logger/logger.hpp"
-#include "service_discovery/util.hpp"
+#include "loop/loop.hpp"
+#include "gene/gene.hpp"
+namespace serviceDiscovery
+{
 // note: this is not thread safe. need to work with task
 template <typename connInfo>
-class service_discovery : public gene::gene
+class serviceDiscovery : public gene::gene<void *>
 {
 public:
     typedef std::list<connInfo> connList;
     typedef std::function<connList()> getConnFun;
     typedef std::function<bool(connInfo)> onConnInfoChangeCb;
     typedef connInfo connInfo_type_t;
-    service_discovery<connInfo>() = delete;
-    service_discovery<connInfo>(std::shared_ptr<Loop> loopIn) : _timerManager(loop)
+    serviceDiscovery<connInfo>() = delete;
+    serviceDiscovery<connInfo>(std::shared_ptr<loop::loop> loopIn) : _timerManager(loop)
     {
-        __LOG(debug, "[service_discovery] service_discovery");
+        __LOG(debug, "[serviceDiscovery] serviceDiscovery");
         _retrigerTimer = timer_manager->getTimer();
     }
 
-    virtual ~service_discovery<connInfo>()
+    virtual ~serviceDiscovery<connInfo>()
     {
         _retrigerTimer->stop();
-        __LOG(warn, "[service_discovery] ~service_discovery");
+        __LOG(warn, "[serviceDiscovery] ~serviceDiscovery");
     }
     virtual bool init() = 0;
-
+#if 0
     std::pair<connInfo, bool> host2connInfo(std::string host)
     {
         connInfo _tmp_info;
@@ -82,10 +84,10 @@ public:
             return std::make_pair(_tmp_info, false);
         }
     }
-
+#endif
     virtual bool stop()
     {
-        __LOG(warn, "[service_discovery] stop is called");
+        __LOG(warn, "[serviceDiscovery] stop is called");
         for (auto it : _conn_list)
         {
             onConnInfoDec(it);
@@ -97,13 +99,13 @@ public:
     // restart with init function, note : this will triger service discovery
     virtual bool restart()
     {
-        __LOG(warn, "[service_discovery] restart is called");
+        __LOG(warn, "[serviceDiscovery] restart is called");
         stop();
         return init();
     }
     virtual bool retriger()
     {
-        __LOG(debug, "[service_discovery] [retriger]");
+        __LOG(debug, "[serviceDiscovery] [retriger]");
         if (!(_retrigerTimer->getIsRunning()))
         {
             __LOG(debug, "retriger timer is finished, start a new timer");
@@ -228,5 +230,5 @@ public:
     std::shared_ptr<timer::timerManager> _timerManager;
     onConnInfoChangeCb _cfgInc;
     onConnInfoChangeCb _cfgDec;
-
 };
+} // namespace serviceDiscovery

@@ -1,10 +1,12 @@
 #pragma once
-#include "service_discovery/service_discovery.hpp"
-
-class srvcUnixSocket : public service_discovery<connInfo>
+#include "serviceDiscovery/serviceDiscovery.hpp"
+namespace serviceDiscovery
 {
-  public:
-	srvcUnixSocket(std::shared_ptr<translib::TimerManager> timer_manager = nullptr) : service_discovery<connInfo>(timer_manager)
+template <typename connInfo>
+class sdUnixSocket : public serviceDiscovery<connInfo>
+{
+public:
+	sdUnixSocket(std::shared_ptr<translib::TimerManager> timer_manager = nullptr) : serviceDiscovery<connInfo>(timer_manager)
 	{
 	}
 	virtual bool init()
@@ -24,3 +26,4 @@ class srvcUnixSocket : public service_discovery<connInfo>
 		return true;
 	}
 };
+} // namespace serviceDiscovery

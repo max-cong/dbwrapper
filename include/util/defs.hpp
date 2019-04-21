@@ -5,9 +5,18 @@ namespace dbw
 {
 struct redisContext
 {
+    int _priority;
     redisAsyncContext *_ctx;
     std::shared_ptr<heartBeat::heartBeat> _hb;
     std::shared_ptr<lbStrategy::lbStrategy<redisAsyncContext *>> _lbs;
+};
+
+struct CONN_INFO
+{
+    CONN_INFO():priority(1){}
+    std::string ip;
+    unsigned short port;
+    int priority;
 };
 // this is singleton to save redisAsyncContext<->redisContext
 template <typename OBJ = void *, typename RDS_CTX = std::shared_ptr<redisContext>>

@@ -43,7 +43,7 @@ public:
     }
     bool add_conn(std::string ip, int port)
     {
-        TASK_REDIS_ADD_CONN_BODY add_cmd;
+        CONN_INFO add_cmd;
         add_cmd.ip = ip;
         add_cmd.port = port;
         ins->send2task(task::taskMsgType::TASK_REDIS_ADD_CONN, add_cmd);

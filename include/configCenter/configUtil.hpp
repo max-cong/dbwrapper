@@ -33,4 +33,10 @@ const std::string PROP_HOST = "host"; // the remote host IP or FQDN
 const std::string DEFAULT_HOST = "127.0.0.1";
 const std::string DEFAULT_HB_LOST_NUM = "DEFAULT_HB_LOST_NUM";
 const std::string PROP_HB_LOST_NUM = "PROP_HB_LOST_NUM";
+const std::string DEFAULT_LOAD_BALANCE_STRATEGY = "DEFAULT_LOAD_BALANCE_STRATEGY";
+const std::string PROP_LOAD_BALANCE_STRATEGY = "PROP_LOAD_BALANCE_STRATEGY";
+
+
+const std::string DEFAULT_SERVICE_DISCOVERY_MODE = "DEFAULT_SERVICE_DISCOVERY_MODE";
+const std::string PROP_SERVICE_DISCOVERY_MODE = "PROP_SERVICE_DISCOVERY_MODE";
 } // namespace configCenter

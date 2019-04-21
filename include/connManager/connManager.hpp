@@ -25,7 +25,6 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-
 namespace connManager
 {
 const std::string CONN_INC = "CONN_INC";
@@ -48,8 +47,10 @@ public:
     {
         // load balance related
         _lbs_sptr = lbStrategy::lbsFactory<>::create("RR");
+#if 0
         // message bus related
         auto bus = messageBusHelper<DBConn>(get_genetic_gene()).getMessageBus();
+    
         auto self_sptr = std::get_shared_from_this();
         bus->register_handler(CONN_DEC, [self_sptr](DBConn obj) {
             self_sptr->getLbs()->del_obj(obj);
@@ -57,6 +58,7 @@ public:
         bus->register_handler(CONN_INC, [self_sptr](DBConn obj, unsigned int priority) {
             self_sptr->getLbs()->add_obj(obj, priority);
         });
+#endif
     }
 
     void on_unavaliable() {}

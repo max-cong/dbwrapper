@@ -29,44 +29,44 @@
 #include <list>
 #include <unordered_set>
 #include <algorithm>
-#include "translib/timerManager.h"
-#include "translib/timer.h"
+
 #include "logger/logger.hpp"
-#include "service_discovery/util.hpp"
-#include "common/util.hpp"
+
 #include "boost/asio/ip/address.hpp"
 #include "boost/any.hpp"
 #include <boost/algorithm/string.hpp>
 #include <typeinfo>
-using boost::asio::ip::address;
-using namespace dbw;
-class dns_service_discovery : public service_discovery<connInfo>
+namespace serviceDiscovery
 {
-  public:
-    dns_service_discovery(std::shared_ptr<translib::TimerManager> timer_manager) : service_discovery<connInfo>(timer_manager)
+using boost::asio::ip::address;
+template <typename connInfo>
+class sdDns : public serviceDiscovery<connInfo>
+{
+public:
+    sdDns(std::shared_ptr<translib::TimerManager> timer_manager) : serviceDiscovery<connInfo>(timer_manager)
     {
         _dns_timer = _timer_manager->getTimer();
         _dns_ttl = 0;
     }
 
-    virtual ~dns_service_discovery()
+    virtual ~sdDns()
     {
         _dns_timer->stop();
-        __LOG(warn, "[dns_service_discovery] ~dns_service_discovery");
+        __LOG(warn, "[sdDns] ~sdDns");
     }
 
     virtual bool retriger() override
     {
         __LOG(debug, "[dns retriger]");
         _dns_timer->stop();
-        service_discovery::retriger();
+        serviceDiscovery::retriger();
         return true;
     }
 
     // this is called by APP thread, lock is for this(setConnInfoList have lock)
     void dnsResolveCallback(List &ipList, int dns_ttl)
     {
-        __LOG(debug, "[dns_service_discovery] dnsResolveCallback ");
+        __LOG(debug, "[sdDns] dnsResolveCallback ");
         {
             __LOG(debug, "IP list size is : " << ipList.size() << ", list is :");
             for (auto it : ipList)
@@ -145,7 +145,7 @@ class dns_service_discovery : public service_discovery<connInfo>
         {
             if (_dns_timer)
             {
-                _dns_timer->startOnce(_dns_ttl * 1000, std::bind(&dns_service_discovery::do_dns_with_timer, this));
+                _dns_timer->startOnce(_dns_ttl * 1000, std::bind(&sdDns::do_dns_with_timer, this));
             }
             else
             {
@@ -160,9 +160,9 @@ class dns_service_discovery : public service_discovery<connInfo>
     // note: init may return fail. then do not start the system and check the configuration of host!
     virtual bool init() override
     {
-        std::lock_guard<std::recursive_mutex> lck(_mutex);
-        __LOG(debug, "[dns_service_discovery] init is called");
-        boost::function<bool()> _cfg_change_fn = boost::bind(&dns_service_discovery::stop, this);
+       
+        __LOG(debug, "[sdDns] init is called");
+        boost::function<bool()> _cfg_change_fn = boost::bind(&sdDns::stop, this);
         // register callback to any saver
         auto cfg_change_ret = any_saver<void *>::instance()->save_data(get_genetic_gene(), CFG_CHANGE_SERVICE_DISCOVERY_MESSAGE, _cfg_change_fn);
 
@@ -171,10 +171,10 @@ class dns_service_discovery : public service_discovery<connInfo>
             return false;
         }
 
-        __LOG(debug, "[dns_service_discovery] dns_service_discovery init");
+        __LOG(debug, "[sdDns] sdDns init");
         unsigned int _default_ttl = config_center<void *>::instance()->get_properties_fields(get_genetic_gene(), PROP_TTL_VALUE, DEFAULT_TTL_VALUE);
         _dns_ttl = _default_ttl;
-        boost::function<void(List &, int)> _dns_resolve_fn = boost::bind(&dns_service_discovery::dnsResolveCallback, this, _1, _2);
+        boost::function<void(List &, int)> _dns_resolve_fn = boost::bind(&sdDns::dnsResolveCallback, this, _1, _2);
 
         // register callback to any saver
         auto ret = any_saver<void *>::instance()->save_data(get_genetic_gene(), DNS_RESP_IP_LIST, _dns_resolve_fn);
@@ -261,3 +261,4 @@ class dns_service_discovery : public service_discovery<connInfo>
     int _dns_ttl;
     translib::Timer::ptr_p _dns_timer;
 };
+} // namespace serviceDiscovery

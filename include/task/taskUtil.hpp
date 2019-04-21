@@ -23,23 +23,20 @@ struct taskMsg
     std::string to;
     DBW_ANY body;
 };
-struct TASK_REDIS_ADD_CONN
+
+
+struct TASK_REDIS_FORMAT_RAW_MSG_BODY
 {
-std::string ip;
-unsigned short port;
+    redisCallbackFn *fn;
+    std::string body;
+    void *usr_data;
+};
+struct TASK_REDIS_RAW_MSG_BODY
+{
+    redisCallbackFn *fn;
+    std::string body;
+    void *usr_data;
 };
 
-struct TASK_REDIS_FORMAT_RAW_MSG
-{
-    redisCallbackFn *fn;
-    std::string body;
-    void *usr_data;
-};
-struct TASK_REDIS_RAW_MSG
-{
-    redisCallbackFn *fn;
-    std::string body;
-    void *usr_data;
-};
 using TASK_QUEUE = std::queue<taskMsg>;
 } // namespace task
