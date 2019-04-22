@@ -31,19 +31,22 @@
 #include <algorithm>
 
 #include "logger/logger.hpp"
+#include "timer/timerManager.hpp"
 
 #include "boost/asio/ip/address.hpp"
 #include "boost/any.hpp"
 #include <boost/algorithm/string.hpp>
 #include <typeinfo>
+#include <list>
 namespace serviceDiscovery
 {
 using boost::asio::ip::address;
+using List = std::list<std::string>;
 template <typename connInfo>
 class sdDns : public serviceDiscovery<connInfo>
 {
 public:
-    sdDns(std::shared_ptr<translib::TimerManager> timer_manager) : serviceDiscovery<connInfo>(timer_manager)
+    sdDns(std::shared_ptr<timer::timerManager> timer_manager) : serviceDiscovery<connInfo>(timer_manager)
     {
         _dns_timer = _timer_manager->getTimer();
         _dns_ttl = 0;
@@ -66,6 +69,8 @@ public:
     // this is called by APP thread, lock is for this(setConnInfoList have lock)
     void dnsResolveCallback(List &ipList, int dns_ttl)
     {
+// to do : need to add task to anysaver
+#if 0
         __LOG(debug, "[sdDns] dnsResolveCallback ");
         {
             __LOG(debug, "IP list size is : " << ipList.size() << ", list is :");
@@ -105,9 +110,12 @@ public:
         {
             setConnInfoList(_tmp_list);
         }
+#endif
     }
+#if 0
     bool do_dns()
     {
+        
         // if er run into here, that means the PROP_HOST in the configration is FQDN
         // get FQND from configuration, is FQDN is not empty, then call DNS related function
         std::string _host = config_center<void *>::instance()->get_properties_fields(get_genetic_gene(), PROP_HOST, DEFAULT_HOST);
@@ -157,10 +165,11 @@ public:
             __LOG(debug, "do not need to refresh!");
         }
     }
+#endif
     // note: init may return fail. then do not start the system and check the configuration of host!
     virtual bool init() override
     {
-       
+#if 0
         __LOG(debug, "[sdDns] init is called");
         boost::function<bool()> _cfg_change_fn = boost::bind(&sdDns::stop, this);
         // register callback to any saver
@@ -255,10 +264,11 @@ public:
         }
 
         return true;
+#endif
     }
 
     // refresh interval
     int _dns_ttl;
-    translib::Timer::ptr_p _dns_timer;
+    timer::timer::ptr_p _dns_timer;
 };
 } // namespace serviceDiscovery

@@ -24,7 +24,8 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
+#include "lbStrategy/lbsFactory.hpp"
+#include "serviceDiscovery/serviceDiscoveryFactory.hpp"
 namespace connManager
 {
 const std::string CONN_INC = "CONN_INC";
@@ -47,6 +48,8 @@ public:
     {
         // load balance related
         _lbs_sptr = lbStrategy::lbsFactory<>::create("RR");
+        // service discovery related
+        std::shared_ptr<serviceDiscovery::serviceDiscovery<CONN_INFO>> _srvc_sptr = serviceDiscovery::serviceDiscoveryFactory<CONN_INFO>::create(getLoop());
 #if 0
         // message bus related
         auto bus = messageBusHelper<DBConn>(get_genetic_gene()).getMessageBus();
@@ -77,6 +80,10 @@ public:
     {
         return _lbs_sptr;
     }
+    std::shared_ptr<serviceDiscovery::serviceDiscovery<CONN_INFO>> getSds()
+    {
+        return _srvc_sptr;
+    }
     std::shared_prt<loop::loop> getLoop()
     {
         return _loop.lock();
@@ -85,5 +92,6 @@ public:
 private:
     std::weak_ptr<loop::loop> _loop;
     std::shared_ptr<lbStrategy<DBConn>> _lbs_sptr;
+    std::shared_ptr<serviceDiscovery::serviceDiscovery<CONN_INFO>> _srvc_sptr;
 };
 } // namespace connManager

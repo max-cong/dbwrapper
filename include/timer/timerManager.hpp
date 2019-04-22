@@ -34,14 +34,14 @@
 #include "logger/logger.hpp"
 namespace timer
 {
-class TimerManager
+class timerManager
 {
 public:
-	TimerManager() = delete;
-	TimerManager(std::shared_ptr<loop::loop> loopIn) : _uniqueIDAtomic(0), _timerMap(), _loop(loopIn)
+	timerManager() = delete;
+	timerManager(std::shared_ptr<loop::loop> loopIn) : _uniqueIDAtomic(0), _timerMap(), _loop(loopIn)
 	{
 	}
-	virtual ~TimerManager()
+	virtual ~timerManager()
 	{
 	}
 	bool stop()

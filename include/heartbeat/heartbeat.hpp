@@ -30,6 +30,7 @@
 #include "gene/gene.hpp"
 #include "loop/loop.hpp"
 #include "configCenter/configCenter.hpp"
+#include "configCenter/configUtil.hpp"
 #include <memory>
 #include <atomic>
 
@@ -49,7 +50,6 @@ public:
     ~heartBeat()
     {
         __LOG(debug, "[heartBeat] ~heartBeat, this is : " << (void *)this);
-        _timer->stop();
     }
     bool init()
     {
@@ -93,11 +93,16 @@ public:
             if (this_sptr->get_hb_success())
             {
                 this_sptr->onHeartbeatSuccess();
-                this_sptr->_retryNum = configCenter::configCenter<void*>::instance()->get_properties_fields(this_sptr->get_genetic_gene(), configCenter::PROP_HB_LOST_NUM, configCenter::DEFAULT_HB_LOST_NUM);
+
+                std::string hbLostNum = configCenter::configCenter<void *>::instance()->get_properties_fields(this_sptr->get_genetic_gene(), PROP_HB_LOST_NUM, DEFAULT_HB_LOST_NUM);
+                std::string::size_type sz; // alias of size_t
+
+                int i_dec = std::stoi(hbLostNum, &sz);
+                this_sptr->_retryNum = i_dec;
             }
             else
             {
-               this_sptr-> _retryNum--;
+                this_sptr->_retryNum--;
                 if (this_sptr->_retryNum < 1)
                 {
                     this_sptr->_retryNum = 0;
@@ -109,11 +114,16 @@ public:
 
             if (this_sptr->_retryNum < 1)
             {
-                this_sptr->_retryNum = configCenter::configCenter::instance()->get_properties_fields(this_sptr->get_genetic_gene(), configCenter::PROP_HB_LOST_NUM, configCenter::DEFAULT_HB_LOST_NUM);
-               this_sptr-> onHeartbeatLost();
+
+                  std::string hbLostNum = configCenter::configCenter<void *>::instance()->get_properties_fields(this_sptr->get_genetic_gene(), PROP_HB_LOST_NUM, DEFAULT_HB_LOST_NUM);
+                std::string::size_type sz; // alias of size_t
+
+                int i_dec = std::stoi(hbLostNum, &sz);
+                this_sptr->_retryNum = i_dec;
+              
+                this_sptr->onHeartbeatLost();
             }
 
-            __LOG(debug, "call ping function : " << typeid(fun).name());
             if (this_sptr->getPingCb())
             {
                 (this_sptr->getPingCb())(this_sptr);
@@ -152,6 +162,6 @@ private:
 
     std::atomic<bool> _success;
     std::atomic<unsigned int> _retryNum;
-    std::shared_ptr<(timer::timerManager)> _tManager;
+    std::shared_ptr<timer::timerManager> _tManager;
 };
 } // namespace heartBeat

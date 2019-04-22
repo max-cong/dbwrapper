@@ -11,10 +11,19 @@ struct redisContext
     std::shared_ptr<lbStrategy::lbStrategy<redisAsyncContext *>> _lbs;
 };
 
+enum class CONN_TYPE : std::uint32_t
+{
+    IP,
+    UNIX_SOCKET,
+    TYPE_MAX
+};
+
 struct CONN_INFO
 {
-    CONN_INFO():priority(1){}
+    CONN_INFO() : priority(1), type(CONN_TYPE::IP) {}
+    CONN_TYPE type;
     std::string ip;
+    std::string path;
     unsigned short port;
     int priority;
 };

@@ -29,10 +29,12 @@
 #include "serviceDiscovery/serviceDiscovery.hpp"
 #include "serviceDiscovery/DNS/sdDns.hpp"
 #include "serviceDiscovery/UNIX_SOCKET/sdUnixSocket.hpp"
+#include "serviceDiscovery/CONFIG/sdConfig.hpp"
 #include "loop/loop.hpp"
 #include "configCenter/configCenter.hpp"
 namespace serviceDiscovery
 {
+template <typename connInfo>
 class serviceDiscoveryFactory : public gene::gene<void *>
 {
 public:
@@ -44,7 +46,7 @@ public:
         std::string name = configCenter::configCenter<void *>::instance()->get_properties_fields(get_genetic_gene(), configCenter::PROP_SERVICE_DISCOVERY_MODE, configCenter::DEFAULT_SERVICE_DISCOVERY_MODE);
         return name;
     }
-    template <typename connInfo>
+
     static std::shared_ptr<serviceDiscovery<connInfo>> create(std::shared_ptr<loop::loop> loopIn)
     {
         std::shared_ptr<serviceDiscovery<connInfo>> ret = nullptr;
@@ -74,6 +76,19 @@ public:
                 __LOG(error, "create service discovery obj fail!");
             }
         }
+        else if (!name.compare("sdConfig"))
+        {
+            ret = std::make_shared<sdConfig>(loopIn);
+            if (ret)
+            {
+                ret->set_genetic_gene(get_genetic_gene());
+            }
+            else
+            {
+                __LOG(error, "create service discovery obj fail!");
+            }
+        }
+
         else
         {
             __LOG(warn, "not support type!");
