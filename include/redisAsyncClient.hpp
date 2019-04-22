@@ -57,7 +57,7 @@ public:
         msg.fn = fn;
         msg.body = command;
         msg.usr_data = usr_data;
-        _task_sptr->sendMsg(task::taskMsgType::TASK_REDIS_RAW, msg);
+        return _task_sptr->sendMsg(task::taskMsgType::TASK_REDIS_RAW, msg);
     }
     std::shared_ptr<loop::loop> _loop_sptr;
     std::shared_ptr<task::task> _task_sptr;

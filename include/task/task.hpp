@@ -26,7 +26,7 @@ namespace task
 class task : public gene::gene<void *>
 {
 public:
-    task(std::shared_ptr<loop::loop> loopIn) : _loop(loopIn), _evfd(-1)
+    task(std::shared_ptr<loop::loop> loopIn) : _evfd(-1), _loop(loopIn)
     {
     }
     task() = delete;
@@ -78,19 +78,22 @@ public:
 
     static void connectCallback(const redisAsyncContext *c, int status)
     {
+
         if (status != REDIS_OK)
         {
             printf("Error: %s\n", c->errstr);
             return;
         }
         printf("Connected...\n");
+        redisAsyncContext *_aCtx = const_cast<redisAsyncContext *>(c);
         auto ctxSaver = dbw::contextSaver<void *, std::shared_ptr<dbw::redisContext>>::instance();
 
-        std::pair<dbw::redisContext, bool> contextRet = ctxSaver->getCtx(c);
+        std::pair<std::shared_ptr<dbw::redisContext>, bool> contextRet = ctxSaver->getCtx((void *)_aCtx);
         if (std::get<1>(contextRet))
         {
-            dbw::redisContext rdsCtx = std::get<0>(contextRet);
-            rdsCtx->_lbs->update_obj(c, rdsCtx->_priority);
+            std::shared_ptr<dbw::redisContext> rdsCtx = std::get<0>(contextRet);
+
+            rdsCtx->_lbs->update_obj(_aCtx, rdsCtx->_priority);
         }
         else
         {
@@ -107,13 +110,14 @@ public:
             return;
         }
         printf("Disconnected...\n");
+        redisAsyncContext *_aCtx = const_cast<redisAsyncContext *>(c);
         auto ctxSaver = dbw::contextSaver<void *, std::shared_ptr<dbw::redisContext>>::instance();
 
-        auto contextRet = ctxSaver->getCtx(c);
+        auto contextRet = ctxSaver->getCtx(_aCtx);
         if (std::get<1>(contextRet))
         {
             auto rdsCtx = std::get<0>(contextRet);
-            rdsCtx->_lbs->del_obj(c);
+            rdsCtx->_lbs->del_obj(_aCtx);
         }
         else
         {
@@ -220,7 +224,7 @@ public:
         // start eventfd server
         try
         {
-            _evfdServer = std::make_shared<evfdServer>(get_loop(), _evfd, evfdCallback, (void*)this);
+            _evfdServer = std::make_shared<evfdServer>(get_loop(), _evfd, evfdCallback, (void *)this);
         }
         catch (std::exception &e)
         {
@@ -247,7 +251,7 @@ public:
     }
     void process_msg(uint64_t num)
     {
-        for (int i = 0; i < num; i++)
+        for (uint64_t i = 0; i < num; i++)
         {
             auto tmpTaskMsg = _taskQueue.front();
             on_message(tmpTaskMsg);

@@ -2,6 +2,6 @@
 #include "redisAsyncClient.hpp"
 int main()
 {
-    redisAsyncClient aclient
+    redisAsyncClient aclient;
     std::cout<<"hello world"<<std::endl;
 }

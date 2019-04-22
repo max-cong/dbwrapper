@@ -42,7 +42,7 @@ class lbStrategy
 public:
     virtual ~lbStrategy() {}
     // Interface
-    virtual std::pair<LB_OBJ, retStatus> get_obj(int index = 0) = 0;
+    virtual std::pair<LB_OBJ, retStatus> get_obj() = 0;
     virtual bool init() = 0;
     virtual retStatus update() = 0;
 
@@ -140,7 +140,7 @@ public:
         return 0;
     }
 
-    retStatus update_obj(const LB_OBJ obj, unsigned int weight = 0)
+    retStatus update_obj(LB_OBJ obj, unsigned int weight = 0)
     {
         __LOG(debug, " update obj is called, weight is : " << weight);
         unsigned int _avaliable_obj_before = get_avaliable_obj().size();
@@ -198,7 +198,6 @@ public:
                 }
             }
 
-            bool found = false;
             for (auto it = _obj_vector.begin(); it != _obj_vector.end();)
             {
                 __LOG(debug, "loop _obj_vector");
@@ -215,7 +214,6 @@ public:
             _obj_vector.push_back(std::make_pair(obj, weight));
         }
 
-       
         unsigned int _avaliable_obj_after = get_avaliable_obj().size();
         if (!_avaliable_obj_after && _avaliable_obj_before)
         {

@@ -20,7 +20,7 @@ enum class CONN_TYPE : std::uint32_t
 
 struct CONN_INFO
 {
-    CONN_INFO() : priority(1), type(CONN_TYPE::IP) {}
+    CONN_INFO() : type(CONN_TYPE::IP), priority(1) {}
     CONN_TYPE type;
     std::string ip;
     std::string path;
@@ -32,9 +32,9 @@ template <typename OBJ, typename RDS_CTX>
 class contextSaver
 {
 public:
-    static contextSaver<OBJ,RDS_CTX> *instance()
+    static contextSaver<OBJ, RDS_CTX> *instance()
     {
-        static contextSaver<OBJ,RDS_CTX> *ins = new contextSaver<OBJ,RDS_CTX>();
+        static contextSaver<OBJ, RDS_CTX> *ins = new contextSaver<OBJ, RDS_CTX>();
         return ins;
     }
     void save(OBJ obj, RDS_CTX gene)

@@ -43,7 +43,7 @@ public:
     using hbSuccCb = std::function<void(void)>;
     using hbLostCb = std::function<void(void)>;
     heartBeat() = delete;
-    heartBeat(std::shared_ptr<loop::loop> loopIn) : _success(false), _interval(5000), _retryNum(5), _loop(loopIn)
+    heartBeat(std::shared_ptr<loop::loop> loopIn) : _interval(5000), _loop(loopIn), _success(false), _retryNum(5)
     {
         __LOG(debug, "start heartBeat, this is :" << (void *)this);
     }
@@ -54,6 +54,7 @@ public:
     bool init()
     {
         _tManager.reset(new timer::timerManager(_loop.lock()));
+        return true;
     }
     void onHeartbeatLost()
     {

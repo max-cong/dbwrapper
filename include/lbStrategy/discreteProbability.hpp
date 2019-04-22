@@ -41,7 +41,7 @@ public:
     }
     // note: there is no lock here
     // for performance, please check the return code during usage
-    std::pair<DIST_OBJ, retStatus> get_obj(int index = 0) override
+    std::pair<DIST_OBJ, retStatus> get_obj() override
     {
         DIST_OBJ obj;
         if (this->_obj_vector.empty())
@@ -51,15 +51,7 @@ public:
         }
         try
         {
-            if (index == 0)
-            {
-                int _rand_num = _dist(_gen);
-                obj = std::get<0>(this->_obj_vector.at(_rand_num));
-            }
-            else
-            {
-                obj = std::get<0>(this->_obj_vector.at(index % ((this->_obj_vector).size())));
-            }
+            obj = std::get<0>(this->_obj_vector.at(_dist(_gen)));
         }
         catch (const std::out_of_range &oor)
         {

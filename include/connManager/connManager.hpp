@@ -77,6 +77,7 @@ public:
             self_sptr->getLbs()->add_obj(obj, priority);
         });
 #endif
+        return true;
     }
 
     void on_unavaliable() {}
@@ -84,7 +85,7 @@ public:
 
     std::pair<DBConn, lbStrategy::retStatus> get_conn()
     {
-        return _lbs_sptr.get_obj();
+        return _lbs_sptr->get_obj();
     }
 
     bool add_conn(dbw::CONN_INFO connInfo)
@@ -95,6 +96,8 @@ public:
     }
     bool del_conn(dbw::CONN_INFO connInfo)
     {
+        // to do 
+        return true;
     }
 
     std::shared_ptr<lbStrategy::lbStrategy<DBConn>> getLbs()

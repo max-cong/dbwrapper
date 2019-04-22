@@ -50,7 +50,7 @@ public:
     {
         _dns_timer = this->_timerManager->getTimer();
         _dns_ttl = 0;
-    }   
+    }
 
     virtual ~sdDns()
     {
@@ -265,6 +265,7 @@ public:
 
         return true;
 #endif
+        return true;
     }
 
     // refresh interval

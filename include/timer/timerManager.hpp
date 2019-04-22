@@ -75,7 +75,7 @@ public:
 	}
 	bool killTimer(timer::ptr_p timer_sptr)
 	{
-		killTimer(timer_sptr->getTid());
+		return killTimer(timer_sptr->getTid());
 	}
 
 protected:
