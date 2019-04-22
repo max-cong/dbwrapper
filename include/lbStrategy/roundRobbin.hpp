@@ -36,23 +36,23 @@ public:
     }
     ~roundRobbin() {}
     // note: there is no lock here
-    std::pair<LB_OBJ, retStatus> get_obj() override
+    std::pair<LB_OBJ, retStatus> get_obj(int index = 0) override
     {
-
+        LB_OBJ obj;
         if (this->_obj_vector.empty() || !_max_index)
         {
-            LB_OBJ obj;
+
             return std::make_pair(obj, retStatus::NO_ENTRY);
         }
         try
         {
             _index++;
-            return std::make_pair(std::get<0>(this->_obj_vector.at(index % _max_index)));
+            return std::make_pair(std::get<0>(this->_obj_vector.at(index % (this->_max_index))));
         }
         catch (const std::out_of_range &oor)
         {
             __LOG(error, "Out of Range error: " << oor.what());
-            LB_OBJ obj;
+
             return std::make_pair(obj, retStatus::FAIL);
         }
         return std::make_pair(obj, retStatus::SUCCESS);
@@ -72,7 +72,7 @@ public:
 
     retStatus update() override
     {
-        _max_index = _obj_vector.size();
+        _max_index = this->_obj_vector.size();
         return retStatus::SUCCESS;
     }
 

@@ -6,13 +6,13 @@ template <typename connInfo>
 class sdUnixSocket : public serviceDiscovery<connInfo>
 {
 public:
-	sdUnixSocket(std::shared_ptr<timer::timerManager> timer_manager = nullptr) : serviceDiscovery<connInfo>(timer_manager)
+	sdUnixSocket(std::shared_ptr<loop::loop> loopIn) : serviceDiscovery<connInfo>(loopIn)
 	{
 	}
 	virtual bool init()
 	{
 		// get unix path
-		std::string _unix_socket_path = configCenter::configCenter<void *>::instance()->get_properties_fields(get_genetic_gene(), PROP_UNIX_PATH, DEFAULT_REDIS_UNIX_PATH);
+		std::string _unix_socket_path = configCenter::configCenter<void *>::instance()->get_properties_fields(this->get_genetic_gene(), PROP_UNIX_PATH, DEFAULT_REDIS_UNIX_PATH);
 
 		// build connInfo
 		connInfo _connInfo;

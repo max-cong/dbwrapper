@@ -43,7 +43,7 @@ public:
     using hbSuccCb = std::function<void(void)>;
     using hbLostCb = std::function<void(void)>;
     heartBeat() = delete;
-    heartBeat(std::shared_ptr<loop::loop> loopIn) : _success(false), _interval(5000), _retryNum(5), _tManager(loopIn)
+    heartBeat(std::shared_ptr<loop::loop> loopIn) : _success(false), _interval(5000), _retryNum(5), _loop(loopIn)
     {
         __LOG(debug, "start heartBeat, this is :" << (void *)this);
     }
@@ -53,6 +53,7 @@ public:
     }
     bool init()
     {
+        _tManager.reset(new timer::timerManager(_loop.lock()));
     }
     void onHeartbeatLost()
     {
@@ -115,12 +116,12 @@ public:
             if (this_sptr->_retryNum < 1)
             {
 
-                  std::string hbLostNum = configCenter::configCenter<void *>::instance()->get_properties_fields(this_sptr->get_genetic_gene(), PROP_HB_LOST_NUM, DEFAULT_HB_LOST_NUM);
+                std::string hbLostNum = configCenter::configCenter<void *>::instance()->get_properties_fields(this_sptr->get_genetic_gene(), PROP_HB_LOST_NUM, DEFAULT_HB_LOST_NUM);
                 std::string::size_type sz; // alias of size_t
 
                 int i_dec = std::stoi(hbLostNum, &sz);
                 this_sptr->_retryNum = i_dec;
-              
+
                 this_sptr->onHeartbeatLost();
             }
 
@@ -159,7 +160,7 @@ private:
     hbSuccCb _hbSuccCb;
     hbLostCb _hbLostCb;
     ping_f _pingCb;
-
+    std::weak_ptr<loop::loop> _loop;
     std::atomic<bool> _success;
     std::atomic<unsigned int> _retryNum;
     std::shared_ptr<timer::timerManager> _tManager;

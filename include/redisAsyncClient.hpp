@@ -2,7 +2,7 @@
 #include "anySaver/anySaver.hpp"
 #include "loop/loop.hpp"
 #include "hiredis/async.h"
-#include "redisCommand/redisCommand.hpp"
+#include "buildRedisCommand/buildRedisCommand.hpp"
 #include "logger/logger.hpp"
 #include "task/task.hpp"
 #include <string>
@@ -35,24 +35,17 @@ public:
     }
     bool put(std::string key, std::string value, void *usr_data, redisCallbackFn *fn)
     {
-        std::string command2send = redisCommand::redisCommand<std::string, std::string>::get_format_command(redisCommand::REDIS_MSG_TYPE::TASK_REDIS_PUT, key, value);
+        std::string command2send = buildRedisCommand::buildRedisCommand<std::string, std::string>::get_format_command(REDIS_MSG_TYPE::TASK_REDIS_PUT, key, value);
 
         __LOG(debug, "get command :\n"
                          << command2send);
         return send_format_raw_command(command2send, usr_data, fn);
     }
-    bool add_conn(std::string ip, int port)
-    {
-        CONN_INFO add_cmd;
-        add_cmd.ip = ip;
-        add_cmd.port = port;
-        ins->send2task(task::taskMsgType::TASK_REDIS_ADD_CONN, add_cmd);
-        return true;
-    }
+
     bool send_format_raw_command(std::string command, void *usr_data, redisCallbackFn *fn)
     {
         task::TASK_REDIS_FORMAT_RAW_MSG_BODY msg;
-        msg.cb = fn;
+        msg.fn = fn;
         msg.body = command;
         msg.usr_data = usr_data;
         _task_sptr->sendMsg(task::taskMsgType::TASK_REDIS_FORMAT_RAW, msg);
@@ -61,7 +54,7 @@ public:
     bool send_raw_command(std::string command, void *usr_data, redisCallbackFn *fn)
     {
         task::TASK_REDIS_RAW_MSG_BODY msg;
-        msg.cb = fn;
+        msg.fn = fn;
         msg.body = command;
         msg.usr_data = usr_data;
         _task_sptr->sendMsg(task::taskMsgType::TASK_REDIS_RAW, msg);

@@ -6,15 +6,15 @@
 namespace serviceDiscovery
 {
 template <typename connInfo>
-class sdConfig
+class sdConfig : public serviceDiscovery<connInfo>
 {
 public:
-    sdConfig(std::shared_ptr<timer::timerManager> timer_manager) : serviceDiscovery<connInfo>(timer_manager) {}
+    sdConfig(std::shared_ptr<loop::loop> loopIn) : serviceDiscovery<connInfo>(loopIn) {}
     virtual bool init()
     {
 
-        std::string connHost = configCenter::configCenter<void *>::instance()->get_properties_fields(get_genetic_gene(), PROP_HOST, DEFAULT_PROP_HOST);
-        std::string connPort = configCenter::configCenter<void *>::instance()->get_properties_fields(get_genetic_gene(), PROP_PORT, DEFAULT_PROP_PORT);
+        std::string connHost = configCenter::configCenter<void *>::instance()->get_properties_fields(this->get_genetic_gene(), PROP_HOST, DEFAULT_HOST);
+        std::string connPort = configCenter::configCenter<void *>::instance()->get_properties_fields(this->get_genetic_gene(), PROP_PORT, DEFAULT_PORT);
 
         // build connInfo
         connInfo _connInfo;

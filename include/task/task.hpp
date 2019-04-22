@@ -63,8 +63,8 @@ public:
             return;
         }
         printf("argv[%s]: %s\n", (char *)privdata, reply->str);
-        auto ctxSaver = dbw::contextSaver<(void *), std::shared_ptr<dbw::redisContext>>::instance();
-        auto ctxRet = ctxSaver->get(c);
+        auto ctxSaver = dbw::contextSaver<void *, std::shared_ptr<dbw::redisContext>>::instance();
+        auto ctxRet = ctxSaver->getCtx(c);
         if (std::get<1>(ctxRet))
         {
             auto rdxCtx = std::get<0>(ctxRet);
@@ -84,12 +84,12 @@ public:
             return;
         }
         printf("Connected...\n");
-        auto ctxSaver = dbw::contextSaver<(void *), std::shared_ptr<dbw::redisContext>>::instance();
+        auto ctxSaver = dbw::contextSaver<void *, std::shared_ptr<dbw::redisContext>>::instance();
 
-        auto contextRet = ctxSaver->get(c);
+        std::pair<dbw::redisContext, bool> contextRet = ctxSaver->getCtx(c);
         if (std::get<1>(contextRet))
         {
-            auto rdsCtx = std::get<0>(contextRet);
+            dbw::redisContext rdsCtx = std::get<0>(contextRet);
             rdsCtx->_lbs->update_obj(c, rdsCtx->_priority);
         }
         else
@@ -107,9 +107,9 @@ public:
             return;
         }
         printf("Disconnected...\n");
-        auto ctxSaver = dbw::contextSaver<(void *), std::shared_ptr<dbw::redisContext>>::instance();
+        auto ctxSaver = dbw::contextSaver<void *, std::shared_ptr<dbw::redisContext>>::instance();
 
-        auto contextRet = ctxSaver->get(c);
+        auto contextRet = ctxSaver->getCtx(c);
         if (std::get<1>(contextRet))
         {
             auto rdsCtx = std::get<0>(contextRet);
@@ -129,7 +129,7 @@ public:
         {
         case taskMsgType::TASK_REDIS_FORMAT_RAW:
         {
-            TASK_REDIS_FORMAT_RAW_MSG_BODY msg = dbw::DBW_ANY_CAST<TASK_REDIS_FORMAT_RAW_MSG_BODY>(task_msg.body);
+            TASK_REDIS_FORMAT_RAW_MSG_BODY msg = DBW_ANY_CAST<TASK_REDIS_FORMAT_RAW_MSG_BODY>(task_msg.body);
             __LOG(debug, "get command :\n"
                              << msg.body);
 
@@ -146,7 +146,7 @@ public:
 
         case taskMsgType::TASK_REDIS_RAW:
         {
-            TASK_REDIS_RAW_MSG_BODY msg = dbw::DBW_ANY_CAST<TASK_REDIS_RAW_MSG_BODY>(task_msg.body);
+            TASK_REDIS_RAW_MSG_BODY msg = DBW_ANY_CAST<TASK_REDIS_RAW_MSG_BODY>(task_msg.body);
             __LOG(debug, "get command :\n"
                              << msg.body);
 
@@ -163,7 +163,7 @@ public:
 
         case taskMsgType::TASK_REDIS_ADD_CONN:
         {
-            CONN_INFO payload = dbw::DBW_ANY_CAST<CONN_INFO>(task_msg.body);
+            dbw::CONN_INFO payload = DBW_ANY_CAST<dbw::CONN_INFO>(task_msg.body);
             __LOG(error, "connect to : " << payload.ip << ":" << payload.port);
 
             redisAsyncContext *_context = redisAsyncConnect(payload.ip.c_str(), payload.port);
@@ -173,23 +173,23 @@ public:
                 return false;
             }
 
-            std::shared_ptr<(dbw::redisContext)> rdsCtx = std::make_shared<dbw::redisContext>();
+            std::shared_ptr<dbw::redisContext> rdsCtx = std::make_shared<dbw::redisContext>();
             rdsCtx->_ctx = _context;
             rdsCtx->_priority = payload.priority;
-            rdsCtx->_hb = std::make_shared<(heartBeat::heartBeat)>(get_loop());
+            rdsCtx->_hb = std::make_shared<heartBeat::heartBeat>(get_loop());
             rdsCtx->_hb->set_genetic_gene(get_genetic_gene());
             rdsCtx->_hb->setPingCb([_context](std::shared_ptr<heartBeat::heartBeat>) {
                 std::string pingMsg("PING");
                 redisAsyncCommand(_context, task::pingCallback, (void *)_context, pingMsg.c_str(), pingMsg.size());
             });
             rdsCtx->_lbs = _connManager->getLbs();
-            auto ctxSaver = dbw::contextSaver::instance();
+            auto ctxSaver = dbw::contextSaver<void *, std::shared_ptr<dbw::redisContext>>::instance();
             ctxSaver->save(_context, rdsCtx);
 
             redisLibeventAttach(_context, get_loop()->ev());
 
-            redisAsyncSetConnectCallback(_context, _connect_cb);
-            redisAsyncSetDisconnectCallback(_context, _disconnect_cb);
+            redisAsyncSetConnectCallback(_context, connectCallback);
+            redisAsyncSetDisconnectCallback(_context, disconnectCallback);
             break;
         }
         case taskMsgType::TASK_REDIS_DEL_CONN:
@@ -220,7 +220,7 @@ public:
         // start eventfd server
         try
         {
-            _evfdServer = std::make_shared<task::evfdServer>(get_loop())->ev(), _evfd, evfdCallback, this);
+            _evfdServer = std::make_shared<evfdServer>(get_loop(), _evfd, evfdCallback, (void*)this);
         }
         catch (std::exception &e)
         {
@@ -230,18 +230,19 @@ public:
         // start evfd client
         try
         {
-            _evfdClient = std::make_shared<task::evfdClient>(_evfd);
+            _evfdClient = std::make_shared<evfdClient>(_evfd);
         }
         catch (std::exception &e)
         {
             __LOG(error, "!!!!!!!!!!!!exception happend when trying to create event fd server, info :" << e.what());
             return false;
         }
-        _connManager = std::make_shared<connManager<redisAsyncContext *>>(get_loop());
+        _connManager = std::make_shared<connManager::connManager<redisAsyncContext *>>(get_loop());
         if (_connManager)
         {
             return false;
         }
+        _connManager->set_genetic_gene(this);
         return true;
     }
     void process_msg(uint64_t num)
@@ -301,7 +302,7 @@ public:
     std::shared_ptr<evfdClient> _evfdClient;
     std::shared_ptr<evfdServer> _evfdServer;
     TASK_QUEUE _taskQueue;
-    std::shared_ptr<(connManager::connManager<redisAsyncContext *>)> _connManager;
+    std::shared_ptr<connManager::connManager<redisAsyncContext *>> _connManager;
 };
 
 } // namespace task

@@ -27,7 +27,7 @@
 #include <unordered_map>
 #include <mutex>
 #include <memory>
-
+#include <boost/lexical_cast.hpp>
 namespace configCenter
 {
 // note: the shared_instance of this class will live until system gone
@@ -84,7 +84,7 @@ public:
 				}
 				catch (boost::bad_lexical_cast &e)
 				{
-					__LOG(warn, "error finding field : "<< field<<", type case fail. dest type is : "<<typeid(T).name();
+					__LOG(warn, "error finding field : "<< field<<", type case fail. dest type is : "<<typeid(T).name());
 				}
 			}
 		}

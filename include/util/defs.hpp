@@ -28,13 +28,13 @@ struct CONN_INFO
     int priority;
 };
 // this is singleton to save redisAsyncContext<->redisContext
-template <typename OBJ = void *, typename RDS_CTX = std::shared_ptr<redisContext>>
+template <typename OBJ, typename RDS_CTX>
 class contextSaver
 {
 public:
-    static contextSaver *instance()
+    static contextSaver<OBJ,RDS_CTX> *instance()
     {
-        static contextSaver *ins = new contextSaver();
+        static contextSaver<OBJ,RDS_CTX> *ins = new contextSaver<OBJ,RDS_CTX>();
         return ins;
     }
     void save(OBJ obj, RDS_CTX gene)
@@ -45,9 +45,9 @@ public:
     {
         _geneMap.erase(obj);
     }
-    std::pair<RDS_CTX, bool> get(OBJ obj)
+    std::pair<RDS_CTX, bool> getCtx(const OBJ obj)
     {
-        if (_geneMap.find() != _geneMap.end())
+        if (_geneMap.find(obj) != _geneMap.end())
         {
             return std::make_pair(_geneMap[obj], true);
         }

@@ -42,7 +42,7 @@ class lbStrategy
 public:
     virtual ~lbStrategy() {}
     // Interface
-    virtual std::pair<LB_OBJ, retStatus> get_obj() = 0;
+    virtual std::pair<LB_OBJ, retStatus> get_obj(int index = 0) = 0;
     virtual bool init() = 0;
     virtual retStatus update() = 0;
 
@@ -82,7 +82,7 @@ public:
         return update_obj(obj, weight);
     }
 
-    retStatus del_obj(LB_OBJ obj)
+    retStatus del_obj(const LB_OBJ obj)
     {
         unsigned int _avaliable_obj_before = get_avaliable_obj().size();
 
@@ -140,7 +140,7 @@ public:
         return 0;
     }
 
-    retStatus update_obj(LB_OBJ obj, unsigned int weight = 0)
+    retStatus update_obj(const LB_OBJ obj, unsigned int weight = 0)
     {
         __LOG(debug, " update obj is called, weight is : " << weight);
         unsigned int _avaliable_obj_before = get_avaliable_obj().size();
@@ -215,7 +215,7 @@ public:
             _obj_vector.push_back(std::make_pair(obj, weight));
         }
 
-        __LOG(debug, "_avaliable_obj_before is : " << _avaliable_obj_before << ", _avaliable_obj_after is :" << _avaliable_obj_after << ", inactive obj size is : " << _inactive_obj_vector.size());
+       
         unsigned int _avaliable_obj_after = get_avaliable_obj().size();
         if (!_avaliable_obj_after && _avaliable_obj_before)
         {

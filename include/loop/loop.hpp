@@ -28,6 +28,7 @@
 #include <map>
 #include <mutex>
 #include <thread>
+#include <string>
 #include <event2/event.h>
 #include <event2/thread.h>
 #include "logger/logger.hpp"
@@ -42,8 +43,8 @@ enum class loopStatus : std::uint32_t
 };
 std::ostream &operator<<(std::ostream &os, loopStatus status)
 {
-
-	os << ((status >= loopStatus::statusInit || status < loopStatus::statisMax) ? "UNDEFINED_STATUS" : ((const std::string[]){"statusInit", "statusRunning", "statusFinished"}[status]));
+	std::string statusString = ((status >= loopStatus::statusInit || status < loopStatus::statisMax) ? "UNDEFINED_STATUS" : ((const std::string[]){"statusInit", "statusRunning", "statusFinished"}[(int)status]));
+	os << statusString;
 	return os;
 }
 class loop : public std::enable_shared_from_this<loop>
@@ -67,9 +68,9 @@ public:
 	{
 		std::unique_lock<std::mutex> lck(_sMutex, std::defer_lock);
 		lck.lock();
-		if (_thread && loopStatus::statusFinished != _status)
+		if (_loopThread && loopStatus::statusFinished != _status)
 		{
-			_thread->join();
+			_loopThread->join();
 		}
 		lck.unlock();
 		if (NULL != _base)
@@ -92,7 +93,7 @@ public:
 	}
 
 	/** get status */
-	inline loopStatus status() const
+	loopStatus status() 
 	{
 		std::unique_lock<std::mutex> lck(_sMutex, std::defer_lock);
 		lck.lock();
@@ -107,6 +108,7 @@ public:
 	bool start(bool newThread = true)
 	{
 		std::unique_lock<std::mutex> lck(_sMutex, std::defer_lock);
+
 		lck.lock();
 		if (_status != loopStatus::statusInit)
 		{
@@ -122,7 +124,7 @@ public:
 		if (newThread)
 		{
 			// take care here
-			_thread = std::make_shared<std::thread>(std::bind(&loop::_run, shared_from_this()));
+			_loopThread = std::make_shared<std::thread>(std::bind(&loop::_run, shared_from_this()));
 		}
 		else
 		{
@@ -169,12 +171,12 @@ private:
 		lck.lock();
 		_status = loopStatus::statusFinished;
 	}
+	std::mutex _sMutex;
 
 private:
 	event_base *_base;
 	std::shared_ptr<std::thread> _loopThread;
 	loopStatus _status;
-	std::mutex _sMutex;
 };
 
 } // namespace loop

@@ -79,11 +79,11 @@ public:
         if (!vector_size)
         {
             __LOG(debug, "this->_obj_vector is empty!");
-            return std::make_pair(obj, retStatus::NO_ENTRY);
+            return retStatus::NO_ENTRY;
         }
         std::vector<double> init_list;
-        unsigned int max_weight = std::get<1>(*std::max_element(_obj_vector.begin(), _obj_vector.end()));
-        unsigned int min_weight = std::get<1>(*std::min_element(_obj_vector.begin(), _obj_vector.end()));
+        unsigned int max_weight = std::get<1>(*std::max_element(this->_obj_vector.begin(), this->_obj_vector.end()));
+        unsigned int min_weight = std::get<1>(*std::min_element(this->_obj_vector.begin(), this->_obj_vector.end()));
 
         if (max_weight != min_weight)
         {

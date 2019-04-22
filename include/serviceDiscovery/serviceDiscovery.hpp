@@ -31,6 +31,7 @@
 #include "logger/logger.hpp"
 #include "loop/loop.hpp"
 #include "gene/gene.hpp"
+#include "configCenter/configCenter.hpp"
 namespace serviceDiscovery
 {
 // note: this is not thread safe. need to work with task
@@ -43,10 +44,11 @@ public:
     typedef std::function<bool(connInfo)> onConnInfoChangeCb;
     typedef connInfo connInfo_type_t;
     serviceDiscovery<connInfo>() = delete;
-    serviceDiscovery<connInfo>(std::shared_ptr<loop::loop> loopIn) : _timerManager(loop)
+    serviceDiscovery<connInfo>(std::shared_ptr<loop::loop> loopIn)
     {
+        _timerManager.reset(new timer::timerManager(loopIn));
         __LOG(debug, "[serviceDiscovery] serviceDiscovery");
-        _retrigerTimer = timer_manager->getTimer();
+        _retrigerTimer = _timerManager->getTimer();
     }
 
     virtual ~serviceDiscovery<connInfo>()
@@ -109,7 +111,7 @@ public:
         if (!(_retrigerTimer->getIsRunning()))
         {
             __LOG(debug, "retriger timer is finished, start a new timer");
-            int _reconnect_interval = config_center<void *>::instance()->get_properties_fields(get_genetic_gene(), PROP_RECONN_INTERVAL, DEFAULT_CONN_TIMER);
+            int _reconnect_interval = configCenter::configCenter<void *>::instance()->get_properties_fields(get_genetic_gene(), PROP_RECONN_INTERVAL, DEFAULT_RECONN_INTERVAL);
             _retrigerTimer->startOnce(_reconnect_interval, [this]() {
                 __LOG(error, "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!restart!!!!!!!!!!!!!!!!!!!!!!!!!");
                 this->restart();

@@ -32,10 +32,11 @@ const std::string PROP_HOST = "PROP_HOST"; // the remote host IP or FQDN
 const std::string DEFAULT_HOST = "127.0.0.1";
 
 const std::string PROP_PORT = "PROP_PORT"; // the remote host IP or FQDN
-const std::string DEFAULT_porT = "6379";
+const std::string DEFAULT_PORT = "6379";
 
 const std::string DEFAULT_HB_LOST_NUM = "DEFAULT_HB_LOST_NUM";
 const std::string PROP_HB_LOST_NUM = "PROP_HB_LOST_NUM";
+
 const std::string DEFAULT_LOAD_BALANCE_STRATEGY = "DEFAULT_LOAD_BALANCE_STRATEGY";
 const std::string PROP_LOAD_BALANCE_STRATEGY = "PROP_LOAD_BALANCE_STRATEGY";
 
@@ -44,11 +45,11 @@ const std::string DEFAULT_SERVICE_DISCOVERY_MODE = "sdConfig";
 const std::string PROP_SERVICE_DISCOVERY_MODE = "PROP_SERVICE_DISCOVERY_MODE";
 
 
-
 const std::string PROP_UNIX_PATH = "PROP_UNIX_PATH";
 const std::string DEFAULT_REDIS_UNIX_PATH = "DEFAULT_REDIS_UNIX_PATH";
 
-const std::string PROP_HB_LOST_NUM = "PROP_HB_LOST_NUM";
-const std::string DEFAULT_HB_LOST_NUM = "DEFAULT_HB_LOST_NUM";
+const std::string  PROP_RECONN_INTERVAL = "PROP_RECONN_INTERVAL";
+const std::string  DEFAULT_RECONN_INTERVAL = "DEFAULT_RECONN_INTERVAL";
+
 
 

@@ -46,11 +46,11 @@ template <typename connInfo>
 class sdDns : public serviceDiscovery<connInfo>
 {
 public:
-    sdDns(std::shared_ptr<timer::timerManager> timer_manager) : serviceDiscovery<connInfo>(timer_manager)
+    sdDns(std::shared_ptr<loop::loop> loopIn) : serviceDiscovery<connInfo>(loopIn)
     {
-        _dns_timer = _timer_manager->getTimer();
+        _dns_timer = this->_timerManager->getTimer();
         _dns_ttl = 0;
-    }
+    }   
 
     virtual ~sdDns()
     {
@@ -62,7 +62,7 @@ public:
     {
         __LOG(debug, "[dns retriger]");
         _dns_timer->stop();
-        serviceDiscovery::retriger();
+        serviceDiscovery<connInfo>::retriger();
         return true;
     }
 

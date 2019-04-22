@@ -26,29 +26,32 @@
 
 #include <memory>
 #include "lbStrategy.hpp"
+#include "lbStrategy/discreteProbability.hpp"
+#include "lbStrategy/revertDiscreteProbability.hpp"
+#include "lbStrategy/roundRobbin.hpp"
 namespace lbStrategy
 {
+template <typename LB_OBJ>
 class lbsFactory
 {
 public:
     lbsFactory(){};
     virtual ~lbsFactory(){};
 
-    template <typename LB_OBJ>
     static std::shared_ptr<lbStrategy<LB_OBJ>> create(std::string name)
     {
         std::shared_ptr<lbStrategy<LB_OBJ>> ret = nullptr;
         if (!name.compare("DPD"))
         {
-            ret = std::dynamic_pointer_cast<lbStrategy<LB_OBJ>>(std::make_shared<DPD<LB_OBJ>>());
+            ret = std::dynamic_pointer_cast<lbStrategy<LB_OBJ>>(std::make_shared<discreteProbability<LB_OBJ>>());
         }
         else if (!name.compare("RDPD"))
         {
-            ret = std::dynamic_pointer_cast<lbStrategy<LB_OBJ>>(std::make_shared<RDPD<LB_OBJ>>());
+            ret = std::dynamic_pointer_cast<lbStrategy<LB_OBJ>>(std::make_shared<revertDiscreteProbability<LB_OBJ>>());
         }
         else if (!name.compare("RR"))
         {
-            ret = std::dynamic_pointer_cast<lbStrategy<LB_OBJ>>(std::make_shared<round_robbin<LB_OBJ>>());
+            ret = std::dynamic_pointer_cast<lbStrategy<LB_OBJ>>(std::make_shared<roundRobbin<LB_OBJ>>());
         }
         else
         {

@@ -3,7 +3,9 @@
 #include <unordered_map>
 #include <mutex>
 #include <memory>
+#include <map>
 #include <util/dbwType.hpp>
+#include "logger/logger.hpp"
 #define ANY_SAVER_TASK "ANY_SAVER_TASK"
 namespace anySaver
 {
@@ -11,12 +13,13 @@ namespace anySaver
 template <typename keyType_t>
 class anySaver
 {
+    
 public:
     anySaver() {}
     virtual ~anySaver() {}
-    static std::shared_ptr<(anySaver<keyType_t>)> instance()
+    static std::shared_ptr<anySaver<keyType_t>> instance()
     {
-        static std::shared_prt<anySaver<keyType_t>> ins(new anySaver<keyType_t>);
+        static std::shared_ptr<anySaver<keyType_t>> ins(new anySaver<keyType_t>);
         return ins;
     }
     // this is a glob, do not call this until all the client gone
@@ -37,7 +40,7 @@ public:
         }
     }
 
-    bool saveData(keyType_t key, std::string name, dbw::Any &&data)
+    bool saveData(keyType_t key, std::string name, DBW_ANY &&data)
     {
         std::lock_guard<std::mutex> lck(_mutex);
         // _anySaver[key][name]= data;
@@ -48,14 +51,14 @@ public:
         else
         {
             __LOG(debug, "no such key with type : " << typeid(key).name());
-            std::map<std::string, dbw::Any> _data;
+            std::unordered_map<std::string, DBW_ANY> _data;
             _data[name] = data;
             _anySaver[key].swap(_data);
         }
         return true;
     }
 
-    std::pair<dbw::Any, bool> getData(keyType_t key, std::string name)
+    std::pair<DBW_ANY, bool> getData(keyType_t key, std::string name)
     {
         std::lock_guard<std::mutex> lck(_mutex);
         auto it = _anySaver.find(key);
@@ -110,7 +113,7 @@ public:
     }
 
 private:
-    std::unordered_map<keyType_t, std::unordered_map<std::string, dbw::Any>> _anySaver;
+    std::unordered_map<keyType_t, std::unordered_map<std::string, DBW_ANY>> _anySaver;
     std::mutex _mutex;
 };
 } // namespace anySaver

@@ -1,9 +1,6 @@
 #pragma once
 
 #include <list>
-namespace redisCommand
-{
-
 enum class REDIS_MSG_TYPE : std::uint32_t
 {
     TASK_REDIS_PUT,
@@ -15,10 +12,12 @@ enum class REDIS_MSG_TYPE : std::uint32_t
     TASK_REDIS_MAX
 
 };
+namespace buildRedisCommand
+{
 
 // interface form APP API to redis RSP message
 template <typename COMMAND_KEY = std::string, typename COMMAND_VALUE = std::string, typename COMMAND_ARGS = std::nullptr_t> // to do typename... COMMAND_ARGS>
-class redisCommand
+class buildRedisCommand
 {
     using List = std::list<std::string>;
 
@@ -27,7 +26,7 @@ public:
     using key_type = std::remove_const_t<std::remove_reference_t<COMMAND_KEY>>;
     using value_type = std::remove_const_t<std::remove_reference_t<COMMAND_VALUE>>;
 #endif
-    redisCommand() = default;
+    buildRedisCommand() = default;
 
     static std::string get_format_command(REDIS_MSG_TYPE type, COMMAND_KEY key, COMMAND_VALUE value, COMMAND_ARGS args = nullptr) // to do COMMAND_ARGS... args)
     {
@@ -99,4 +98,4 @@ public:
         return buffer.str();
     }
 };
-} // namespace redisCommand
+} // namespace buildRedisCommand

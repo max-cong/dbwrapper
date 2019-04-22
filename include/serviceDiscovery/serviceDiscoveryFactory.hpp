@@ -43,7 +43,7 @@ public:
 
     static std::string get_mode()
     {
-        std::string name = configCenter::configCenter<void *>::instance()->get_properties_fields(get_genetic_gene(), configCenter::PROP_SERVICE_DISCOVERY_MODE, configCenter::DEFAULT_SERVICE_DISCOVERY_MODE);
+        std::string name = configCenter::configCenter<void *>::instance()->get_properties_fields(get_genetic_gene(), PROP_SERVICE_DISCOVERY_MODE, DEFAULT_SERVICE_DISCOVERY_MODE);
         return name;
     }
 
@@ -54,7 +54,7 @@ public:
 
         if (!name.compare("DNS"))
         {
-            ret = std::make_shared<sdDns>(loopIn);
+            ret = std::make_shared<sdDns<connInfo>>(loopIn);
             if (ret)
             {
                 ret->set_genetic_gene(get_genetic_gene());
@@ -66,7 +66,7 @@ public:
         }
         else if (!name.compare("unix_socket"))
         {
-            ret = std::make_shared<sdUnixSocket>(loopIn);
+            ret = std::make_shared<sdUnixSocket<connInfo>>(loopIn);
             if (ret)
             {
                 ret->set_genetic_gene(get_genetic_gene());
@@ -78,7 +78,7 @@ public:
         }
         else if (!name.compare("sdConfig"))
         {
-            ret = std::make_shared<sdConfig>(loopIn);
+            ret = std::make_shared<sdConfig<connInfo>>(loopIn);
             if (ret)
             {
                 ret->set_genetic_gene(get_genetic_gene());
