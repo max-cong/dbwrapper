@@ -23,7 +23,7 @@ public:
 		std::list<connInfo> _connInfo_list;
 		_connInfo_list.push_back(_connInfo);
 
-		return updateConnInfo(_connInfo_list);
+		return this->updateConnInfo(_connInfo_list);
 	}
 };
 } // namespace serviceDiscovery

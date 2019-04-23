@@ -24,9 +24,10 @@ public:
         {
             return false;
         }
+        //_loop_sptr
 
         // start task
-        _task_sptr = std::make_shared<task::task>(_loop_sptr);
+        _task_sptr = std::make_shared<task::taskImp>(_loop_sptr);
         if (!_task_sptr)
         {
             return false;
@@ -68,5 +69,5 @@ public:
         return (void *)this;
     }
     std::shared_ptr<loop::loop> _loop_sptr;
-    std::shared_ptr<task::task> _task_sptr;
+    std::shared_ptr<task::taskImp> _task_sptr;
 };

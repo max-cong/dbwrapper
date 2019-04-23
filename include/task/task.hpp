@@ -1,19 +1,21 @@
 #pragma once
 
-#include "gene/gene.hpp"
-#include "loop/loop.hpp"
-#include "taskUtil.hpp"
-#include "evfdClient.hpp"
-#include "evfdServer.hpp"
-#include "util/defs.hpp"
+
+
+#include "task/evfdClient.hpp"
+#include "task/evfdServer.hpp"
+#include "task/taskUtil.hpp"
+
 #include "heartbeat/heartbeat.hpp"
 #include "connManager/connManager.hpp"
 #include "util/dbwType.hpp"
 #include "util/defs.hpp"
+#include "gene/gene.hpp"
+#include "loop/loop.hpp"
 
 #include "hiredis/async.h"
 
-#include "taskUtil.hpp"
+
 #include <string>
 #include <memory>
 #include <list>
@@ -22,15 +24,14 @@
 #include <sys/eventfd.h>
 namespace task
 {
-
-class task : public gene::gene<void *>
+class taskImp : public gene::gene<void *>
 {
 public:
-    task(std::shared_ptr<loop::loop> loopIn) : _evfd(-1), _loop(loopIn)
+    taskImp(std::shared_ptr<loop::loop> loopIn) : _evfd(-1), _loop(loopIn)
     {
     }
-    task() = delete;
-    virtual ~task()
+    taskImp() = delete;
+    virtual ~taskImp()
     {
         if (_evfd > 0)
         {
@@ -48,7 +49,7 @@ public:
             __LOG(warn, "read return : " << ret);
             return;
         }
-        task *tmp = reinterpret_cast<task *>(args);
+        taskImp *tmp = reinterpret_cast<taskImp *>(args);
         tmp->process_msg(one);
     }
     static void pingCallback(redisAsyncContext *c, void *r, void *privdata)
@@ -78,7 +79,6 @@ public:
 
     static void connectCallback(const redisAsyncContext *c, int status)
     {
-
         if (status != REDIS_OK)
         {
             printf("Error: %s\n", c->errstr);
@@ -184,7 +184,7 @@ public:
             rdsCtx->_hb->set_genetic_gene(get_genetic_gene());
             rdsCtx->_hb->setPingCb([_context](std::shared_ptr<heartBeat::heartBeat>) {
                 std::string pingMsg("PING");
-                redisAsyncCommand(_context, task::pingCallback, (void *)_context, pingMsg.c_str(), pingMsg.size());
+                redisAsyncCommand(_context, taskImp::pingCallback, (void *)_context, pingMsg.c_str(), pingMsg.size());
             });
             rdsCtx->_lbs = _connManager->getLbs();
             auto ctxSaver = dbw::contextSaver<void *, std::shared_ptr<dbw::redisContext>>::instance();
@@ -220,7 +220,7 @@ public:
             __LOG(error, "!!!!!!!!create event fd fail!");
             return false;
         }
-        __LOG(debug, "init task with ID :" << _evfd);
+        __LOG(debug, "init taskImp with ID :" << _evfd);
         // start eventfd server
         try
         {
@@ -241,12 +241,13 @@ public:
             __LOG(error, "!!!!!!!!!!!!exception happend when trying to create event fd server, info :" << e.what());
             return false;
         }
-        _connManager = std::make_shared<connManager::connManager<redisAsyncContext *>>(get_loop());
+        _connManager = std::make_shared<connManager::connManager<dbw::CONN_INFO>>(get_loop());
         if (_connManager)
         {
             return false;
         }
         _connManager->set_genetic_gene(this);
+        _connManager->init();
         return true;
     }
     void process_msg(uint64_t num)
@@ -319,7 +320,7 @@ public:
     std::shared_ptr<evfdClient> _evfdClient;
     std::shared_ptr<evfdServer> _evfdServer;
     TASK_QUEUE _taskQueue;
-    std::shared_ptr<connManager::connManager<redisAsyncContext *>> _connManager;
+    std::shared_ptr<connManager::connManager<dbw::CONN_INFO>> _connManager;
 };
-
-} // namespace task
+using task_sptr_t = std::shared_ptr<taskImp>;
+} // namespace taskImp

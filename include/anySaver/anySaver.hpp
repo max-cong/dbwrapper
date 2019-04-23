@@ -40,7 +40,7 @@ public:
         }
     }
 
-    bool saveData(keyType_t key, std::string name, DBW_ANY &&data)
+    bool saveData(keyType_t key, std::string name, DBW_ANY data)
     {
         std::lock_guard<std::mutex> lck(_mutex);
         // _anySaver[key][name]= data;

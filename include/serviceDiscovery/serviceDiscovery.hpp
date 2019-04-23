@@ -41,7 +41,7 @@ class serviceDiscovery : public gene::gene<void *>
 public:
     typedef std::list<connInfo> connList;
     typedef std::function<connList()> getConnFun;
-    typedef std::function<bool(connInfo)> onConnInfoChangeCb;
+    using onConnInfoChangeCb = std::function<bool(connInfo)>;
     typedef connInfo connInfo_type_t;
     serviceDiscovery<connInfo>() = delete;
     serviceDiscovery<connInfo>(std::shared_ptr<loop::loop> loopIn)
@@ -180,12 +180,6 @@ public:
 
         __LOG(debug, "now try to get connection info ");
 
-        __LOG(debug, "dump update_list: ")
-        for (auto it : update_list)
-        {
-            __LOG(debug, "-- " << it.ip << " -- " << it.port << " --");
-        }
-
         if (update_list.empty())
         {
             __LOG(debug, "update_list is empty, now just clear the _conn_list");
@@ -213,7 +207,7 @@ public:
             if (std::find(std::begin(update_list), std::end(update_list), tmp) == update_list.end())
             {
                 onConnInfoDec(tmp);
-                __LOG(warn, "[service_discovery_base] now there is a connection to delete. info : " << tmp.ip);
+                // __LOG(warn, "[service_discovery_base] now there is a connection to delete. info : " << tmp.ip);
                 tmplist_not_in_tmp_list.push_back(tmp);
             }
             else
@@ -224,7 +218,7 @@ public:
         for (auto to_rm : tmplist_not_in_tmp_list)
         {
             std::remove(_conn_list.begin(), _conn_list.end(), to_rm);
-            __LOG(warn, "remove conn : " << to_rm.ip << ", now there are : " << _conn_list.size() << " connection");
+            //__LOG(warn, "remove conn : " << to_rm.ip << ", now there are : " << _conn_list.size() << " connection");
         }
 
         return true;

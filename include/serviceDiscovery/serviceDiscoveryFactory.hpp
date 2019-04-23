@@ -40,24 +40,24 @@ class serviceDiscoveryFactory : public gene::gene<void *>
 public:
     serviceDiscoveryFactory(){};
     virtual ~serviceDiscoveryFactory(){};
-
+#if 0
     static std::string get_mode()
     {
         std::string name = configCenter::configCenter<void *>::instance()->get_properties_fields(get_genetic_gene(), PROP_SERVICE_DISCOVERY_MODE, DEFAULT_SERVICE_DISCOVERY_MODE);
         return name;
     }
-
-    static std::shared_ptr<serviceDiscovery<connInfo>> create(std::shared_ptr<loop::loop> loopIn)
+#endif
+    static std::shared_ptr<serviceDiscovery<connInfo>> create(std::shared_ptr<loop::loop> loopIn, std::string name, void * gene)
     {
         std::shared_ptr<serviceDiscovery<connInfo>> ret = nullptr;
-        std::string name = get_mode();
+        
 
         if (!name.compare("DNS"))
         {
             ret = std::make_shared<sdDns<connInfo>>(loopIn);
             if (ret)
             {
-                ret->set_genetic_gene(get_genetic_gene());
+                ret->set_genetic_gene(gene);
             }
             else
             {
@@ -69,7 +69,7 @@ public:
             ret = std::make_shared<sdUnixSocket<connInfo>>(loopIn);
             if (ret)
             {
-                ret->set_genetic_gene(get_genetic_gene());
+                ret->set_genetic_gene(gene);
             }
             else
             {
@@ -81,7 +81,7 @@ public:
             ret = std::make_shared<sdConfig<connInfo>>(loopIn);
             if (ret)
             {
-                ret->set_genetic_gene(get_genetic_gene());
+                ret->set_genetic_gene(gene);
             }
             else
             {

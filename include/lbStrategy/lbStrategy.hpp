@@ -26,6 +26,7 @@
 #include "logger/logger.hpp"
 #include <algorithm>
 #include <utility>
+#include <functional>
 namespace lbStrategy
 {
 enum class retStatus : std::uint32_t

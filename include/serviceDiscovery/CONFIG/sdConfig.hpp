@@ -21,11 +21,16 @@ public:
 
         _connInfo.type = dbw::CONN_TYPE::IP;
         _connInfo.ip = connHost;
-        _connInfo.port = connPort;
+
+        std::string::size_type sz; // alias of size_t
+
+        int port = std::stoi(connPort, &sz);
+
+        _connInfo.port = port;
         std::list<connInfo> _connInfo_list;
         _connInfo_list.push_back(_connInfo);
 
-        return updateConnInfo(_connInfo_list);
+        return this->updateConnInfo(_connInfo_list);
     }
 };
 } // namespace serviceDiscovery

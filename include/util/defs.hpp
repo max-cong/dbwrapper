@@ -26,7 +26,12 @@ struct CONN_INFO
     std::string path;
     unsigned short port;
     int priority;
+    bool operator==(const CONN_INFO &rhs)
+    {
+        return this->type == rhs.type && this->ip == rhs.ip && this->path == rhs.path&& this->port == rhs.port&& this->priority == rhs.priority;
+    }
 };
+
 // this is singleton to save redisAsyncContext<->redisContext
 template <typename OBJ, typename RDS_CTX>
 class contextSaver
