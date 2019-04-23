@@ -272,13 +272,26 @@ public:
         }
         return true;
     }
+    bool sendMsg(taskMsg msg)
+    {
+        _taskQueue.emplace(msg);
+        if (!_evfdClient)
+        {
+            return false;
+        }
+        else
+        {
+            _evfdClient->send();
+        }
+        return true;
+    }
     bool sendMsg(taskMsgType type, DBW_ANY &&body)
     {
         taskMsg msg;
         msg.type = type;
         msg.body = body;
 
-        return sendMsg(std::move(msg));
+        return sendMsg(msg);
     }
     bool sendMsgList(std::list<taskMsg> &&msgList)
     {

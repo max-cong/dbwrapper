@@ -96,7 +96,7 @@ public:
     }
     bool del_conn(dbw::CONN_INFO connInfo)
     {
-        // to do 
+        // to do
         return true;
     }
 

@@ -111,7 +111,11 @@ public:
         if (!(_retrigerTimer->getIsRunning()))
         {
             __LOG(debug, "retriger timer is finished, start a new timer");
-            int _reconnect_interval = configCenter::configCenter<void *>::instance()->get_properties_fields(get_genetic_gene(), PROP_RECONN_INTERVAL, DEFAULT_RECONN_INTERVAL);
+
+            std::string reccItval = configCenter::configCenter<void *>::instance()->get_properties_fields(get_genetic_gene(), PROP_RECONN_INTERVAL, DEFAULT_RECONN_INTERVAL);
+            std::string::size_type sz; // alias of size_t
+            int _reconnect_interval = std::stoi(reccItval, &sz);
+
             _retrigerTimer->startOnce(_reconnect_interval, [this]() {
                 __LOG(error, "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!restart!!!!!!!!!!!!!!!!!!!!!!!!!");
                 this->restart();

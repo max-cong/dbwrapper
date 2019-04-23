@@ -66,6 +66,12 @@ public:
 	}
 	virtual ~loop()
 	{
+
+		if (NULL != _base)
+		{
+			event_base_free(_base);
+			_base = NULL;
+		}
 		std::unique_lock<std::mutex> lck(_sMutex, std::defer_lock);
 		lck.lock();
 		if (_loopThread && loopStatus::statusFinished != _status)
@@ -73,11 +79,6 @@ public:
 			_loopThread->join();
 		}
 		lck.unlock();
-		if (NULL != _base)
-		{
-			event_base_free(_base);
-			_base = NULL;
-		}
 	}
 
 	/** convert to event_base * pointer*/
@@ -93,7 +94,7 @@ public:
 	}
 
 	/** get status */
-	loopStatus status() 
+	loopStatus status()
 	{
 		std::unique_lock<std::mutex> lck(_sMutex, std::defer_lock);
 		lck.lock();
@@ -166,10 +167,13 @@ private:
 		_status = loopStatus::statusRunning;
 		lck.unlock();
 		onBeforeLoop();
+		__LOG(warn, " start loop!!");
 		event_base_loop(_base, 0);
+		__LOG(warn, " exit loop!!");
 		onAfterLoop();
 		lck.lock();
 		_status = loopStatus::statusFinished;
+		lck.unlock();
 	}
 	std::mutex _sMutex;
 

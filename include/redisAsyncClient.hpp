@@ -14,6 +14,8 @@ public:
     ~redisAsyncClient()
     {
         anySaver::anySaver<void *>::instance().reset();
+        _task_sptr.reset();
+        _loop_sptr.reset();
     }
     bool init()
     {
@@ -22,16 +24,18 @@ public:
         {
             return false;
         }
+
         // start task
         _task_sptr = std::make_shared<task::task>(_loop_sptr);
         if (!_task_sptr)
         {
             return false;
         }
+        _task_sptr->init();
         // save task to any saver
         anySaver::anySaver<void *>::instance()->saveData(this, ANY_SAVER_TASK, _task_sptr);
-
         _loop_sptr->start(true);
+        return true; //_loop_sptr->start(true);
     }
     bool put(std::string key, std::string value, void *usr_data, redisCallbackFn *fn)
     {
@@ -58,6 +62,10 @@ public:
         msg.body = command;
         msg.usr_data = usr_data;
         return _task_sptr->sendMsg(task::taskMsgType::TASK_REDIS_RAW, msg);
+    }
+    void *getThis()
+    {
+        return (void *)this;
     }
     std::shared_ptr<loop::loop> _loop_sptr;
     std::shared_ptr<task::task> _task_sptr;

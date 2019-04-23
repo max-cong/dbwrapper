@@ -1,5 +1,4 @@
 # dbwrapper
 
-## to do 
-add task to anysaver
-dns service discovery
+## project link 
+https://github.com/max-cong/medis/projects
