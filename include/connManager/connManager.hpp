@@ -29,12 +29,14 @@
 #include "util/defs.hpp"
 #include "serviceDiscovery/serviceDiscoveryFactory.hpp"
 #include "task/task.hpp"
+#include <memory>
 
 namespace connManager
 {
 const std::string CONN_INC = "CONN_INC";
 const std::string CONN_DEC = "CONN_DEC";
 
+using task_sptr_t = std::shared_ptr<task::taskImp>;
 // connmanager
 template <typename DBConn>
 class connManager : public gene::gene<void *>, public std::enable_shared_from_this<connManager<DBConn>>
@@ -105,10 +107,9 @@ public:
         std::pair<DBW_ANY, bool> taskPair = anySaver::anySaver<void *>::instance()->getData(get_genetic_gene(), ANY_SAVER_TASK);
         if (std::get<1>(taskPair))
         {
-
             DBW_ANY tmp_task_sptr = std::get<0>(taskPair);
 
-            std::shared_ptr<decltype(task::taskImp)> task_sptr = DBW_ANY_CAST<decltype(std::shared_ptr<decltype(task::taskImp)>)>(tmp_task_sptr);
+            task_sptr_t task_sptr = DBW_ANY_CAST<task_sptr_t>(tmp_task_sptr);
             task_sptr->send2task(task::taskMsgType::TASK_REDIS_ADD_CONN, connInfo);
         }
         else

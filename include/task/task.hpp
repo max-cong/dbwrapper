@@ -1,7 +1,5 @@
 #pragma once
 
-
-
 #include "task/evfdClient.hpp"
 #include "task/evfdServer.hpp"
 #include "task/taskUtil.hpp"
@@ -14,7 +12,6 @@
 #include "loop/loop.hpp"
 
 #include "hiredis/async.h"
-
 
 #include <string>
 #include <memory>
@@ -323,4 +320,4 @@ public:
     std::shared_ptr<connManager::connManager<dbw::CONN_INFO>> _connManager;
 };
 using task_sptr_t = std::shared_ptr<taskImp>;
-} // namespace taskImp
+} // namespace task
