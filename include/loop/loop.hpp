@@ -43,7 +43,7 @@ enum class loopStatus : std::uint32_t
 };
 std::ostream &operator<<(std::ostream &os, loopStatus status)
 {
-	std::string statusString = ((status >= loopStatus::statusInit || status < loopStatus::statisMax) ? "UNDEFINED_STATUS" : ((const std::string[]){"statusInit", "statusRunning", "statusFinished"}[(int)status]));
+	std::string statusString = ((status >= loopStatus::statusInit || status < loopStatus::statisMax) ? "UNDEFINED_STATUS" : (const std::string[]){"statusInit", "statusRunning", "statusFinished"}[(int)status]);
 	os << statusString;
 	return os;
 }
@@ -61,7 +61,6 @@ public:
 			// note!!!! if you catch this exception
 			// please remember call the distructure function
 			// !!!!!!! this is important
-			//throw std::logic_error(CREATE_EVENT_FAIL);
 		}
 	}
 	virtual ~loop()
@@ -155,9 +154,9 @@ protected:
 	{
 		return true;
 	}
-	virtual void onBeforeLoop() {}
-	virtual void onAfterLoop() {}
-	virtual void onAfterStop() {}
+	virtual void onBeforeLoop() { __LOG(debug, "onBeforeLoop"); }
+	virtual void onAfterLoop() { __LOG(debug, "onAfterLoop"); }
+	virtual void onAfterStop() { __LOG(debug, "onAfterStop"); }
 
 private:
 	void _run()
@@ -177,7 +176,6 @@ private:
 	}
 	std::mutex _sMutex;
 
-private:
 	event_base *_base;
 	std::shared_ptr<std::thread> _loopThread;
 	loopStatus _status;

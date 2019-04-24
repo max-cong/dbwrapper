@@ -13,7 +13,6 @@
 class redisAsyncClient : public nonCopyable
 {
 public:
-
     bool init()
     {
         _loop_sptr = std::make_shared<loop::loop>();
@@ -30,16 +29,12 @@ public:
             return false;
         }
         _task_sptr->init();
-
-        _loop_sptr->start(true);
-        return true; //_loop_sptr->start(true);
+        return _loop_sptr->start(true);
     }
     bool put(std::string key, std::string value, void *usr_data, redisCallbackFn *fn)
     {
         std::string command2send = buildRedisCommand::buildRedisCommand<std::string, std::string>::get_format_command(REDIS_MSG_TYPE::TASK_REDIS_PUT, key, value);
-
-        __LOG(debug, "get command :\n"
-                         << command2send);
+        __LOG(debug, "get command :\n"  << command2send);
         return send_format_raw_command(command2send, usr_data, fn);
     }
 

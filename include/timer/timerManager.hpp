@@ -62,7 +62,6 @@ public:
 		tmp_ptr->setTid(tid);
 		{
 			std::lock_guard<std::mutex> lck(_tMutex);
-			//_timerMap.emplace(tid, tmp_ptr);
 			_timerMap[tid] = tmp_ptr;
 		}
 		return tmp_ptr;
@@ -78,7 +77,7 @@ public:
 		return killTimer(timer_sptr->getTid());
 	}
 
-protected:
+
 private:
 	unsigned long getUniqueID()
 	{

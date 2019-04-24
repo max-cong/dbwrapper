@@ -18,8 +18,9 @@ enum class CONN_TYPE : std::uint32_t
     TYPE_MAX
 };
 
-struct CONN_INFO
+class CONN_INFO
 {
+public:
     CONN_INFO() : type(CONN_TYPE::IP), priority(1) {}
     CONN_TYPE type;
     std::string ip;
@@ -28,7 +29,7 @@ struct CONN_INFO
     int priority;
     bool operator==(const CONN_INFO &rhs)
     {
-        return this->type == rhs.type && this->ip == rhs.ip && this->path == rhs.path&& this->port == rhs.port&& this->priority == rhs.priority;
+        return this->type == rhs.type && this->ip == rhs.ip && this->path == rhs.path && this->port == rhs.port && this->priority == rhs.priority;
     }
 };
 

@@ -57,11 +57,11 @@ public:
         {
             if (c->errstr)
             {
-                __LOG(error,"errstr: "<< c->errstr);
+                __LOG(error, "errstr: " << c->errstr);
             }
             return;
         }
-        __LOG(debug, "argv: "<<(char *)privdata<<", string is %s"<<reply->str);
+        __LOG(debug, "argv: " << (char *)privdata << ", string is %s" << reply->str);
         auto ctxSaver = dbw::contextSaver<void *, std::shared_ptr<dbw::redisContext>>::instance();
         auto ctxRet = ctxSaver->getCtx(c);
         if (std::get<1>(ctxRet))
@@ -79,7 +79,7 @@ public:
     {
         if (status != REDIS_OK)
         {
-            __LOG(error, "Error: "<< c->errstr);
+            __LOG(error, "Error: " << c->errstr);
             return;
         }
         __LOG(debug, "Connected...");
@@ -104,10 +104,10 @@ public:
     {
         if (status != REDIS_OK)
         {
-            __LOG(error, "Error: "<< c->errstr);
+            __LOG(error, "Error: " << c->errstr);
             return;
         }
-        __LOG(warn,"Disconnected...\n");
+        __LOG(warn, "Disconnected...\n");
         redisAsyncContext *_aCtx = const_cast<redisAsyncContext *>(c);
         auto ctxSaver = dbw::contextSaver<void *, std::shared_ptr<dbw::redisContext>>::instance();
 
@@ -221,29 +221,17 @@ public:
         }
         __LOG(debug, "init taskImp with ID :" << _evfd);
         // start eventfd server
-        try
+
+        _evfdServer = std::make_shared<evfdServer>(get_loop(), _evfd, evfdCallback, (void *)this);
+        if (!_evfdServer->init())
         {
-            _evfdServer = std::make_shared<evfdServer>(get_loop(), _evfd, evfdCallback, (void *)this);
-            if (!_evfdServer->init())
-            {
-                return false;
-            }
-        }
-        catch (std::exception &e)
-        {
-            __LOG(error, "!!!!!!!!!!!!exception happend when trying to create event fd server, info :" << e.what());
             return false;
         }
+
         // start evfd client
-        try
-        {
-            _evfdClient = std::make_shared<evfdClient>(_evfd);
-        }
-        catch (std::exception &e)
-        {
-            __LOG(error, "!!!!!!!!!!!!exception happend when trying to create event fd server, info :" << e.what());
-            return false;
-        }
+
+        _evfdClient = std::make_shared<evfdClient>(_evfd);
+
         _connManager = std::make_shared<connManager::connManager<dbw::CONN_INFO>>(get_loop());
         if (!_connManager)
         {
@@ -252,11 +240,11 @@ public:
         _connManager->set_genetic_gene(this);
 
         auto sef_sptr = this->shared_from_this();
-        _connManager->setAddConnCb([sef_sptr](dbw::CONN_INFO connInfo) -> bool {
+        _connManager->setAddConnCb([sef_sptr](dbw::CONN_INFO connInfo) {
             __LOG(debug, "there is a new connection, send message to task with type TASK_REDIS_ADD_CONN");
             return sef_sptr->sendMsg(task::taskMsgType::TASK_REDIS_ADD_CONN, connInfo);
         });
-        _connManager->setDecConnCb([sef_sptr](dbw::CONN_INFO connInfo) -> bool {
+        _connManager->setDecConnCb([sef_sptr](dbw::CONN_INFO connInfo) {
             return sef_sptr->sendMsg(task::taskMsgType::TASK_REDIS_DEL_CONN, connInfo);
         });
         _connManager->init();

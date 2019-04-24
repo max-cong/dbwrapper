@@ -32,7 +32,7 @@
 namespace timer
 {
 
-class timer : public nonCopyable
+class timer : public nonCopyable, public std::enable_shared_from_this<timer>
 {
 public:
 	/** @brief callback fuction */
@@ -40,17 +40,16 @@ public:
 	typedef std::function<int(void *, int)> CBHandler;
 	typedef std::shared_ptr<timer> ptr_p;
 
-public:
 	timer() = delete;
 	explicit timer(std::shared_ptr<loop::loop> loop) : _loop(loop),
-											  _event(NULL),
-											  _interval(0),
-											  _round(1),
-											  _curRound(0),
-											  _handler(NULL),
+													   _event(NULL),
+													   _interval(0),
+													   _round(1),
+													   _curRound(0),
+													   _handler(NULL),
 
-											  _tid(0),
-											  _isRunning(false)
+													   _tid(0),
+													   _isRunning(false)
 
 	{
 	}
@@ -98,7 +97,6 @@ public:
 		if (0 != event_add(_event, &tv))
 		{
 			__LOG(error, "event add return fail");
-			//reset();
 			return false;
 		}
 
@@ -109,23 +107,24 @@ public:
 		setIsRunning(true);
 		return true;
 	}
-	bool startOnce(uint32_t interval, timer::timer::Handler const & handler)
+	bool startOnce(uint32_t interval, timer::timer::Handler const &handler)
 	{
 		return startRounds(interval, 1, handler);
 	}
 	// note: this is not true forever
-	bool startForever(uint32_t interval, timer::timer::Handler const & handler)
+	bool startForever(uint32_t interval, timer::timer::Handler const &handler)
 	{
 		return startRounds(interval, uint32_t(-1), handler);
 	}
 	bool startAfter(
 		uint32_t after,
-		uint32_t interval,
-		uint64_t round,
-		timer::timer::Handler const & handler)
+		uint32_t intval,
+		uint64_t rund,
+		timer::timer::Handler const &handler)
 	{
-		return startOnce(after, [=]() {
-			startRounds(interval, round, handler);
+		auto this_sptr = this->shared_from_this();
+		return startOnce(after, [intval, rund, handler, this_sptr]() {
+			this_sptr->startRounds(intval, rund, handler);
 		});
 	}
 
@@ -180,7 +179,6 @@ private:
 		_timer->_handler();
 	}
 
-private:
 	std::weak_ptr<loop::loop> _loop;
 	struct event *_event;
 	uint32_t _interval; //ms

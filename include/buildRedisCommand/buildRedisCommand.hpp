@@ -53,17 +53,15 @@ public:
             {
             }
 #else
-            if (std::is_same<COMMAND_KEY, std::string>::value)
+            if (std::is_same<COMMAND_KEY, std::string>::value && std::is_same<COMMAND_VALUE, std::string>::value)
             {
-                if (std::is_same<COMMAND_VALUE, std::string>::value)
-                {
-                    __LOG(error, "Put command, key is : " << key << ", value is : " << value);
-                    List _list;
-                    _list.emplace_back("SET");
-                    _list.emplace_back(key);
-                    _list.emplace_back(value);
-                    return redis_formatCommand(_list);
-                }
+
+                __LOG(error, "Put command, key is : " << key << ", value is : " << value);
+                List _list;
+                _list.emplace_back("SET");
+                _list.emplace_back(key);
+                _list.emplace_back(value);
+                return redis_formatCommand(_list);
             }
 #endif
             break;

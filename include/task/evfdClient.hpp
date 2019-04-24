@@ -7,10 +7,9 @@ class evfdClient
 public:
     evfdClient() = delete;
     // Note:!! please make sure your fd is non-blocking
-    // for example: int ev_fd = eventfd(0, EFD_NONBLOCK|EFD_CLOEXEC);
-    explicit evfdClient(int efd) : _one(1)
+    
+    explicit evfdClient(int efd) : _evfd(efd),_one(1)
     {
-        _evfd = efd;
         __LOG(debug, "event fd is " << _evfd);
     }
     virtual ~evfdClient() {}

@@ -60,7 +60,7 @@ public:
     }
 
     // for round robbin, if the weight is 0, that mean we should delete the obj
-    // the default weight is 10;
+    // the default weight_ is 10;
     virtual retStatus add_obj(LB_OBJ obj, unsigned int weight = 10)
     {
         return this->update_obj(obj, weight);

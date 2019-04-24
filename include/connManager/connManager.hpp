@@ -46,7 +46,6 @@ public:
     connManager() = delete;
     explicit connManager(std::shared_ptr<loop::loop> loopIn) : _loop(loopIn)
     {
-        //std::shared_ptr<task::taskImp> = std::make_shared<task::taskImp>(loopIn);
     }
     virtual ~connManager()
     {
@@ -65,11 +64,11 @@ public:
 
         auto this_sptr = this->shared_from_this();
 
-        _srvc_sptr->setOnConnInc([this_sptr](DBConn connInfo) -> bool {
+        _srvc_sptr->setOnConnInc([this_sptr](DBConn connInfo) {
             __LOG(debug, "new there is a new connection, add it to connection manager");
             return this_sptr->add_conn(connInfo);
         });
-        _srvc_sptr->setOnConnDec([this_sptr](DBConn connInfo) -> bool {
+        _srvc_sptr->setOnConnDec([this_sptr](DBConn connInfo) {
             return this_sptr->add_conn(connInfo);
         });
         _srvc_sptr->init();
@@ -77,8 +76,14 @@ public:
         return true;
     }
 
-    void on_unavaliable() {}
-    void on_avaliable() {}
+    void on_unavaliable()
+    {
+        __LOG(debug, "on_unavaliable");
+    }
+    void on_avaliable()
+    {
+        __LOG(debug, "on_avaliable");
+    }
 
     std::pair<redisAsyncContext *, lbStrategy::retStatus> get_conn()
     {

@@ -185,18 +185,19 @@ public:
             if (std::find(std::begin(update_list), std::end(update_list), tmp) == update_list.end())
             {
                 onConnInfoDec(tmp);
-                // __LOG(warn, "[service_discovery_base] now there is a connection to delete. info : " << tmp.ip);
+    
                 tmplist_not_in_tmp_list.push_back(tmp);
             }
             else
             {
+                __LOG(debug, "[service_discovery_base] connection info already in the local list");
             }
         }
 
         for (auto to_rm : tmplist_not_in_tmp_list)
         {
             std::remove(_conn_list.begin(), _conn_list.end(), to_rm);
-            //__LOG(warn, "remove conn : " << to_rm.ip << ", now there are : " << _conn_list.size() << " connection");
+            
         }
 
         return true;

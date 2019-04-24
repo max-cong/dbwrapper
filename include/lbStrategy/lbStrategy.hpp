@@ -51,7 +51,7 @@ public:
     {
         _no_avaliable_cb = cb;
     }
-    void set_first_avaliable_cb(std::function<void()> const & cb)
+    void set_first_avaliable_cb(std::function<void()> const &cb)
     {
         _first_avaliable_cb = cb;
     }
@@ -88,7 +88,7 @@ public:
         unsigned int _avaliable_obj_before = get_avaliable_obj().size();
 
         for (auto it = _obj_vector.begin(); it != _obj_vector.end();)
-        //for (auto it : _obj_vector)
+
         {
             if (std::get<0>(*it) == obj)
             {
@@ -101,7 +101,7 @@ public:
             }
         }
         for (auto it = _inactive_obj_vector.begin(); it != _inactive_obj_vector.end();)
-        //for (auto it : _obj_vector)
+
         {
             if ((*it) == obj)
             {
@@ -117,12 +117,10 @@ public:
         __LOG(warn, " size of _obj_vector is : " << _obj_vector.size() << ", size of _inactive_obj_vector is : " << _inactive_obj_vector.size());
         unsigned int _avaliable_obj_after = get_avaliable_obj().size();
 
-        if (_avaliable_obj_before && !_avaliable_obj_after)
+        if (_avaliable_obj_before && !_avaliable_obj_after && _no_avaliable_cb)
         {
-            if (_no_avaliable_cb)
-            {
-                _no_avaliable_cb();
-            }
+
+            _no_avaliable_cb();
         }
 
         return update();
@@ -169,7 +167,7 @@ public:
                 __LOG(debug, "loop inactive thread");
                 if ((*it) == obj)
                 {
-                    //it = _inactive_obj_vector.erase(it);
+
                     __LOG(warn, "obj is in the inactive obj");
                     found = true;
                     it++;
@@ -216,12 +214,9 @@ public:
         }
 
         unsigned int _avaliable_obj_after = get_avaliable_obj().size();
-        if (!_avaliable_obj_after && _avaliable_obj_before)
+        if (!_avaliable_obj_after && _avaliable_obj_before && _no_avaliable_cb)
         {
-            if (_no_avaliable_cb)
-            {
-                _no_avaliable_cb();
-            }
+            _no_avaliable_cb();
         }
         if (_avaliable_obj_before == 0 && _avaliable_obj_after > 0)
         {

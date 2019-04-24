@@ -9,7 +9,7 @@ public:
     typedef void (*evCb)(evutil_socket_t fd, short event, void *args);
     evfdServer() = delete;
     // Note:!! please make sure your fd is non-blocking
-    // for example: int ev_fd = eventfd(0, EFD_NONBLOCK|EFD_CLOEXEC);
+  
     // Note:!! please make sure that you pass in a right envent base loop
     // event base is not changeable, if you want to change it, please kill this object and start a new _one
     // will add some some check later.....

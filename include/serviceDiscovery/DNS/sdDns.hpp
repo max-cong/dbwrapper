@@ -41,7 +41,7 @@
 #include <list>
 namespace serviceDiscovery
 {
-using boost::asio::ip::address;
+
 using List = std::list<std::string>;
 template <typename connInfo>
 class sdDns : public serviceDiscovery<connInfo>
@@ -219,7 +219,7 @@ public:
         {
             try
             {
-                address addr(address::from_string(_host_iter));
+                boost::asio::ip::address addr(boost::asio::ip::address::from_string(_host_iter));
                 connInfo _tmp_info;
                 if (addr.is_v4())
                 {

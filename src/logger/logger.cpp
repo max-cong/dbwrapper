@@ -31,7 +31,7 @@ static const char yellow[] = {0x1b, '[', '1', ';', '3', '3', 'm', 0};
 static const char blue[] = {0x1b, '[', '1', ';', '3', '4', 'm', 0};
 static const char normal[] = {0x1b, '[', '0', ';', '3', '9', 'm', 0};
 
-std::unique_ptr<loggerIface> _activeLogger(new logger(loggerIface::logLevel::error)); //nullptr;
+std::unique_ptr<loggerIface> _activeLogger(new logger(loggerIface::logLevel::error));
 
 logger::logger(loggerIface::logLevel level)
     : _logLevel(level)
