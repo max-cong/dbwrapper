@@ -48,4 +48,10 @@ before_script:
   - git clone https://github.com/redis/hiredis.git&&cd hiredis&&git checkout v0.14.0&&make&&sudo make install&&cd ..
 
 
-script: mkdir -p build  &&cp sonar-project.properties build/ && cd build&& cmake ..  &&build-wrapper-linux-x86-64 --out-dir ../bw-output make clean all&&cd ..&& sonar-scanner
+script: 
+  - export BASE_DIR=$PWD
+  - export GCOV_DIR=$PWD/build/tst/CMakeFiles/_medis_tests.dir
+  - mkdir -p build  &&cp sonar-project.properties build/ && cd build
+  - cmake -DCODE_COVERAGE=ON -DBUILD_TESTING=ON ..  &&build-wrapper-linux-x86-64 --out-dir ../bw-output make clean all&&bin/medis_tests
+  - cd $GCOV_DIR&& gcov -a tst.cpp.gcno
+  - cd $PWD&& sonar-scanner -Dsonar.cfamily.gcov.reportsPath=$GCOV_DIR&&

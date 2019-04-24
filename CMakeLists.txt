@@ -1,5 +1,5 @@
 PROJECT(medis)
-CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
+cmake_minimum_required(VERSION 3.5)
 
 
 SET(M_VERSION_MAJOR 1)
@@ -8,21 +8,44 @@ SET(M_VERSION_PATCH 0)
 SET(M_VERSION ${M_VERSION_MAJOR}.${M_VERSION_MINOR}.${M_VERSION_PATCH})
 
 
-
 SET(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)
 SET(TESTS_BINARY ${PROJECT_NAME}_tests)
 SET(EXAMPLE_BINARY ${PROJECT_NAME}_example)
-SET(CCXX_FLAGS "-O2 -g -Wall -std=c++11 -fPIC -lpthread")
-SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CCXX_FLAGS}")
+
+
+
+
+IF(CODE_COVERAGE)
+	SET(CCXX_FLAGS "-O0 -g -Wall -std=c++11 -fPIC -lpthread -fprofile-arcs -ftest-coverage")
+	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CCXX_FLAGS}")
+ELSE()
+    SET(CCXX_FLAGS "-O2 -g -Wall -std=c++11 -fPIC -lpthread")
+	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CCXX_FLAGS}")
+ENDIF()
+
+
+
+
 
 MESSAGE(STATUS "start build")
 MESSAGE(STATUS "CMAKE_CXX_FLAGS: " ${CMAKE_CXX_FLAGS})
 
 
+
 ADD_SUBDIRECTORY(src)
 ADD_SUBDIRECTORY(example)
-ADD_SUBDIRECTORY(tst)
+
+
+
+option (BUILD_TESTING "Build the testing tree." ON)
+# Only build tests if we are the top-level project
+# Allows this to be used by super projects with `add_subdirectory`
+if (BUILD_TESTING AND (PROJECT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR))
+  enable_testing()
+  add_subdirectory(tst)
+endif()
+
 
 
 
@@ -53,4 +76,5 @@ ADD_CUSTOM_TARGET(cleanup
 	WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
 	COMMENT "Remove all temp files"
 )
+
 
