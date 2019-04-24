@@ -45,6 +45,9 @@ public:
     using onConnInfoChangeCb = std::function<bool(connInfo)>;
     typedef connInfo connInfo_type_t;
     serviceDiscovery<connInfo>() = delete;
+
+
+
     explicit serviceDiscovery<connInfo>(std::shared_ptr<loop::loop> loopIn)
     {
         _timerManager.reset(new timer::timerManager(loopIn));

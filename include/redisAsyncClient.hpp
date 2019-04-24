@@ -13,12 +13,7 @@
 class redisAsyncClient : public nonCopyable
 {
 public:
-    redisAsyncClient() = default;
-    virtual ~redisAsyncClient()
-    {
-        _task_sptr.reset();
-        _loop_sptr.reset();
-    }
+
     bool init()
     {
         _loop_sptr = std::make_shared<loop::loop>();
