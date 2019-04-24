@@ -49,6 +49,8 @@ public:
     {
 
         DIST_OBJ obj;
+        // note: do this to supress build warning. this is redisAsyncContext*
+        obj = NULL;
         if (this->_obj_vector.empty())
         {
             return std::make_pair(obj, retStatus::NO_ENTRY);

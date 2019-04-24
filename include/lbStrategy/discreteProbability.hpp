@@ -44,6 +44,8 @@ public:
     std::pair<DIST_OBJ, retStatus> get_obj() override
     {
         DIST_OBJ obj;
+        // note: do this to supress build warning. this is redisAsyncContext*
+        obj = NULL;
         if (this->_obj_vector.empty())
         {
             __LOG(warn, "there is no object to get!");

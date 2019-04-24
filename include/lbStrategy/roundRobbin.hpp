@@ -39,6 +39,8 @@ public:
     std::pair<LB_OBJ, retStatus> get_obj() override
     {
         LB_OBJ obj;
+        // note: do this to supress build warning. this is redisAsyncContext*
+        obj = NULL;
         if (this->_obj_vector.empty() || !_max_index)
         {
             return std::make_pair(obj, retStatus::NO_ENTRY);

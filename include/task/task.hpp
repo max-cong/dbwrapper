@@ -253,10 +253,10 @@ public:
         auto sef_sptr = this->shared_from_this();
         _connManager->setAddConnCb([sef_sptr](dbw::CONN_INFO connInfo) -> bool {
             __LOG(debug, "there is a new connection, send message to task with type TASK_REDIS_ADD_CONN");
-            sef_sptr->sendMsg(task::taskMsgType::TASK_REDIS_ADD_CONN, connInfo);
+            return sef_sptr->sendMsg(task::taskMsgType::TASK_REDIS_ADD_CONN, connInfo);
         });
         _connManager->setDecConnCb([sef_sptr](dbw::CONN_INFO connInfo) -> bool {
-            sef_sptr->sendMsg(task::taskMsgType::TASK_REDIS_DEL_CONN, connInfo);
+            return sef_sptr->sendMsg(task::taskMsgType::TASK_REDIS_DEL_CONN, connInfo);
         });
         _connManager->init();
         return true;

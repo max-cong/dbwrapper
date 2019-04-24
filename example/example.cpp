@@ -16,7 +16,8 @@ void getCallback(redisAsyncContext *c, void *r, void *privdata)
         }
         return;
     }
-    printf("argv[%s]: %s\n", (char *)privdata, reply->str);
+     __LOG(debug, "private data is : "<<(void*)privdata<<", string is : "<<reply->str);
+   
 }
 int main()
 {
@@ -32,5 +33,5 @@ int main()
 
     aclient.put("hello", "world", NULL, getCallback);
     std::this_thread::sleep_for(std::chrono::milliseconds(500));
-    std::cout << "hello world" << std::endl;
+    
 }
