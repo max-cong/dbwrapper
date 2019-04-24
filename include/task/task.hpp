@@ -12,7 +12,7 @@
 #include "loop/loop.hpp"
 
 #include "hiredis/async.h"
-
+#include "hiredis/hiredis.h"
 #include <string>
 #include <memory>
 #include <list>
