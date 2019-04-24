@@ -46,4 +46,4 @@ before_script:
   - sudo apt-get install libevent-dev
   - sudo apt-get install libhiredis-dev
 
-script: mkdir -p build  &&cp sonar-project.properties build/ && cd build&& cmake ..  &&build-wrapper-linux-x86-64 --out-dir ../bw-output make clean all&&cd ..&& sonar-scanner
+script: mkdir -p build  &&cp sonar-project.properties build/ && cd build&& cmake ..  &&build-wrapper-linux-x86-64 --out-dir ../bw-output make clean all&&cd ..&& sonar-scanner&&ls /usr/include&&echo "test"&&ls /usr/local/include
