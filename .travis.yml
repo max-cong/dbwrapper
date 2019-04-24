@@ -1,0 +1,43 @@
+dist: trusty
+language: cpp
+
+# safelist
+branches:
+  only:
+  - master
+  - dev
+
+compiler:
+  - gcc
+
+cache: ccache
+sudo: required
+os:
+  - linux
+jdk:
+- oraclejdk8
+addons:
+  apt:
+    sources:
+      - ubuntu-toolchain-r-test
+    packages:
+     # - gcc-4.8
+     # - g++-4.8
+  sonarcloud:
+    organization: "max-cong" # the key of the org you chose at step #3
+    projectKey: "max-cong_medis"
+    project: "medis"
+
+    token:
+      secure: "DQMQ0AFOisiMRjCvo4fovi/uK8B+sOgKprt9lu81CCCWNH1Fjqp+Bf6mbQ4+3rUE5F935p2ma+RDqNDaZlgUXYoa+NR64vFZLBHfxEehfEq+g3Q1LkqKsKKjhs0r/O9xmZbl9Q4lMkQqZIXjH+uFRhfW7hahttKIZz38qR3Gr8PBIuYvRsRf4PomRwHMU/3sQsxB70c3QTQlShiCG3eoZ1Sdc3yDkjPaO1q1df8OBZitZ4PalX7rUg93C8I4GYGp885jGj5GRkCZx4VGRXBGZ9lkoS48H+xfEYya8nCmuF4ff1+zM0nEJhyqv0lilNrBDDx5T9fBIupuZMyboFHqzKyE86KA0cZFmyFhkwRP/EsDo8MwfpUgqGbp8GEUZ6Slej5TCdXWkx287vy7qUy7z04eBwr9gW+3bQu5nxFZiw0ziUmw/XXicChwL2DL929rLRRz+QNPtCGzDdLIQeRrbQiFmY8dZL3iY5O39w3NsWtCz5wmbVtyEdRkX0xEtgvF6mECOcY5Uxkru6ARV47YrzTJVuwJvRro0eGvG2bqQ3DuqlSM5klg1nbAP5wvc6x49afwC922zMKS2Vye60nIgm4ic4ATD4pVKEP2+hSwWrehEasDFJd2jnxxUskDu5PhvhsDfy8Zc8uWV16DTGvPZPRrmR/91pgDWExf8ggjUb4="
+
+
+
+before_install:
+
+
+install:
+  - if [[ "$TRAVIS_OS_NAME" != "osx" && "$CXX" = "g++" ]]; then export CXX="g++-4.8" CC="gcc-4.8"; fi
+#script: mkdir -p build  &&cp sonar-project.properties build/ && cd build&& cmake ..  &&build-wrapper-linux-x86-64 --out-dir bw-output make clean all&& sonar-scanner
+
+script: mkdir -p build  &&cp sonar-project.properties build/ && cd build&& cmake ..  &&build-wrapper-linux-x86-64 --out-dir ../bw-output make clean all&&cd ..&& sonar-scanner

@@ -26,12 +26,11 @@ int main()
 
     configCenter::cfgPropMap _config;
     _config[PROP_HOST] = "127.0.0.1";
-
     configCenter::configCenter<void *>::instance()->set_properties(aclient.getThis(), _config);
+    
     aclient.init();
-    std::this_thread::sleep_for(std::chrono::milliseconds(500));
 
+    std::this_thread::sleep_for(std::chrono::milliseconds(500));
     aclient.put("hello", "world", NULL, getCallback);
     std::this_thread::sleep_for(std::chrono::milliseconds(500));
-    
 }
