@@ -28,7 +28,8 @@
 #include "lbStrategy/lbsFactory.hpp"
 #include "util/defs.hpp"
 #include "serviceDiscovery/serviceDiscoveryFactory.hpp"
-#include "task/task.hpp"
+//#include "task/task.hpp"
+#include "anySaver/anySaver.hpp"
 #include <memory>
 
 namespace connManager
@@ -36,15 +37,16 @@ namespace connManager
 const std::string CONN_INC = "CONN_INC";
 const std::string CONN_DEC = "CONN_DEC";
 
-using task_sptr_t = std::shared_ptr<task::taskImp>;
 // connmanager
 template <typename DBConn>
 class connManager : public gene::gene<void *>, public std::enable_shared_from_this<connManager<DBConn>>
 {
 public:
+    using connChange = std::function<bool(DBConn connInfo)>;
     connManager() = delete;
     connManager(std::shared_ptr<loop::loop> loopIn) : _loop(loopIn)
     {
+        //std::shared_ptr<task::taskImp> = std::make_shared<task::taskImp>(loopIn);
     }
     virtual ~connManager()
     {
@@ -61,13 +63,14 @@ public:
 #endif
     bool init()
     {
+        __LOG(debug, "[connManager] init is called");
         // load balance related
         _lbs_sptr = lbStrategy::lbsFactory<redisAsyncContext *>::create("RR");
         _lbs_sptr->init();
         // service discovery related
         std::string sdsName = configCenter::configCenter<void *>::instance()->get_properties_fields(get_genetic_gene(), PROP_SERVICE_DISCOVERY_MODE, DEFAULT_SERVICE_DISCOVERY_MODE);
 
-        std::shared_ptr<serviceDiscovery::serviceDiscovery<DBConn>> _srvc_sptr = serviceDiscovery::serviceDiscoveryFactory<DBConn>::create(getLoop(), sdsName, get_genetic_gene());
+        _srvc_sptr = serviceDiscovery::serviceDiscoveryFactory<DBConn>::create(getLoop(), sdsName, get_genetic_gene());
         _srvc_sptr->init();
 
         auto this_sptr = this->shared_from_this();
@@ -101,27 +104,21 @@ public:
     {
         return _lbs_sptr->get_obj();
     }
-
+    void setAddConnCb(connChange inc)
+    {
+        connInc = inc;
+    }
+    void setDecConnCb(connChange dec)
+    {
+        connDec = dec;
+    }
     bool add_conn(DBConn connInfo)
     {
-        std::pair<DBW_ANY, bool> taskPair = anySaver::anySaver<void *>::instance()->getData(get_genetic_gene(), ANY_SAVER_TASK);
-        if (std::get<1>(taskPair))
-        {
-            DBW_ANY tmp_task_sptr = std::get<0>(taskPair);
-
-            task_sptr_t task_sptr = DBW_ANY_CAST<task_sptr_t>(tmp_task_sptr);
-            task_sptr->send2task(task::taskMsgType::TASK_REDIS_ADD_CONN, connInfo);
-        }
-        else
-        {
-            return false;
-        }
-        return true;
+        return connInc(connInfo);
     }
     bool del_conn(DBConn connInfo)
     {
-        // to do
-        return true;
+        return connDec(connInfo);
     }
 
     std::shared_ptr<lbStrategy::lbStrategy<redisAsyncContext *>> getLbs()
@@ -142,5 +139,7 @@ private:
     std::weak_ptr<loop::loop> _loop;
     std::shared_ptr<lbStrategy::lbStrategy<redisAsyncContext *>> _lbs_sptr;
     std::shared_ptr<serviceDiscovery::serviceDiscovery<DBConn>> _srvc_sptr;
+    connChange connInc;
+    connChange connDec;
 };
 } // namespace connManager

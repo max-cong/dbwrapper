@@ -21,7 +21,7 @@
 #include <sys/eventfd.h>
 namespace task
 {
-class taskImp : public gene::gene<void *>
+class taskImp : public gene::gene<void *>, public std::enable_shared_from_this<taskImp>
 {
 public:
     taskImp(std::shared_ptr<loop::loop> loopIn) : _evfd(-1), _loop(loopIn)
@@ -154,6 +154,7 @@ public:
             auto conn = _connManager->get_conn();
             if (std::get<1>(conn) != lbStrategy::retStatus::SUCCESS)
             {
+                __LOG(debug, "did not get a connection");
                 return false;
             }
 
@@ -222,6 +223,10 @@ public:
         try
         {
             _evfdServer = std::make_shared<evfdServer>(get_loop(), _evfd, evfdCallback, (void *)this);
+            if(!_evfdServer->init())
+            {
+                return false;
+            }
         }
         catch (std::exception &e)
         {
@@ -239,11 +244,19 @@ public:
             return false;
         }
         _connManager = std::make_shared<connManager::connManager<dbw::CONN_INFO>>(get_loop());
-        if (_connManager)
+        if (!_connManager)
         {
             return false;
         }
         _connManager->set_genetic_gene(this);
+
+        auto sef_sptr = this->shared_from_this();
+        _connManager->setAddConnCb([sef_sptr](dbw::CONN_INFO connInfo) -> bool {
+            sef_sptr->sendMsg(task::taskMsgType::TASK_REDIS_ADD_CONN, connInfo);
+        });
+        _connManager->setDecConnCb([sef_sptr](dbw::CONN_INFO connInfo) -> bool {
+            sef_sptr->sendMsg(task::taskMsgType::TASK_REDIS_DEL_CONN, connInfo);
+        });
         _connManager->init();
         return true;
     }
