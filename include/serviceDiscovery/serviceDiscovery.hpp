@@ -32,11 +32,12 @@
 #include "loop/loop.hpp"
 #include "gene/gene.hpp"
 #include "configCenter/configCenter.hpp"
+#include "util/nonCopyable.hpp"
 namespace serviceDiscovery
 {
 // note: this is not thread safe. need to work with task
 template <typename connInfo>
-class serviceDiscovery : public gene::gene<void *>
+class serviceDiscovery : public gene::gene<void *>, public nonCopyable
 {
 public:
     typedef std::list<connInfo> connList;

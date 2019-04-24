@@ -5,15 +5,17 @@
 #include "buildRedisCommand/buildRedisCommand.hpp"
 #include "logger/logger.hpp"
 #include "task/task.hpp"
+#include "util/nonCopyable.hpp"
+
 #include <string>
 #include <memory>
-class redisAsyncClient
+
+class redisAsyncClient : public nonCopyable
 {
 public:
     redisAsyncClient() = default;
-    ~redisAsyncClient()
+    virtual ~redisAsyncClient()
     {
-  
         _task_sptr.reset();
         _loop_sptr.reset();
     }

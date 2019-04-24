@@ -32,6 +32,7 @@
 
 #include "logger/logger.hpp"
 #include "timer/timerManager.hpp"
+#include "util/nonCopyable.hpp"
 
 #include "boost/asio/ip/address.hpp"
 #include "boost/any.hpp"
@@ -46,7 +47,8 @@ template <typename connInfo>
 class sdDns : public serviceDiscovery<connInfo>
 {
 public:
-    sdDns(std::shared_ptr<loop::loop> loopIn) : serviceDiscovery<connInfo>(loopIn)
+    sdDns<connInfo>() = delete;
+    sdDns<connInfo>(std::shared_ptr<loop::loop> loopIn) : serviceDiscovery<connInfo>(loopIn)
     {
         _dns_timer = this->_timerManager->getTimer();
         _dns_ttl = 0;

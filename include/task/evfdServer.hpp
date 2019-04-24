@@ -1,8 +1,9 @@
 #pragma once
 #include "loop/loop.hpp"
+#include "util/nonCopyable.hpp"
 namespace task
 {
-class evfdServer
+class evfdServer: public nonCopyable
 {
 public:
     typedef void (*evCb)(evutil_socket_t fd, short event, void *args);

@@ -27,10 +27,12 @@
 
 #include <memory>
 #include "loop/loop.hpp"
+#include "util/nonCopyable.hpp"
+
 namespace timer
 {
 
-class timer
+class timer: public nonCopyable
 {
 public:
 	/** @brief callback fuction */

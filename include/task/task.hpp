@@ -10,6 +10,7 @@
 #include "util/defs.hpp"
 #include "gene/gene.hpp"
 #include "loop/loop.hpp"
+#include "util/nonCopyable.hpp"
 
 #include "hiredis/async.h"
 #include "hiredis/hiredis.h"
@@ -21,7 +22,7 @@
 #include <sys/eventfd.h>
 namespace task
 {
-class taskImp : public gene::gene<void *>, public std::enable_shared_from_this<taskImp>
+class taskImp : public gene::gene<void *>, public std::enable_shared_from_this<taskImp>, public nonCopyable
 {
 public:
     taskImp(std::shared_ptr<loop::loop> loopIn) : _evfd(-1), _loop(loopIn)
