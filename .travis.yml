@@ -55,4 +55,4 @@ script:
   - mkdir -p build  &&cp sonar-project.properties build/ && cd build
   - cmake -DCODE_COVERAGE=ON -DBUILD_TESTING=ON ..  &&build-wrapper-linux-x86-64 --out-dir ../bw-output make clean all&&bin/medis_tests
   - cd $GCOV_DIR&& gcov -a tst.cpp.gcno
-  - cd $PWD&& sonar-scanner -Dsonar.cfamily.gcov.reportsPath=$GCOV_DIR
+  - cd $PWD&& sonar-scanner 
