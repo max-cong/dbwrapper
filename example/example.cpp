@@ -3,7 +3,7 @@
 #include <thread>
 #include <chrono>
 #include "redisAsyncClient.hpp"
-#include <hiredis.h>
+#include "hiredis/hiredis.h"
 
 void getCallback(redisAsyncContext *c, void *r, void *privdata)
 {
