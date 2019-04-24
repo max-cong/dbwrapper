@@ -55,11 +55,7 @@ public:
         _retrigerTimer = _timerManager->getTimer();
     }
 
-    virtual ~serviceDiscovery<connInfo>()
-    {
-        _retrigerTimer->stop();
-        __LOG(warn, "[serviceDiscovery] ~serviceDiscovery");
-    }
+   
     virtual bool init() = 0;
 
     virtual bool stop()

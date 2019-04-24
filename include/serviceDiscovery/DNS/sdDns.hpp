@@ -54,11 +54,6 @@ public:
         _dns_ttl = 0;
     }
 
-    virtual ~sdDns()
-    {
-        _dns_timer->stop();
-        __LOG(warn, "[sdDns] ~sdDns");
-    }
 
     virtual bool retriger() override
     {

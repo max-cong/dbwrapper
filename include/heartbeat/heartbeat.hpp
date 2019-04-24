@@ -47,10 +47,7 @@ public:
     {
         __LOG(debug, "start heartBeat, this is :" << (void *)this);
     }
-    ~heartBeat()
-    {
-        __LOG(debug, "[heartBeat] ~heartBeat, this is : " << (void *)this);
-    }
+   
     bool init()
     {
         _tManager.reset(new timer::timerManager(_loop.lock()));
