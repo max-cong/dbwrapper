@@ -71,17 +71,17 @@ public:
         std::string sdsName = configCenter::configCenter<void *>::instance()->get_properties_fields(get_genetic_gene(), PROP_SERVICE_DISCOVERY_MODE, DEFAULT_SERVICE_DISCOVERY_MODE);
 
         _srvc_sptr = serviceDiscovery::serviceDiscoveryFactory<DBConn>::create(getLoop(), sdsName, get_genetic_gene());
-        _srvc_sptr->init();
 
         auto this_sptr = this->shared_from_this();
 
         _srvc_sptr->setOnConnInc([this_sptr](DBConn connInfo) -> bool {
+            __LOG(debug, "new there is a new connection, add it to connection manager");
             return this_sptr->add_conn(connInfo);
         });
         _srvc_sptr->setOnConnDec([this_sptr](DBConn connInfo) -> bool {
             return this_sptr->add_conn(connInfo);
         });
-
+        _srvc_sptr->init();
 #if 0
         // message bus related
         auto bus = messageBusHelper<DBConn>(get_genetic_gene()).getMessageBus();

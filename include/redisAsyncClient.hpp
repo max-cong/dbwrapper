@@ -1,5 +1,5 @@
 #pragma once
-#include "anySaver/anySaver.hpp"
+
 #include "loop/loop.hpp"
 #include "hiredis/async.h"
 #include "buildRedisCommand/buildRedisCommand.hpp"
@@ -13,7 +13,7 @@ public:
     redisAsyncClient() = default;
     ~redisAsyncClient()
     {
-        anySaver::anySaver<void *>::instance().reset();
+  
         _task_sptr.reset();
         _loop_sptr.reset();
     }
@@ -33,8 +33,7 @@ public:
             return false;
         }
         _task_sptr->init();
-        // save task to any saver
-        anySaver::anySaver<void *>::instance()->saveData(this, ANY_SAVER_TASK, _task_sptr);
+
         _loop_sptr->start(true);
         return true; //_loop_sptr->start(true);
     }

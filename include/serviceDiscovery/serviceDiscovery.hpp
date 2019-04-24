@@ -130,8 +130,10 @@ public:
 
     virtual void onConnInfoInc(connInfo info)
     {
+        __LOG(debug, "[serviceDiscovery] onConnInfoInc");
         if (_cfgInc)
         {
+            __LOG(debug, "[serviceDiscovery] call registered callback function");
             _cfgInc(info);
         }
     }
@@ -144,6 +146,7 @@ public:
     }
     virtual void setOnConnInc(onConnInfoChangeCb cfgIncCb)
     {
+        __LOG(debug, "[serviceDiscovery] set conn inc callback function");
         _cfgInc = cfgIncCb;
     }
     virtual void setOnConnDec(onConnInfoChangeCb cfgDecCb)
