@@ -48,7 +48,7 @@ class sdDns : public serviceDiscovery<connInfo>
 {
 public:
     sdDns<connInfo>() = delete;
-    sdDns<connInfo>(std::shared_ptr<loop::loop> loopIn) : serviceDiscovery<connInfo>(loopIn)
+    explicit sdDns<connInfo>(std::shared_ptr<loop::loop> loopIn) : serviceDiscovery<connInfo>(loopIn)
     {
         _dns_timer = this->_timerManager->getTimer();
         _dns_ttl = 0;

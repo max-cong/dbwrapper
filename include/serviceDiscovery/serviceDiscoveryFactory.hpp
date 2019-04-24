@@ -40,13 +40,7 @@ class serviceDiscoveryFactory : public gene::gene<void *>
 public:
     serviceDiscoveryFactory(){};
     virtual ~serviceDiscoveryFactory(){};
-#if 0
-    static std::string get_mode()
-    {
-        std::string name = configCenter::configCenter<void *>::instance()->get_properties_fields(get_genetic_gene(), PROP_SERVICE_DISCOVERY_MODE, DEFAULT_SERVICE_DISCOVERY_MODE);
-        return name;
-    }
-#endif
+
     static std::shared_ptr<serviceDiscovery<connInfo>> create(std::shared_ptr<loop::loop> loopIn, std::string name, void * gene)
     {
         std::shared_ptr<serviceDiscovery<connInfo>> ret = nullptr;

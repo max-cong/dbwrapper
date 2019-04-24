@@ -44,23 +44,14 @@ class connManager : public gene::gene<void *>, public std::enable_shared_from_th
 public:
     using connChange = std::function<bool(DBConn connInfo)>;
     connManager() = delete;
-    connManager(std::shared_ptr<loop::loop> loopIn) : _loop(loopIn)
+    explicit connManager(std::shared_ptr<loop::loop> loopIn) : _loop(loopIn)
     {
         //std::shared_ptr<task::taskImp> = std::make_shared<task::taskImp>(loopIn);
     }
     virtual ~connManager()
     {
     }
-#if 0
-    void set_genetic_gene(void *gene)
-    {
-        _gene = gene;
-    }
-    void *get_genetic_gene()
-    {
-        return _gene;
-    }
-#endif
+
     bool init()
     {
         __LOG(debug, "[connManager] init is called");

@@ -71,7 +71,7 @@ public:
 class logger : public loggerIface
 {
 public:
-	logger(loggerIface::logLevel level = loggerIface::logLevel::info);
+	explicit  logger(loggerIface::logLevel level = loggerIface::logLevel::info);
 	~logger() = default;
 
 	logger(const logger &) = default;

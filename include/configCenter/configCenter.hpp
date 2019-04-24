@@ -118,7 +118,7 @@ public:
 		}
 		return false;
 	}
-	bool update_properties(cfgKeyType_t key, cfgPropMap props)
+	bool update_properties(cfgKeyType_t key, cfgPropMap const &props)
 	{
 		std::lock_guard<std::mutex> lck(_mutex);
 		auto it = _propertiesMap.find(key);
@@ -136,7 +136,7 @@ public:
 			return false;
 		}
 	}
-	bool set_properties(cfgKeyType_t key, cfgPropMap prop)
+	bool set_properties(cfgKeyType_t key, cfgPropMap const & prop)
 	{
 		std::lock_guard<std::mutex> lck(_mutex);
 		_propertiesMap[key] = prop;

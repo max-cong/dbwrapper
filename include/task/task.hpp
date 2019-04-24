@@ -25,7 +25,7 @@ namespace task
 class taskImp : public gene::gene<void *>, public std::enable_shared_from_this<taskImp>, public nonCopyable
 {
 public:
-    taskImp(std::shared_ptr<loop::loop> loopIn) : _evfd(-1), _loop(loopIn)
+    explicit taskImp(std::shared_ptr<loop::loop> loopIn) : _evfd(-1), _loop(loopIn)
     {
     }
     taskImp() = delete;
@@ -57,11 +57,11 @@ public:
         {
             if (c->errstr)
             {
-                printf("errstr: %s\n", c->errstr);
+                __LOG(error,"errstr: "<< c->errstr);
             }
             return;
         }
-        printf("argv[%s]: %s\n", (char *)privdata, reply->str);
+        __LOG(debug, "argv: "<<(char *)privdata<<", string is %s"<<reply->str);
         auto ctxSaver = dbw::contextSaver<void *, std::shared_ptr<dbw::redisContext>>::instance();
         auto ctxRet = ctxSaver->getCtx(c);
         if (std::get<1>(ctxRet))
@@ -79,10 +79,10 @@ public:
     {
         if (status != REDIS_OK)
         {
-            printf("Error: %s\n", c->errstr);
+            __LOG(error, "Error: "<< c->errstr);
             return;
         }
-        printf("Connected...\n");
+        __LOG(debug, "Connected...");
         redisAsyncContext *_aCtx = const_cast<redisAsyncContext *>(c);
         auto ctxSaver = dbw::contextSaver<void *, std::shared_ptr<dbw::redisContext>>::instance();
 
@@ -104,10 +104,10 @@ public:
     {
         if (status != REDIS_OK)
         {
-            printf("Error: %s\n", c->errstr);
+            __LOG(error, "Error: "<< c->errstr);
             return;
         }
-        printf("Disconnected...\n");
+        __LOG(warn,"Disconnected...\n");
         redisAsyncContext *_aCtx = const_cast<redisAsyncContext *>(c);
         auto ctxSaver = dbw::contextSaver<void *, std::shared_ptr<dbw::redisContext>>::instance();
 
@@ -125,7 +125,7 @@ public:
     }
 
     // set the callback function for evnet coming
-    virtual bool on_message(taskMsg task_msg)
+    virtual bool on_message(taskMsg const &task_msg)
     {
         switch (task_msg.type)
         {
@@ -224,7 +224,7 @@ public:
         try
         {
             _evfdServer = std::make_shared<evfdServer>(get_loop(), _evfd, evfdCallback, (void *)this);
-            if(!_evfdServer->init())
+            if (!_evfdServer->init())
             {
                 return false;
             }
@@ -285,7 +285,7 @@ public:
         }
         return true;
     }
-    bool sendMsg(taskMsg msg)
+    bool sendMsg(taskMsg const &msg)
     {
         _taskQueue.emplace(msg);
         if (!_evfdClient)

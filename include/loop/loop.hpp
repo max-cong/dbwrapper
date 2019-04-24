@@ -82,7 +82,7 @@ public:
 	}
 
 	/** convert to event_base * pointer*/
-	inline operator event_base *() const
+	inline explicit operator event_base *() const
 	{
 		return _base;
 	};

@@ -38,7 +38,7 @@ class timerManager
 {
 public:
 	timerManager() = delete;
-	timerManager(std::shared_ptr<loop::loop> loopIn) : _uniqueIDAtomic(0), _timerMap(), _loop(loopIn)
+	explicit timerManager(std::shared_ptr<loop::loop> loopIn) : _uniqueIDAtomic(0), _timerMap(), _loop(loopIn)
 	{
 	}
 	virtual ~timerManager()

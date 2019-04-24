@@ -45,7 +45,7 @@ public:
     using onConnInfoChangeCb = std::function<bool(connInfo)>;
     typedef connInfo connInfo_type_t;
     serviceDiscovery<connInfo>() = delete;
-    serviceDiscovery<connInfo>(std::shared_ptr<loop::loop> loopIn)
+    explicit serviceDiscovery<connInfo>(std::shared_ptr<loop::loop> loopIn)
     {
         _timerManager.reset(new timer::timerManager(loopIn));
         __LOG(debug, "[serviceDiscovery] serviceDiscovery");
@@ -58,36 +58,7 @@ public:
         __LOG(warn, "[serviceDiscovery] ~serviceDiscovery");
     }
     virtual bool init() = 0;
-#if 0
-    std::pair<connInfo, bool> host2connInfo(std::string host)
-    {
-        connInfo _tmp_info;
-        try
-        {
-            boost::asio::ip::address addr(boost::asio::ip::address::from_string(host));
-            if (addr.is_v4())
-            {
-                _tmp_info.type = conn_type::IPv4;
-                _tmp_info.ip = host;
-                return std::make_pair(_tmp_info, true);
-            }
-            else if (addr.is_v6())
-            {
-                _tmp_info.type = conn_type::IPv6;
-                _tmp_info.ip = host;
-                return std::make_pair(_tmp_info, true);
-            }
-            else
-            {
-                return std::make_pair(_tmp_info, false);
-            }
-        }
-        catch (boost::system::system_error &e)
-        {
-            return std::make_pair(_tmp_info, false);
-        }
-    }
-#endif
+
     virtual bool stop()
     {
         __LOG(warn, "[serviceDiscovery] stop is called");

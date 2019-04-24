@@ -6,7 +6,7 @@ template <typename connInfo>
 class sdUnixSocket : public serviceDiscovery<connInfo>
 {
 public:
-	sdUnixSocket(std::shared_ptr<loop::loop> loopIn) : serviceDiscovery<connInfo>(loopIn)
+	explicit sdUnixSocket(std::shared_ptr<loop::loop> loopIn) : serviceDiscovery<connInfo>(loopIn)
 	{
 	}
 	virtual bool init()

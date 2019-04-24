@@ -32,7 +32,7 @@
 namespace timer
 {
 
-class timer: public nonCopyable
+class timer : public nonCopyable
 {
 public:
 	/** @brief callback fuction */
@@ -42,15 +42,15 @@ public:
 
 public:
 	timer() = delete;
-	timer(std::shared_ptr<loop::loop> loop) : _loop(loop),
-										_event(NULL),
-										_interval(0),
-										_round(1),
-										_curRound(0),
-										_handler(NULL),
+	explicit timer(std::shared_ptr<loop::loop> loop) : _loop(loop),
+											  _event(NULL),
+											  _interval(0),
+											  _round(1),
+											  _curRound(0),
+											  _handler(NULL),
 
-										_tid(0),
-										_isRunning(false)
+											  _tid(0),
+											  _isRunning(false)
 
 	{
 	}
@@ -63,7 +63,7 @@ public:
 	{
 		return _tid;
 	}
-	bool startRounds(uint32_t interval, uint64_t round, timer::timer::Handler handler)
+	bool startRounds(uint32_t interval, uint64_t round, timer::timer::Handler const &handler)
 	{
 		if (NULL != _event)
 		{
@@ -109,12 +109,12 @@ public:
 		setIsRunning(true);
 		return true;
 	}
-	bool startOnce(uint32_t interval, timer::timer::Handler handler)
+	bool startOnce(uint32_t interval, timer::timer::Handler const & handler)
 	{
 		return startRounds(interval, 1, handler);
 	}
 	// note: this is not true forever
-	bool startForever(uint32_t interval, timer::timer::Handler handler)
+	bool startForever(uint32_t interval, timer::timer::Handler const & handler)
 	{
 		return startRounds(interval, uint32_t(-1), handler);
 	}
@@ -122,7 +122,7 @@ public:
 		uint32_t after,
 		uint32_t interval,
 		uint64_t round,
-		timer::timer::Handler handler)
+		timer::timer::Handler const & handler)
 	{
 		return startOnce(after, [=]() {
 			startRounds(interval, round, handler);

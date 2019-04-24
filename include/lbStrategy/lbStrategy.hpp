@@ -47,11 +47,11 @@ public:
     virtual bool init() = 0;
     virtual retStatus update() = 0;
 
-    void set_no_avaliable_cb(std::function<void()> cb)
+    void set_no_avaliable_cb(std::function<void()> const &cb)
     {
         _no_avaliable_cb = cb;
     }
-    void set_first_avaliable_cb(std::function<void()> cb)
+    void set_first_avaliable_cb(std::function<void()> const & cb)
     {
         _first_avaliable_cb = cb;
     }

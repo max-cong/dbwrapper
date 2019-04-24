@@ -9,7 +9,7 @@ template <typename connInfo>
 class sdConfig : public serviceDiscovery<connInfo>
 {
 public:
-    sdConfig(std::shared_ptr<loop::loop> loopIn) : serviceDiscovery<connInfo>(loopIn) {}
+    explicit sdConfig(std::shared_ptr<loop::loop> loopIn) : serviceDiscovery<connInfo>(loopIn) {}
     virtual bool init()
     {
 

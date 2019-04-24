@@ -43,7 +43,7 @@ public:
     using hbSuccCb = std::function<void(void)>;
     using hbLostCb = std::function<void(void)>;
     heartBeat() = delete;
-    heartBeat(std::shared_ptr<loop::loop> loopIn) : _interval(5000), _loop(loopIn), _success(false), _retryNum(5)
+    explicit heartBeat(std::shared_ptr<loop::loop> loopIn) : _interval(5000), _loop(loopIn), _success(false), _retryNum(5)
     {
         __LOG(debug, "start heartBeat, this is :" << (void *)this);
     }
@@ -140,9 +140,9 @@ public:
 
     void setInterval(uint32_t iv) { _interval = iv; }
     uint32_t getInterval() { return _interval; }
-    void setHbSuccCb(hbSuccCb cb) { _hbSuccCb = cb; }
-    void setHbLostCb(hbLostCb cb) { _hbLostCb = cb; }
-    void setPingCb(ping_f cb) { _pingCb = cb; }
+    void setHbSuccCb(hbSuccCb const &cb) { _hbSuccCb = cb; }
+    void setHbLostCb(hbLostCb const &cb) { _hbLostCb = cb; }
+    void setPingCb(ping_f const &cb) { _pingCb = cb; }
     ping_f getPingCb() { return _pingCb; }
 
     void set_hb_success(bool success)

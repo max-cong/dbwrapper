@@ -12,7 +12,7 @@ void getCallback(redisAsyncContext *c, void *r, void *privdata)
     {
         if (c->errstr)
         {
-            printf("errstr: %s\n", c->errstr);
+            __LOG(debug, "errstr: %s"<< c->errstr);
         }
         return;
     }
