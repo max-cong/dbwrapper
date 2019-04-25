@@ -42,6 +42,10 @@ public:
     }
     bool put(std::string key, std::string value, void *usr_data, redisCallbackFn *fn)
     {
+        if (!getConnStatus())
+        {
+            return false;
+        }
         std::string command2send = buildRedisCommand::buildRedisCommand<std::string, std::string>::get_format_command(REDIS_MSG_TYPE::TASK_REDIS_PUT, key, value);
         __LOG(debug, "get command :\n"
                          << command2send);
@@ -68,6 +72,10 @@ public:
     void *getThis()
     {
         return (void *)this;
+    }
+    bool getConnStatus()
+    {
+        return _task_sptr->getConnStatus();
     }
     std::shared_ptr<loop::loop> _loop_sptr;
     std::shared_ptr<task::taskImp> _task_sptr;

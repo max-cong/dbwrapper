@@ -20,12 +20,13 @@
 #include <tuple>
 #include <unistd.h>
 #include <sys/eventfd.h>
+#include <atomic>
 namespace task
 {
 class taskImp : public gene::gene<void *>, public std::enable_shared_from_this<taskImp>, public nonCopyable
 {
 public:
-    explicit taskImp(std::shared_ptr<loop::loop> loopIn) : _evfd(-1), _loop(loopIn)
+    explicit taskImp(std::shared_ptr<loop::loop> loopIn) : _connected(false), _evfd(-1), _loop(loopIn)
     {
     }
     taskImp() = delete;
@@ -287,6 +288,14 @@ public:
         _connManager->setDecConnCb([sef_sptr](dbw::CONN_INFO connInfo) {
             return sef_sptr->sendMsg(task::taskMsgType::TASK_REDIS_DEL_CONN, connInfo);
         });
+
+        _connManager->setAvaliableCb([sef_sptr]() {
+            sef_sptr->_connected = true;
+        });
+        _connManager->setUnavaliableCb([sef_sptr]() {
+            sef_sptr->_connected = false;
+        });
+
         _connManager->init();
         return true;
     }
@@ -358,7 +367,11 @@ public:
     {
         return _loop.lock();
     }
-
+    bool getConnStatus()
+    {
+        return _connected;
+    }
+    std::atomic<bool> _connected;
     int _evfd;
     std::weak_ptr<loop::loop> _loop;
     std::shared_ptr<evfdClient> _evfdClient;
@@ -366,5 +379,5 @@ public:
     TASK_QUEUE _taskQueue;
     std::shared_ptr<connManager::connManager<dbw::CONN_INFO>> _connManager;
 };
-using task_sptr_t = std::shared_ptr<taskImp>;
+
 } // namespace task

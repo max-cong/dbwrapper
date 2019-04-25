@@ -54,15 +54,21 @@ public:
     bool init()
     {
         __LOG(debug, "[connManager] init is called");
+        auto this_sptr = this->shared_from_this();
         // load balance related
         _lbs_sptr = lbStrategy::lbsFactory<redisAsyncContext *>::create("RR");
         _lbs_sptr->init();
+
+        _lbs_sptr->set_first_avaliable_cb([this_sptr]() {
+            this_sptr->on_avaliable();
+        });
+        _lbs_sptr->set_no_avaliable_cb([this_sptr]() {
+            this_sptr->on_unavaliable();
+        });
         // service discovery related
         std::string sdsName = configCenter::configCenter<void *>::instance()->get_properties_fields(get_genetic_gene(), PROP_SERVICE_DISCOVERY_MODE, DEFAULT_SERVICE_DISCOVERY_MODE);
 
         _srvc_sptr = serviceDiscovery::serviceDiscoveryFactory<DBConn>::create(getLoop(), sdsName, get_genetic_gene());
-
-        auto this_sptr = this->shared_from_this();
 
         _srvc_sptr->setOnConnInc([this_sptr](DBConn connInfo) {
             __LOG(debug, "new there is a new connection, add it to connection manager");
@@ -79,10 +85,35 @@ public:
     void on_unavaliable()
     {
         __LOG(debug, "on_unavaliable");
+        if (_unavaliable_cb)
+        {
+            _unavaliable_cb();
+        }
     }
     void on_avaliable()
     {
         __LOG(debug, "on_avaliable");
+        if (_avaliable_cb)
+        {
+            _avaliable_cb();
+        }
+    }
+
+    void setAvaliableCb(std::function<void()> cb)
+    {
+        _avaliable_cb = cb;
+    }
+    std::function<void()> getAvaliableCb()
+    {
+        return _avaliable_cb;
+    }
+    void setUnavaliableCb(std::function<void()> cb)
+    {
+        _unavaliable_cb = cb;
+    }
+    std::function<void()> getUnavaliableCb()
+    {
+        return _unavaliable_cb;
     }
 
     std::pair<redisAsyncContext *, lbStrategy::retStatus> get_conn()
@@ -126,5 +157,7 @@ private:
     std::shared_ptr<serviceDiscovery::serviceDiscovery<DBConn>> _srvc_sptr;
     connChange connInc;
     connChange connDec;
+    std::function<void()> _avaliable_cb;
+    std::function<void()> _unavaliable_cb;
 };
 } // namespace connManager
