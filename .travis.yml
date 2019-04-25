@@ -12,10 +12,11 @@ compiler:
 
 cache: ccache
 sudo: required
+services:
+  - redis-server
 os:
   - linux
-jdk:
-- oraclejdk8
+
 addons:
   apt:
     sources:
