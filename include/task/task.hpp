@@ -119,22 +119,19 @@ public:
         {
             auto rdsCtx = std::get<0>(contextRet);
             rdsCtx->_lbs->update_obj(_aCtx, 0);
-            redisAsyncContext *ctx = rdsCtx->_ctx;
+            std::string innerIp = rdsCtx->ip;
+            unsigned short innerPort = rdsCtx->port;
             int priority = rdsCtx->_priority;
             auto gene = rdsCtx->_hb->get_genetic_gene();
-            rdsCtx->_retryTimerManager->getTimer()->startOnce(5000, [gene, ctx, priority]() {
+            rdsCtx->_retryTimerManager->getTimer()->startOnce(5000, [gene, innerIp, innerPort, priority]() {
                 auto taskPair = dbw::taskSaver::instance<void *, std::shared_ptr<task::taskImp>>()->getTask(gene);
 
                 if (std::get<1>(taskPair))
                 {
                     auto task_sptr = std::get<0>(taskPair);
                     dbw::CONN_INFO connInfo;
-                    // need IP Port Priority
-                    // first get the fd from redisAsyncContext
-                    int innerFd = ctx->c.fd;
-
-                    // use getaddrinfo to parse IP
-
+                    connInfo.ip = innerIp;
+                    connInfo.port = innerPort;
                     connInfo.priority = priority;
                     task_sptr->sendMsg(taskMsgType::TASK_REDIS_ADD_CONN, connInfo);
                 }
@@ -240,8 +237,9 @@ public:
         std::shared_ptr<dbw::redisContext> rdsCtx = std::make_shared<dbw::redisContext>();
         rdsCtx->_ctx = _context;
         rdsCtx->_priority = payload.priority;
+        rdsCtx->ip = payload.ip;
+        rdsCtx->port = payload.port;
         rdsCtx->_hb = std::make_shared<heartBeat::heartBeat>(get_loop());
-
         rdsCtx->_hb->set_genetic_gene(get_genetic_gene());
         rdsCtx->_hb->setPingCb([_context](std::shared_ptr<heartBeat::heartBeat>) {
             __LOG(debug, "now send ping");

@@ -6,6 +6,8 @@ namespace dbw
 struct redisContext
 {
     int _priority;
+    std::string ip;
+    unsigned short port;
     redisAsyncContext *_ctx;
     std::shared_ptr<heartBeat::heartBeat> _hb;
     std::shared_ptr<lbStrategy::lbStrategy<redisAsyncContext *>> _lbs;
