@@ -62,7 +62,7 @@ public:
             }
             return;
         }
-        __LOG(debug, "argv: " << (char *)privdata << ", string is %s" << reply->str);
+        __LOG(debug, "argv: " << (char *)privdata << ", string is " << reply->str);
         auto ctxSaver = dbw::contextSaver<void *, std::shared_ptr<dbw::redisContext>>::instance();
         auto ctxRet = ctxSaver->getCtx(c);
         if (std::get<1>(ctxRet))

@@ -56,7 +56,7 @@ public:
             if (std::is_same<COMMAND_KEY, std::string>::value && std::is_same<COMMAND_VALUE, std::string>::value)
             {
 
-                __LOG(error, "Put command, key is : " << key << ", value is : " << value);
+                __LOG(debug, "Put command, key is : " << key << ", value is : " << value);
                 List _list;
                 _list.emplace_back("SET");
                 _list.emplace_back(key);
@@ -84,7 +84,7 @@ public:
 
     static std::string redis_formatCommand(List &argv)
     {
-        __LOG(warn, "[redis_formatCommand]");
+        __LOG(debug, "[redis_formatCommand]");
         std::ostringstream buffer;
         buffer << "*" << argv.size() << "\r\n";
         List::const_iterator iter = argv.begin();
