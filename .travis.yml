@@ -68,4 +68,4 @@ script:
   - cd $GCOV_DIR&& gcov -a tst.cpp.gcno
   - cp * $BASE_DIR/gcov/
   - cd $BASE_DIR/build&&rm -rf *&&cmake -DBUILD_TESTING=ON ..  &&build-wrapper-linux-x86-64 --out-dir ../bw-output make clean all&&bin/medis_tests
-  - cd $BASE_DIR&& sonar-scanner -Dsonar.projectKey=max-cong_medis -Dsonar.projectName=medis -Dsonar.projectVersion=1.0 -Dsonar.cfamily.build-wrapper-output=bw-output -Dsonar.sources=. -Dsonar.cfamily.gcov.reportsPath=gcov/ -Dsonar.coverage.exclusions=example/**/*,tst/**/* -Dsonar.exclusions=example/**/*,tst/**/*
+  - cd $BASE_DIR&& sonar-scanner -Dsonar.projectKey=max-cong_medis -Dsonar.projectName=medis -Dsonar.projectVersion=1.0 -Dsonar.cfamily.build-wrapper-output=bw-output -Dsonar.sources=. -Dsonar.cfamily.gcov.reportsPath=gcov/ -Dsonar.coverage.exclusions=example/**/*,tst/**/*,googletest-release-1.7.0/**/*,hireis/**/* -Dsonar.exclusions=example/**/*,tst/**/*,googletest-release-1.7.0/**/*,hireis/**/*
