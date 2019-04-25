@@ -42,7 +42,7 @@ public:
 
 	timer() = delete;
 	explicit timer(std::shared_ptr<loop::loop> loop) : _loop(loop),
-													   _event(NULL),
+													 
 													   _interval(0),
 													   _round(1),
 													   _curRound(0),
@@ -53,7 +53,7 @@ public:
 
 	{
 	}
-	virtual ~timer() { stop(); }
+
 	void setTid(unsigned long tid)
 	{
 		_tid = tid;
@@ -64,9 +64,9 @@ public:
 	}
 	bool startRounds(uint32_t interval, uint64_t round, timer::timer::Handler const &handler)
 	{
-		if (NULL != _event)
+		if (!_event_sptr)
 		{
-			__LOG(error, "_event is not NULL, the timer is running, please stop first then start");
+			__LOG(error, "_event_sptr is not valid, the timer is running, please stop first then start");
 			return false;
 		}
 		if (_loop.expired())
@@ -82,8 +82,14 @@ public:
 			return false;
 		}
 
-		_event = event_new((_loop.lock())->ev(), -1, (round > 1) ? EV_PERSIST : 0, eventHandler, this);
-		if (NULL == _event)
+		_event_sptr.reset(event_new(_event_base, -1, (round > 1) ? EV_PERSIST : 0, eventHandler, this), [](event *innerEvent) {
+			if (NULL != innerEvent)
+			{
+				event_free(innerEvent);
+				innerEvent = NULL;
+			}
+		});
+		if (!_event_sptr)
 		{
 			__LOG(error, "event is invalid");
 			return false;
@@ -94,7 +100,7 @@ public:
 		tv.tv_sec = interval / 1000;
 		tv.tv_usec = interval % 1000 * 1000;
 
-		if (0 != event_add(_event, &tv))
+		if (0 != event_add(_event_sptr.get(), &tv))
 		{
 			__LOG(error, "event add return fail");
 			return false;
@@ -150,10 +156,9 @@ public:
 	}
 	void stop()
 	{
-		if (NULL != _event)
+		if (!_event_sptr)
 		{
-			event_free(_event);
-			_event = NULL;
+			_event_sptr.reset();
 			_curRound = 0;
 			_round = 0;
 		}
@@ -180,7 +185,8 @@ private:
 	}
 
 	std::weak_ptr<loop::loop> _loop;
-	struct event *_event;
+	std::shared_ptr<event> _event_sptr;
+
 	uint32_t _interval; //ms
 	uint64_t _round;
 	uint64_t _curRound;

@@ -146,71 +146,11 @@ public:
 
         if (!weight)
         {
-            // if the obj is in active list, remove it
-            for (auto it = _obj_vector.begin(); it != _obj_vector.end();)
-            {
-                __LOG(debug, "loop _obj_vector");
-                if (std::get<0>(*it) == obj)
-                {
-                    __LOG(debug, "found obj, erase it");
-                    it = _obj_vector.erase(it);
-                }
-                else
-                {
-                    it++;
-                }
-            }
-
-            bool found = false;
-            for (auto it = _inactive_obj_vector.begin(); it != _inactive_obj_vector.end();)
-            {
-                __LOG(debug, "loop inactive thread");
-                if ((*it) == obj)
-                {
-
-                    __LOG(warn, "obj is in the inactive obj");
-                    found = true;
-                    it++;
-                }
-                else
-                {
-                    it++;
-                }
-            }
-            if (!found)
-            {
-                _inactive_obj_vector.push_back(obj);
-            }
+            update_obj_zero(obj);
         }
         else // weight is not 0
         {
-            for (auto it = _inactive_obj_vector.begin(); it != _inactive_obj_vector.end();)
-            {
-                __LOG(debug, "loop inactive thread");
-                if ((*it) == obj)
-                {
-                    it = _inactive_obj_vector.erase(it);
-                }
-                else
-                {
-                    it++;
-                }
-            }
-
-            for (auto it = _obj_vector.begin(); it != _obj_vector.end();)
-            {
-                __LOG(debug, "loop _obj_vector");
-                if (std::get<0>(*it) == obj)
-                {
-                    __LOG(debug, "found obj, erase it");
-                    it = _obj_vector.erase(it);
-                }
-                else
-                {
-                    it++;
-                }
-            }
-            _obj_vector.push_back(std::make_pair(obj, weight));
+            update_obj_not_zero(obj, weight);
         }
 
         unsigned int _avaliable_obj_after = get_avaliable_obj().size();
@@ -272,12 +212,82 @@ public:
     {
         return _obj_vector;
     }
-
-    std::vector<std::pair<LB_OBJ, unsigned int>> _obj_vector;
+   std::vector<std::pair<LB_OBJ, unsigned int>> _obj_vector;
     std::vector<LB_OBJ> _inactive_obj_vector;
     std::recursive_mutex _mutex;
 
     std::function<void()> _no_avaliable_cb;
     std::function<void()> _first_avaliable_cb;
+private:
+    void update_obj_zero(LB_OBJ obj)
+    {
+        // if the obj is in active list, remove it
+        for (auto it = _obj_vector.begin(); it != _obj_vector.end();)
+        {
+            __LOG(debug, "loop _obj_vector");
+            if (std::get<0>(*it) == obj)
+            {
+                __LOG(debug, "found obj, erase it");
+                it = _obj_vector.erase(it);
+            }
+            else
+            {
+                it++;
+            }
+        }
+
+        bool found = false;
+        for (auto it = _inactive_obj_vector.begin(); it != _inactive_obj_vector.end();)
+        {
+            __LOG(debug, "loop inactive thread");
+            if ((*it) == obj)
+            {
+
+                __LOG(warn, "obj is in the inactive obj");
+                found = true;
+                it++;
+            }
+            else
+            {
+                it++;
+            }
+        }
+        if (!found)
+        {
+            _inactive_obj_vector.push_back(obj);
+        }
+    }
+    void update_obj_not_zero(LB_OBJ obj, unsigned int weight)
+    {
+        for (auto it = _inactive_obj_vector.begin(); it != _inactive_obj_vector.end();)
+        {
+            __LOG(debug, "loop inactive thread");
+            if ((*it) == obj)
+            {
+                it = _inactive_obj_vector.erase(it);
+            }
+            else
+            {
+                it++;
+            }
+        }
+
+        for (auto it = _obj_vector.begin(); it != _obj_vector.end();)
+        {
+            __LOG(debug, "loop _obj_vector");
+            if (std::get<0>(*it) == obj)
+            {
+                __LOG(debug, "found obj, erase it");
+                it = _obj_vector.erase(it);
+            }
+            else
+            {
+                it++;
+            }
+        }
+        _obj_vector.push_back(std::make_pair(obj, weight));
+    }
+
+ 
 };
 } // namespace lbStrategy

@@ -127,83 +127,123 @@ public:
     // set the callback function for evnet coming
     virtual bool on_message(taskMsg const &task_msg)
     {
+        bool ret = false;
         switch (task_msg.type)
         {
         case taskMsgType::TASK_REDIS_FORMAT_RAW:
-        {
-            TASK_REDIS_FORMAT_RAW_MSG_BODY msg = DBW_ANY_CAST<TASK_REDIS_FORMAT_RAW_MSG_BODY>(task_msg.body);
-            __LOG(debug, "get command :\n"
-                             << msg.body);
-
-            auto conn = _connManager->get_conn();
-            if (std::get<1>(conn) != lbStrategy::retStatus::SUCCESS)
-            {
-                return false;
-            }
-            redisAsyncContext *_context = std::get<0>(conn);
-
-            redisAsyncFormattedCommand(_context, msg.fn, msg.usr_data, msg.body.c_str(), msg.body.size());
+            ret = processRedisFormatRawCommand(task_msg);
             break;
-        }
 
         case taskMsgType::TASK_REDIS_RAW:
-        {
-            TASK_REDIS_RAW_MSG_BODY msg = DBW_ANY_CAST<TASK_REDIS_RAW_MSG_BODY>(task_msg.body);
-            __LOG(debug, "get command :\n"
-                             << msg.body);
-
-            auto conn = _connManager->get_conn();
-            if (std::get<1>(conn) != lbStrategy::retStatus::SUCCESS)
-            {
-                __LOG(debug, "did not get a connection");
-                return false;
-            }
-
-            redisAsyncContext *_context = std::get<0>(conn);
-            redisAsyncCommand(_context, msg.fn, msg.usr_data, msg.body.c_str());
+            ret = processRedisRawCommand(task_msg);
             break;
-        }
 
         case taskMsgType::TASK_REDIS_ADD_CONN:
-        {
-            dbw::CONN_INFO payload = DBW_ANY_CAST<dbw::CONN_INFO>(task_msg.body);
-            __LOG(error, "connect to : " << payload.ip << ":" << payload.port);
 
-            redisAsyncContext *_context = redisAsyncConnect(payload.ip.c_str(), payload.port);
-            if (_context->err)
-            {
-                __LOG(error, "connect to : " << payload.ip << ":" << payload.port << " return error");
-                return false;
-            }
-
-            std::shared_ptr<dbw::redisContext> rdsCtx = std::make_shared<dbw::redisContext>();
-            rdsCtx->_ctx = _context;
-            rdsCtx->_priority = payload.priority;
-            rdsCtx->_hb = std::make_shared<heartBeat::heartBeat>(get_loop());
-            rdsCtx->_hb->set_genetic_gene(get_genetic_gene());
-            rdsCtx->_hb->setPingCb([_context](std::shared_ptr<heartBeat::heartBeat>) {
-                std::string pingMsg("PING");
-                redisAsyncCommand(_context, taskImp::pingCallback, (void *)_context, pingMsg.c_str(), pingMsg.size());
-            });
-            rdsCtx->_lbs = _connManager->getLbs();
-            auto ctxSaver = dbw::contextSaver<void *, std::shared_ptr<dbw::redisContext>>::instance();
-            ctxSaver->save(_context, rdsCtx);
-
-            redisLibeventAttach(_context, get_loop()->ev());
-
-            redisAsyncSetConnectCallback(_context, connectCallback);
-            redisAsyncSetDisconnectCallback(_context, disconnectCallback);
+            ret = processRedisAddConnection(task_msg);
             break;
-        }
+
         case taskMsgType::TASK_REDIS_DEL_CONN:
-        {
+            ret = processRedisDelConnection(task_msg);
             break;
-        }
+
         default:
             __LOG(warn, "unsupport message type!");
             break;
         }
+        return ret;
+    }
+    bool processRedisFormatRawCommand(taskMsg const &task_msg)
+    {
+        TASK_REDIS_FORMAT_RAW_MSG_BODY msg = DBW_ANY_CAST<TASK_REDIS_FORMAT_RAW_MSG_BODY>(task_msg.body);
+        __LOG(debug, "get command :\n"
+                         << msg.body);
+
+        auto conn = _connManager->get_conn();
+        if (std::get<1>(conn) != lbStrategy::retStatus::SUCCESS)
+        {
+            __LOG(warn, "did not get connection!");
+            return false;
+        }
+        redisAsyncContext *_context = std::get<0>(conn);
+
+        int ret = redisAsyncFormattedCommand(_context, msg.fn, msg.usr_data, msg.body.c_str(), msg.body.size());
+        if (ret != REDIS_OK)
+        {
+            return false;
+        }
+        else
+        {
+            return true;
+        }
+    }
+    bool processRedisRawCommand(taskMsg const &task_msg)
+    {
+        TASK_REDIS_RAW_MSG_BODY msg = DBW_ANY_CAST<TASK_REDIS_RAW_MSG_BODY>(task_msg.body);
+        __LOG(debug, "get command :\n"
+                         << msg.body);
+
+        auto conn = _connManager->get_conn();
+        if (std::get<1>(conn) != lbStrategy::retStatus::SUCCESS)
+        {
+            __LOG(debug, "did not get a connection");
+            return false;
+        }
+
+        redisAsyncContext *_context = std::get<0>(conn);
+        int ret = redisAsyncCommand(_context, msg.fn, msg.usr_data, msg.body.c_str());
+        if (ret != REDIS_OK)
+        {
+            return false;
+        }
+        else
+        {
+            return true;
+        }
+    }
+    bool processRedisAddConnection(taskMsg const &task_msg)
+    {
+        dbw::CONN_INFO payload = DBW_ANY_CAST<dbw::CONN_INFO>(task_msg.body);
+        __LOG(error, "connect to : " << payload.ip << ":" << payload.port);
+
+        redisAsyncContext *_context = redisAsyncConnect(payload.ip.c_str(), payload.port);
+        if (_context->err)
+        {
+            __LOG(error, "connect to : " << payload.ip << ":" << payload.port << " return error");
+            return false;
+        }
+
+        std::shared_ptr<dbw::redisContext> rdsCtx = std::make_shared<dbw::redisContext>();
+        rdsCtx->_ctx = _context;
+        rdsCtx->_priority = payload.priority;
+        rdsCtx->_hb = std::make_shared<heartBeat::heartBeat>(get_loop());
+        rdsCtx->_hb->set_genetic_gene(get_genetic_gene());
+        rdsCtx->_hb->setPingCb([_context](std::shared_ptr<heartBeat::heartBeat>) {
+            std::string pingMsg("PING");
+            redisAsyncCommand(_context, taskImp::pingCallback, (void *)_context, pingMsg.c_str(), pingMsg.size());
+        });
+        rdsCtx->_lbs = _connManager->getLbs();
+        auto ctxSaver = dbw::contextSaver<void *, std::shared_ptr<dbw::redisContext>>::instance();
+        ctxSaver->save(_context, rdsCtx);
+
+        int ret = REDIS_ERR;
+
+        ret = redisLibeventAttach(_context, get_loop()->ev());
+        if (ret != REDIS_OK)
+        {
+            __LOG(error, "redisLibeventAttach fail");
+            return false;
+        }
+
+        redisAsyncSetConnectCallback(_context, connectCallback);
+        redisAsyncSetDisconnectCallback(_context, disconnectCallback);
         return true;
+    }
+
+    bool processRedisDelConnection(taskMsg const &task_msg)
+    {
+        // to do
+        return false;
     }
     bool init()
     {
@@ -255,7 +295,11 @@ public:
         for (uint64_t i = 0; i < num; i++)
         {
             auto tmpTaskMsg = _taskQueue.front();
-            on_message(tmpTaskMsg);
+            if (!on_message(tmpTaskMsg))
+            {
+                // to do start timer?
+                sendMsg(tmpTaskMsg);
+            }
             _taskQueue.pop();
         }
     }

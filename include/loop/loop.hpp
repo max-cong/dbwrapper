@@ -50,46 +50,28 @@ std::ostream &operator<<(std::ostream &os, loopStatus status)
 class loop : public std::enable_shared_from_this<loop>
 {
 public:
-	loop() : _base(NULL),
-			 _status(loopStatus::statusInit)
+	loop() : _status(loopStatus::statusInit)
 	{
-
 		evthread_use_pthreads();
-		_base = event_base_new();
-		if (!_base)
-		{
-			// note!!!! if you catch this exception
-			// please remember call the distructure function
-			// !!!!!!! this is important
-		}
-	}
-	virtual ~loop()
-	{
-
-		if (NULL != _base)
-		{
-			event_base_free(_base);
-			_base = NULL;
-		}
-		std::unique_lock<std::mutex> lck(_sMutex, std::defer_lock);
-		lck.lock();
-		if (_loopThread && loopStatus::statusFinished != _status)
-		{
-			_loopThread->join();
-		}
-		lck.unlock();
+		_base_sptr.reset(event_base_new(), [](event_base *innerBase) {
+			if (NULL != innerBase)
+			{
+				event_base_free(innerBase);
+				innerBase = NULL;
+			}
+		});
 	}
 
 	/** convert to event_base * pointer*/
 	inline explicit operator event_base *() const
 	{
-		return _base;
+		return _base_sptr.get();
 	};
 
 	/** @brief get event_base * pointer*/
 	inline event_base *ev() const
 	{
-		return _base;
+		return _base_sptr.get();
 	}
 
 	/** get status */
@@ -107,6 +89,11 @@ public:
 	 */
 	bool start(bool newThread = true)
 	{
+
+		if (!_base_sptr)
+		{
+			return false;
+		}
 		std::unique_lock<std::mutex> lck(_sMutex, std::defer_lock);
 
 		lck.lock();
@@ -145,18 +132,26 @@ public:
 			return;
 		}
 		lck.unlock();
-		waiting ? event_base_loopexit(_base, NULL) : event_base_loopbreak(_base);
+		__LOG(warn, "now try to stop loop, event base is : " << (void *)_base_sptr.get());
+		waiting ? event_base_loopexit(_base_sptr.get(), NULL) : event_base_loopbreak(this->ev());
 		onAfterStop();
+
+		lck.lock();
+		if (_loopThread && loopStatus::statusFinished != _status)
+		{
+			_loopThread->join();
+		}
+		lck.unlock();
 	}
 
 protected:
-	virtual bool onBeforeStart()
+	bool onBeforeStart()
 	{
 		return true;
 	}
-	virtual void onBeforeLoop() { __LOG(debug, "onBeforeLoop"); }
-	virtual void onAfterLoop() { __LOG(debug, "onAfterLoop"); }
-	virtual void onAfterStop() { __LOG(debug, "onAfterStop"); }
+	void onBeforeLoop() { __LOG(debug, "onBeforeLoop"); }
+	void onAfterLoop() { __LOG(debug, "onAfterLoop"); }
+	void onAfterStop() { __LOG(debug, "onAfterStop"); }
 
 private:
 	void _run()
@@ -166,8 +161,8 @@ private:
 		_status = loopStatus::statusRunning;
 		lck.unlock();
 		onBeforeLoop();
-		__LOG(warn, " start loop!!");
-		event_base_loop(_base, 0);
+		__LOG(warn, " start loop!! base event is : " << (void *)ev());
+		event_base_loop(this->ev(), 0);
 		__LOG(warn, " exit loop!!");
 		onAfterLoop();
 		lck.lock();
@@ -176,7 +171,7 @@ private:
 	}
 	std::mutex _sMutex;
 
-	event_base *_base;
+	std::shared_ptr<event_base> _base_sptr;
 	std::shared_ptr<std::thread> _loopThread;
 	loopStatus _status;
 };
