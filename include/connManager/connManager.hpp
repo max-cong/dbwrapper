@@ -75,7 +75,8 @@ public:
             return this_sptr->add_conn(connInfo);
         });
         _srvc_sptr->setOnConnDec([this_sptr](DBConn connInfo) {
-            return this_sptr->add_conn(connInfo);
+            __LOG(debug, "delete a connection");
+            return this_sptr->del_conn(connInfo);
         });
         _srvc_sptr->init();
 

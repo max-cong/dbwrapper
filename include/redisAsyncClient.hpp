@@ -6,6 +6,7 @@
 #include "logger/logger.hpp"
 #include "task/task.hpp"
 #include "util/nonCopyable.hpp"
+#include "util/defs.hpp"
 
 #include <string>
 #include <memory>
@@ -38,6 +39,8 @@ public:
             return false;
         }
         _task_sptr->init();
+
+        dbw::taskSaver::instance<void *, std::shared_ptr<task::taskImp>>()->save(getThis(), _task_sptr);
         return _loop_sptr->start(true);
     }
     bool put(std::string key, std::string value, void *usr_data, redisCallbackFn *fn)

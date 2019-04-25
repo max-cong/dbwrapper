@@ -9,6 +9,7 @@ struct redisContext
     redisAsyncContext *_ctx;
     std::shared_ptr<heartBeat::heartBeat> _hb;
     std::shared_ptr<lbStrategy::lbStrategy<redisAsyncContext *>> _lbs;
+    std::shared_ptr<timer::timerManager> _retryTimerManager;
 };
 
 enum class CONN_TYPE : std::uint32_t
@@ -63,4 +64,37 @@ public:
 
     std::map<OBJ, RDS_CTX> _geneMap;
 };
+// this is gene <->task
+template <typename OBJ, typename RDS_TASK_SPTR>
+class taskSaver
+{
+public:
+    static taskSaver<OBJ, RDS_TASK_SPTR> *instance()
+    {
+        static taskSaver<OBJ, RDS_TASK_SPTR> *ins = new taskSaver<OBJ, RDS_TASK_SPTR>();
+        return ins;
+    }
+    void save(OBJ obj, RDS_TASK_SPTR gene)
+    {
+        _geneMap[obj] = gene;
+    }
+    void del(OBJ obj)
+    {
+        _geneMap.erase(obj);
+    }
+    std::pair<RDS_TASK_SPTR, bool> getTask(const OBJ obj)
+    {
+        if (_geneMap.find(obj) != _geneMap.end())
+        {
+            return std::make_pair(_geneMap[obj], true);
+        }
+        RDS_TASK_SPTR gene;
+        return std::make_pair(gene, false);
+    }
+
+    std::map<OBJ, RDS_TASK_SPTR> _geneMap;
+};
+
+
+
 } // namespace dbw
