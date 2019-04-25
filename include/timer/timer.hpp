@@ -64,7 +64,7 @@ public:
 	}
 	bool startRounds(uint32_t interval, uint64_t round, timer::timer::Handler const &handler)
 	{
-		if (!_event_sptr)
+		if (_event_sptr)
 		{
 			__LOG(error, "_event_sptr is not valid, the timer is running, please stop first then start");
 			return false;

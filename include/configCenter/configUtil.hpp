@@ -34,8 +34,8 @@ const std::string DEFAULT_HOST = "127.0.0.1";
 const std::string PROP_PORT = "PROP_PORT"; // the remote host IP or FQDN
 const std::string DEFAULT_PORT = "6379";
 
-const std::string DEFAULT_HB_LOST_NUM = "DEFAULT_HB_LOST_NUM";
-const std::string PROP_HB_LOST_NUM = "5";
+const std::string DEFAULT_HB_LOST_NUM = "5";
+const std::string PROP_HB_LOST_NUM = "PROP_HB_LOST_NUM";
 
 const std::string DEFAULT_LOAD_BALANCE_STRATEGY = "DEFAULT_LOAD_BALANCE_STRATEGY";
 const std::string PROP_LOAD_BALANCE_STRATEGY = "RR";

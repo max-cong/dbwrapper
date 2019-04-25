@@ -218,11 +218,14 @@ public:
         rdsCtx->_ctx = _context;
         rdsCtx->_priority = payload.priority;
         rdsCtx->_hb = std::make_shared<heartBeat::heartBeat>(get_loop());
+
         rdsCtx->_hb->set_genetic_gene(get_genetic_gene());
         rdsCtx->_hb->setPingCb([_context](std::shared_ptr<heartBeat::heartBeat>) {
+            __LOG(debug, "now send ping");
             std::string pingMsg("PING");
             redisAsyncCommand(_context, taskImp::pingCallback, (void *)_context, pingMsg.c_str(), pingMsg.size());
         });
+        rdsCtx->_hb->init();
         rdsCtx->_lbs = _connManager->getLbs();
         auto ctxSaver = dbw::contextSaver<void *, std::shared_ptr<dbw::redisContext>>::instance();
         ctxSaver->save(_context, rdsCtx);

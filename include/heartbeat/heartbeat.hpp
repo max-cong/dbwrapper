@@ -51,6 +51,7 @@ public:
     bool init()
     {
         _tManager.reset(new timer::timerManager(_loop.lock()));
+        start();
         return true;
     }
     void onHeartbeatLost()
