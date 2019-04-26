@@ -17,7 +17,7 @@ public:
 		// build connInfo
 		connInfo _connInfo;
 
-		_connInfo.type = dbw::CONN_TYPE::UNIX_SOCKET;
+		_connInfo.type = medis::CONN_TYPE::UNIX_SOCKET;
 		_connInfo.path = _unix_socket_path;
 
 		std::list<connInfo> _connInfo_list;

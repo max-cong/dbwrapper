@@ -161,7 +161,7 @@ private:
 		_status = loopStatus::statusRunning;
 		lck.unlock();
 		onBeforeLoop();
-		__LOG(warn, " start loop!! base event is : " << (void *)ev());
+		__LOG(debug, " start loop!! base event is : " << (void *)ev());
 		event_base_loop(this->ev(), 0);
 		__LOG(warn, " exit loop!!");
 		onAfterLoop();

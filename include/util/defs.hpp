@@ -1,14 +1,17 @@
 #pragma once
 #include "lbStrategy/lbStrategy.hpp"
 #include "heartbeat/heartbeat.hpp"
-namespace dbw
+namespace medis
 {
 struct redisContext
 {
     int _priority;
+    std::string ip;
+    unsigned short port;
     redisAsyncContext *_ctx;
     std::shared_ptr<heartBeat::heartBeat> _hb;
     std::shared_ptr<lbStrategy::lbStrategy<redisAsyncContext *>> _lbs;
+    std::shared_ptr<timer::timerManager> _retryTimerManager;
 };
 
 enum class CONN_TYPE : std::uint32_t
@@ -51,6 +54,24 @@ public:
     {
         _geneMap.erase(obj);
     }
+    std::list<RDS_CTX> getIpPortThenDel(std::string ip, unsigned short port)
+    {
+        std::list<RDS_CTX> ctxList;
+        auto iter = _geneMap.begin();
+        while (iter != _geneMap.end())
+        {
+            if (iter->second->ip == ip && iter->second->port == port)
+            {
+                ctxList.push_back(iter->second);
+                iter = _geneMap.erase(iter);
+            }
+            else
+            {
+                iter++;
+            }
+        }
+        return ctxList;
+    }
     std::pair<RDS_CTX, bool> getCtx(const OBJ obj)
     {
         if (_geneMap.find(obj) != _geneMap.end())
@@ -63,4 +84,35 @@ public:
 
     std::map<OBJ, RDS_CTX> _geneMap;
 };
-} // namespace dbw
+// this is gene <->task
+template <typename OBJ, typename RDS_TASK_SPTR>
+class taskSaver
+{
+public:
+    static taskSaver<OBJ, RDS_TASK_SPTR> *instance()
+    {
+        static taskSaver<OBJ, RDS_TASK_SPTR> *ins = new taskSaver<OBJ, RDS_TASK_SPTR>();
+        return ins;
+    }
+    void save(OBJ obj, RDS_TASK_SPTR gene)
+    {
+        _geneMap[obj] = gene;
+    }
+    void del(OBJ obj)
+    {
+        _geneMap.erase(obj);
+    }
+    std::pair<RDS_TASK_SPTR, bool> getTask(const OBJ obj)
+    {
+        if (_geneMap.find(obj) != _geneMap.end())
+        {
+            return std::make_pair(_geneMap[obj], true);
+        }
+        RDS_TASK_SPTR gene;
+        return std::make_pair(gene, false);
+    }
+
+    std::map<OBJ, RDS_TASK_SPTR> _geneMap;
+};
+
+} // namespace medis

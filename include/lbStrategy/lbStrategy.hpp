@@ -212,12 +212,13 @@ public:
     {
         return _obj_vector;
     }
-   std::vector<std::pair<LB_OBJ, unsigned int>> _obj_vector;
+    std::vector<std::pair<LB_OBJ, unsigned int>> _obj_vector;
     std::vector<LB_OBJ> _inactive_obj_vector;
     std::recursive_mutex _mutex;
 
     std::function<void()> _no_avaliable_cb;
     std::function<void()> _first_avaliable_cb;
+
 private:
     void update_obj_zero(LB_OBJ obj)
     {
@@ -287,7 +288,5 @@ private:
         }
         _obj_vector.push_back(std::make_pair(obj, weight));
     }
-
- 
 };
 } // namespace lbStrategy
