@@ -26,7 +26,7 @@ int main()
 
     configCenter::cfgPropMap _config;
     _config[PROP_HOST] = "127.0.0.1";
-    configCenter::configCenter<void *>::instance()->set_properties(aclient.getThis(), _config);
+    configCenter::configCenter<void *>::instance()->setProperties(aclient.getThis(), _config);
     
     aclient.init();
 

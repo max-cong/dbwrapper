@@ -164,7 +164,7 @@ public:
 		}
 		setIsRunning(false);
 	}
-	std::shared_ptr<loop::loop> get_loop()
+	std::shared_ptr<loop::loop> getLoop()
 	{
 		return _loop.lock();
 	}

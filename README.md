@@ -7,7 +7,8 @@
 
 
 
-# redisrapper
+# medis
+medis is a C++ client for redis.
 
 
 

@@ -49,13 +49,13 @@ public:
         {
             return false;
         }
-        std::string command2send = buildRedisCommand::buildRedisCommand<std::string, std::string>::get_format_command(REDIS_MSG_TYPE::TASK_REDIS_PUT, key, value);
+        std::string command2send = buildRedisCommand::buildRedisCommand<std::string, std::string>::get_format_command(REDIS_COMMAND_TYPE::TASK_REDIS_PUT, key, value);
         __LOG(debug, "get command :\n"
                          << command2send);
-        return send_format_raw_command(command2send, usr_data, fn);
+        return sendFormatRawCommand(command2send, usr_data, fn);
     }
 
-    bool send_format_raw_command(std::string command, void *usr_data, redisCallbackFn *fn)
+    bool sendFormatRawCommand(std::string command, void *usr_data, redisCallbackFn *fn)
     {
         task::TASK_REDIS_FORMAT_RAW_MSG_BODY msg;
         msg.fn = fn;
@@ -64,7 +64,7 @@ public:
         _task_sptr->sendMsg(task::taskMsgType::TASK_REDIS_FORMAT_RAW, msg);
         return true;
     }
-    bool send_raw_command(std::string command, void *usr_data, redisCallbackFn *fn)
+    bool sendRawCommand(std::string command, void *usr_data, redisCallbackFn *fn)
     {
         task::TASK_REDIS_RAW_MSG_BODY msg;
         msg.fn = fn;

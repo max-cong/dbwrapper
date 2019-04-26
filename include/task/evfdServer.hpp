@@ -13,7 +13,7 @@ public:
     // Note:!! please make sure that you pass in a right envent base loop
     // event base is not changeable, if you want to change it, please kill this object and start a new _one
     // will add some some check later.....
-    evfdServer(std::shared_ptr<loop::loop> loopIn, int efd, evCb cb, void *arg) : eventFd(efd), _one(1), _loop(loopIn), eventCallback(cb), _arg(arg)
+    evfdServer(std::shared_ptr<loop::loop> loopIn, int efd, evCb cb, void *arg) : eventFd(efd),  _loop(loopIn), eventCallback(cb), _arg(arg)
     {
     }
 
@@ -44,7 +44,7 @@ public:
 
 private:
     int eventFd;
-    uint64_t _one;
+   
     std::weak_ptr<loop::loop> _loop;
     evCb eventCallback;
 

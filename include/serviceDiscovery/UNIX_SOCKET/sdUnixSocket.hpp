@@ -12,7 +12,7 @@ public:
 	virtual bool init()
 	{
 		// get unix path
-		std::string _unix_socket_path = configCenter::configCenter<void *>::instance()->get_properties_fields(this->get_genetic_gene(), PROP_UNIX_PATH, DEFAULT_REDIS_UNIX_PATH);
+		std::string _unix_socket_path = configCenter::configCenter<void *>::instance()->getPropertiesField(this->getGeneticGene(), PROP_UNIX_PATH, DEFAULT_REDIS_UNIX_PATH);
 
 		// build connInfo
 		connInfo _connInfo;

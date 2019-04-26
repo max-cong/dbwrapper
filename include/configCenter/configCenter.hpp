@@ -52,7 +52,7 @@ public:
 		}
 	}
 
-	cfgPropMap get_properties(cfgKeyType_t key)
+	cfgPropMap getProperties(cfgKeyType_t key)
 	{
 		std::lock_guard<std::mutex> lck(_mutex);
 		if (_propertiesMap.find(key) != _propertiesMap.end())
@@ -67,7 +67,7 @@ public:
 	}
 
 	template <typename T>
-	T get_properties_fields(cfgKeyType_t key, std::string field, const T default_value)
+	T getPropertiesField(cfgKeyType_t key, std::string field, const T default_value)
 	{
 		std::lock_guard<std::mutex> lck(_mutex);
 
@@ -91,7 +91,7 @@ public:
 		return default_value;
 	}
 
-	bool update_properties(cfgKeyType_t key, std::string field, std::string value)
+	bool updateProperties(cfgKeyType_t key, std::string field, std::string value)
 	{
 
 		std::lock_guard<std::mutex> lck(_mutex);
@@ -118,7 +118,7 @@ public:
 		}
 		return false;
 	}
-	bool update_properties(cfgKeyType_t key, cfgPropMap const &props)
+	bool updateProperties(cfgKeyType_t key, cfgPropMap const &props)
 	{
 		std::lock_guard<std::mutex> lck(_mutex);
 		auto it = _propertiesMap.find(key);
@@ -136,13 +136,13 @@ public:
 			return false;
 		}
 	}
-	bool set_properties(cfgKeyType_t key, cfgPropMap const & prop)
+	bool setProperties(cfgKeyType_t key, cfgPropMap const & prop)
 	{
 		std::lock_guard<std::mutex> lck(_mutex);
 		_propertiesMap[key] = prop;
 		return true;
 	}
-	bool del_properties(cfgKeyType_t key)
+	bool delProperties(cfgKeyType_t key)
 	{
 		std::lock_guard<std::mutex> lck(_mutex);
 		_propertiesMap.erase(key);

@@ -70,7 +70,7 @@ public:
         if (std::get<1>(ctxRet))
         {
             auto rdxCtx = std::get<0>(ctxRet);
-            rdxCtx->_hb->set_hb_success(true);
+            rdxCtx->_hb->setHbSuccess(true);
         }
         else
         {
@@ -94,7 +94,7 @@ public:
         {
             std::shared_ptr<medis::redisContext> rdsCtx = std::get<0>(contextRet);
 
-            rdsCtx->_lbs->update_obj(_aCtx, rdsCtx->_priority);
+            rdsCtx->_lbs->updateObj(_aCtx, rdsCtx->_priority);
         }
         else
         {
@@ -118,11 +118,11 @@ public:
         if (std::get<1>(contextRet))
         {
             auto rdsCtx = std::get<0>(contextRet);
-            rdsCtx->_lbs->update_obj(_aCtx, 0);
+            rdsCtx->_lbs->updateObj(_aCtx, 0);
             std::string innerIp = rdsCtx->ip;
             unsigned short innerPort = rdsCtx->port;
             int priority = rdsCtx->_priority;
-            auto gene = rdsCtx->_hb->get_genetic_gene();
+            auto gene = rdsCtx->_hb->getGeneticGene();
             rdsCtx->_retryTimerManager->getTimer()->startOnce(5000, [gene, innerIp, innerPort, priority]() {
                 auto taskPair = medis::taskSaver<void *, std::shared_ptr<task::taskImp>>::instance()->getTask(gene);
 
@@ -250,15 +250,15 @@ public:
         rdsCtx->_priority = payload.priority;
         rdsCtx->ip = payload.ip;
         rdsCtx->port = payload.port;
-        rdsCtx->_hb = std::make_shared<heartBeat::heartBeat>(get_loop());
-        rdsCtx->_hb->set_genetic_gene(get_genetic_gene());
+        rdsCtx->_hb = std::make_shared<heartBeat::heartBeat>(getLoop());
+        rdsCtx->_hb->setGeneticGene(getGeneticGene());
         rdsCtx->_hb->setPingCb([_context](std::shared_ptr<heartBeat::heartBeat>) {
             __LOG(debug, "now send ping");
             std::string pingMsg("PING");
             redisAsyncCommand(_context, taskImp::pingCallback, (void *)_context, pingMsg.c_str(), pingMsg.size());
         });
         rdsCtx->_hb->init();
-        rdsCtx->_retryTimerManager = std::make_shared<timer::timerManager>(get_loop());
+        rdsCtx->_retryTimerManager = std::make_shared<timer::timerManager>(getLoop());
         rdsCtx->_lbs = _connManager->getLbs();
 
         auto ctxSaver = medis::contextSaver<void *, std::shared_ptr<medis::redisContext>>::instance();
@@ -266,7 +266,7 @@ public:
 
         int ret = REDIS_ERR;
 
-        ret = redisLibeventAttach(_context, get_loop()->ev());
+        ret = redisLibeventAttach(_context, getLoop()->ev());
         if (ret != REDIS_OK)
         {
             __LOG(error, "redisLibeventAttach fail");
@@ -288,7 +288,7 @@ public:
         for (auto it : ctxList)
         {
             // need to delete related info from load balancer
-            it->_lbs->del_obj(it->_ctx);
+            it->_lbs->delObj(it->_ctx);
             // need to stop the hiredis connection here
             redisAsyncDisconnect(it->_ctx);
         }
@@ -312,7 +312,7 @@ public:
         __LOG(debug, "init taskImp with ID :" << _evfd);
         // start eventfd server
 
-        _evfdServer = std::make_shared<evfdServer>(get_loop(), _evfd, evfdCallback, (void *)this);
+        _evfdServer = std::make_shared<evfdServer>(getLoop(), _evfd, evfdCallback, (void *)this);
         if (!_evfdServer->init())
         {
             return false;
@@ -322,12 +322,12 @@ public:
 
         _evfdClient = std::make_shared<evfdClient>(_evfd);
 
-        _connManager = std::make_shared<connManager::connManager<medis::CONN_INFO>>(get_loop());
+        _connManager = std::make_shared<connManager::connManager<medis::CONN_INFO>>(getLoop());
         if (!_connManager)
         {
             return false;
         }
-        _connManager->set_genetic_gene(this);
+        _connManager->setGeneticGene(this);
 
         auto sef_sptr = this->shared_from_this();
         _connManager->setAddConnCb([sef_sptr](medis::CONN_INFO connInfo) {
@@ -348,7 +348,7 @@ public:
         _connManager->init();
 
         // timer manager
-        _timerManager.reset(new timer::timerManager(get_loop()));
+        _timerManager.reset(new timer::timerManager(getLoop()));
 
         return true;
     }
@@ -422,7 +422,7 @@ public:
         return true;
     }
 
-    std::shared_ptr<loop::loop> get_loop()
+    std::shared_ptr<loop::loop> getLoop()
     {
         return _loop.lock();
     }

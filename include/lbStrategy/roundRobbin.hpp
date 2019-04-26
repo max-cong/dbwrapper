@@ -36,7 +36,7 @@ public:
     }
     ~roundRobbin() {}
     // note: there is no lock here
-    std::pair<LB_OBJ, retStatus> get_obj() override
+    std::pair<LB_OBJ, retStatus> getObj() override
     {
         LB_OBJ obj;
         // note: do this to supress build warning. this is redisAsyncContext*
@@ -61,9 +61,9 @@ public:
 
     // for round robbin, if the weight is 0, that mean we should delete the obj the default weight_ is 10
     
-    virtual retStatus add_obj(LB_OBJ obj, unsigned int weight = 10)
+    virtual retStatus addObj(LB_OBJ obj, unsigned int weight = 10)
     {
-        return this->update_obj(obj, weight);
+        return this->updateObj(obj, weight);
     }
 
     virtual bool init()

@@ -59,41 +59,41 @@ public:
         _lbs_sptr = lbStrategy::lbsFactory<redisAsyncContext *>::create("RR");
         _lbs_sptr->init();
 
-        _lbs_sptr->set_first_avaliable_cb([this_sptr]() {
-            this_sptr->on_avaliable();
+        _lbs_sptr->setFirstAvaliableCb([this_sptr]() {
+            this_sptr->onAvaliable();
         });
-        _lbs_sptr->set_no_avaliable_cb([this_sptr]() {
-            this_sptr->on_unavaliable();
+        _lbs_sptr->setNoAvaliableCb([this_sptr]() {
+            this_sptr->onUnavaliable();
         });
         // service discovery related
-        std::string sdsName = configCenter::configCenter<void *>::instance()->get_properties_fields(get_genetic_gene(), PROP_SERVICE_DISCOVERY_MODE, DEFAULT_SERVICE_DISCOVERY_MODE);
+        std::string sdsName = configCenter::configCenter<void *>::instance()->getPropertiesField(getGeneticGene(), PROP_SERVICE_DISCOVERY_MODE, DEFAULT_SERVICE_DISCOVERY_MODE);
 
-        _srvc_sptr = serviceDiscovery::serviceDiscoveryFactory<DBConn>::create(getLoop(), sdsName, get_genetic_gene());
+        _srvc_sptr = serviceDiscovery::serviceDiscoveryFactory<DBConn>::create(getLoop(), sdsName, getGeneticGene());
 
         _srvc_sptr->setOnConnInc([this_sptr](DBConn connInfo) {
             __LOG(debug, "new there is a new connection, add it to connection manager");
-            return this_sptr->add_conn(connInfo);
+            return this_sptr->addConn(connInfo);
         });
         _srvc_sptr->setOnConnDec([this_sptr](DBConn connInfo) {
             __LOG(debug, "delete a connection");
-            return this_sptr->del_conn(connInfo);
+            return this_sptr->delConn(connInfo);
         });
         _srvc_sptr->init();
 
         return true;
     }
 
-    void on_unavaliable()
+    void onUnavaliable()
     {
-        __LOG(debug, "on_unavaliable");
+        __LOG(debug, "onUnavaliable");
         if (_unavaliable_cb)
         {
             _unavaliable_cb();
         }
     }
-    void on_avaliable()
+    void onAvaliable()
     {
-        __LOG(debug, "on_avaliable");
+        __LOG(debug, "onAvaliable");
         if (_avaliable_cb)
         {
             _avaliable_cb();
@@ -119,7 +119,7 @@ public:
 
     std::pair<redisAsyncContext *, lbStrategy::retStatus> get_conn()
     {
-        return _lbs_sptr->get_obj();
+        return _lbs_sptr->getObj();
     }
     void setAddConnCb(connChange inc)
     {
@@ -129,11 +129,11 @@ public:
     {
         connDec = dec;
     }
-    bool add_conn(DBConn connInfo)
+    bool addConn(DBConn connInfo)
     {
         return connInc(connInfo);
     }
-    bool del_conn(DBConn connInfo)
+    bool delConn(DBConn connInfo)
     {
         return connDec(connInfo);
     }
@@ -152,7 +152,7 @@ public:
     }
 
 private:
-    void *_gene;
+
     std::weak_ptr<loop::loop> _loop;
     std::shared_ptr<lbStrategy::lbStrategy<redisAsyncContext *>> _lbs_sptr;
     std::shared_ptr<serviceDiscovery::serviceDiscovery<DBConn>> _srvc_sptr;
