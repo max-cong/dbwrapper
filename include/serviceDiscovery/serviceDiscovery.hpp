@@ -37,7 +37,7 @@ namespace serviceDiscovery
 {
 // note: this is not thread safe. need to work with task
 template <typename connInfo>
-class serviceDiscovery : public gene::gene<void *>, public nonCopyable
+class serviceDiscovery : public gene::gene<void *>, public std::enable_shared_from_this public nonCopyable
 {
 public:
     typedef std::list<connInfo> connList;
@@ -86,10 +86,11 @@ public:
             std::string reccItval = configCenter::configCenter<void *>::instance()->getPropertiesField(getGeneticGene(), PROP_RECONN_INTERVAL, DEFAULT_RECONN_INTERVAL);
             std::string::size_type sz; // alias of size_t
             int _reconnect_interval = std::stoi(reccItval, &sz);
+            auto self_sptr = shared_from_this();
 
-            _retrigerTimer->startOnce(_reconnect_interval, [this]() {
-                __LOG(error, "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!restart!!!!!!!!!!!!!!!!!!!!!!!!!");
-                this->restart();
+            _retrigerTimer->startOnce(_reconnect_interval, [self_sptr]() {
+                __LOG(warn, "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!restart service discovery!!!!!!!!!!!!!!!!!!!!!!!!!");
+                self_sptr->restart();
             });
         }
         else
