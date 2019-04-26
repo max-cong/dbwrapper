@@ -40,7 +40,7 @@ public:
         }
         _task_sptr->init();
 
-        dbw::taskSaver::instance<void *, std::shared_ptr<task::taskImp>>()->save(getThis(), _task_sptr);
+        medis::taskSaver<void *, std::shared_ptr<task::taskImp>>::instance()->save(getThis(), _task_sptr);
         return _loop_sptr->start(true);
     }
     bool put(std::string key, std::string value, void *usr_data, redisCallbackFn *fn)

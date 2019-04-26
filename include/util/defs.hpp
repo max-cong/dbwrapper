@@ -1,7 +1,7 @@
 #pragma once
 #include "lbStrategy/lbStrategy.hpp"
 #include "heartbeat/heartbeat.hpp"
-namespace dbw
+namespace medis
 {
 struct redisContext
 {
@@ -54,6 +54,24 @@ public:
     {
         _geneMap.erase(obj);
     }
+    std::list<RDS_CTX> getIpPortThenDel(std::string ip, unsigned short port)
+    {
+        std::list<RDS_CTX> ctxList;
+        auto iter = _geneMap.begin();
+        while (iter != _geneMap.end())
+        {
+            if (iter->second->ip == ip && iter->second->port == port)
+            {
+                ctxList.push_back(iter->second);
+                iter = _geneMap.erase(iter);
+            }
+            else
+            {
+                iter++;
+            }
+        }
+        return ctxList;
+    }
     std::pair<RDS_CTX, bool> getCtx(const OBJ obj)
     {
         if (_geneMap.find(obj) != _geneMap.end())
@@ -97,6 +115,4 @@ public:
     std::map<OBJ, RDS_TASK_SPTR> _geneMap;
 };
 
-
-
-} // namespace dbw
+} // namespace medis

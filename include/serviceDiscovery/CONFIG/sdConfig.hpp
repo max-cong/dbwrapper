@@ -19,7 +19,7 @@ public:
         // build connInfo
         connInfo _connInfo;
 
-        _connInfo.type = dbw::CONN_TYPE::IP;
+        _connInfo.type = medis::CONN_TYPE::IP;
         _connInfo.ip = connHost;
 
         std::string::size_type sz; // alias of size_t
