@@ -13,8 +13,8 @@ public:
     virtual bool init()
     {
 
-        std::string connHost = configCenter::configCenter<void *>::instance()->get_properties_fields(this->get_genetic_gene(), PROP_HOST, DEFAULT_HOST);
-        std::string connPort = configCenter::configCenter<void *>::instance()->get_properties_fields(this->get_genetic_gene(), PROP_PORT, DEFAULT_PORT);
+        std::string connHost = configCenter::configCenter<void *>::instance()->getPropertiesField(this->getGeneticGene(), PROP_HOST, DEFAULT_HOST);
+        std::string connPort = configCenter::configCenter<void *>::instance()->getPropertiesField(this->getGeneticGene(), PROP_PORT, DEFAULT_PORT);
 
         // build connInfo
         connInfo _connInfo;

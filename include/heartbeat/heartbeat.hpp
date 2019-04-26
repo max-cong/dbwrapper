@@ -79,7 +79,7 @@ public:
         // At this time we should not call the ping function
         // as the connection may not set up yet
         // the worest case is to detect APP not avaliable net heart beat
-        set_hb_success(true);
+        setHbSuccess(true);
         __LOG(debug, "start heartBeat!");
 
         auto timer = _tManager->getTimer();
@@ -90,11 +90,11 @@ public:
         }
         auto this_sptr = shared_from_this();
         timer->startForever(_interval, [this_sptr]() {
-            if (this_sptr->get_hb_success())
+            if (this_sptr->getHbSuccess())
             {
                 this_sptr->onHeartbeatSuccess();
 
-                std::string hbLostNum = configCenter::configCenter<void *>::instance()->get_properties_fields(this_sptr->get_genetic_gene(), PROP_HB_LOST_NUM, DEFAULT_HB_LOST_NUM);
+                std::string hbLostNum = configCenter::configCenter<void *>::instance()->getPropertiesField(this_sptr->getGeneticGene(), PROP_HB_LOST_NUM, DEFAULT_HB_LOST_NUM);
                 std::string::size_type sz; // alias of size_t
 
                 int i_dec = std::stoi(hbLostNum, &sz);
@@ -110,12 +110,12 @@ public:
             }
 
             // set heartBeat status false, if hb success, it will set to true
-            this_sptr->set_hb_success(false);
+            this_sptr->setHbSuccess(false);
 
             if (this_sptr->_retryNum < 1)
             {
 
-                std::string hbLostNum = configCenter::configCenter<void *>::instance()->get_properties_fields(this_sptr->get_genetic_gene(), PROP_HB_LOST_NUM, DEFAULT_HB_LOST_NUM);
+                std::string hbLostNum = configCenter::configCenter<void *>::instance()->getPropertiesField(this_sptr->getGeneticGene(), PROP_HB_LOST_NUM, DEFAULT_HB_LOST_NUM);
                 std::string::size_type sz; // alias of size_t
 
                 int i_dec = std::stoi(hbLostNum, &sz);
@@ -143,11 +143,11 @@ public:
     void setPingCb(ping_f const &cb) { _pingCb = cb; }
     ping_f getPingCb() { return _pingCb; }
 
-    void set_hb_success(bool success)
+    void setHbSuccess(bool success)
     {
         _success = success;
     }
-    bool get_hb_success()
+    bool getHbSuccess()
     {
         bool ret = _success;
         return ret;

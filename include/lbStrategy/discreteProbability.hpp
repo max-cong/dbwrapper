@@ -41,7 +41,7 @@ public:
     }
     // note: there is no lock here
     // for performance, please check the return code during usage
-    std::pair<DIST_OBJ, retStatus> get_obj() override
+    std::pair<DIST_OBJ, retStatus> getObj() override
     {
         DIST_OBJ obj;
         // note: do this to supress build warning. this is redisAsyncContext*

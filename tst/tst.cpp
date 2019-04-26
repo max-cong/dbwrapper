@@ -30,7 +30,7 @@ protected:
 
         configCenter::cfgPropMap _config;
         _config[PROP_HOST] = "127.0.0.1";
-        configCenter::configCenter<void *>::instance()->set_properties(_aclient_sptr->getThis(), _config);
+        configCenter::configCenter<void *>::instance()->setProperties(_aclient_sptr->getThis(), _config);
 
         _aclient_sptr->init();
         std::this_thread::sleep_for(std::chrono::milliseconds(100));

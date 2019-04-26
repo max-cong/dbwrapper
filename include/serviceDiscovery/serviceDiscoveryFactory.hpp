@@ -51,7 +51,7 @@ public:
             ret = std::make_shared<sdDns<connInfo>>(loopIn);
             if (ret)
             {
-                ret->set_genetic_gene(gene);
+                ret->setGeneticGene(gene);
             }
             else
             {
@@ -63,7 +63,7 @@ public:
             ret = std::make_shared<sdUnixSocket<connInfo>>(loopIn);
             if (ret)
             {
-                ret->set_genetic_gene(gene);
+                ret->setGeneticGene(gene);
             }
             else
             {
@@ -75,7 +75,7 @@ public:
             ret = std::make_shared<sdConfig<connInfo>>(loopIn);
             if (ret)
             {
-                ret->set_genetic_gene(gene);
+                ret->setGeneticGene(gene);
             }
             else
             {

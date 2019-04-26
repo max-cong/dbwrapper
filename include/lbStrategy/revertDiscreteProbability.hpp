@@ -45,7 +45,7 @@ public:
         return true;
     }
     // note: there is no lock here
-    std::pair<DIST_OBJ, retStatus> get_obj() override
+    std::pair<DIST_OBJ, retStatus> getObj() override
     {
 
         DIST_OBJ obj;

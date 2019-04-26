@@ -1,7 +1,7 @@
 #pragma once
 
 #include <list>
-enum class REDIS_MSG_TYPE : std::uint32_t
+enum class REDIS_COMMAND_TYPE : std::uint32_t
 {
     TASK_REDIS_PUT,
     TASK_REDIS_GET,
@@ -28,11 +28,11 @@ public:
 #endif
     buildRedisCommand() = default;
 
-    static std::string get_format_command(REDIS_MSG_TYPE type, COMMAND_KEY key, COMMAND_VALUE value, COMMAND_ARGS args = nullptr) // to do COMMAND_ARGS... args)
+    static std::string get_format_command(REDIS_COMMAND_TYPE type, COMMAND_KEY key, COMMAND_VALUE value, COMMAND_ARGS args = nullptr) // to do COMMAND_ARGS... args)
     {
         switch (type)
         {
-        case REDIS_MSG_TYPE::TASK_REDIS_PUT:
+        case REDIS_COMMAND_TYPE::TASK_REDIS_PUT:
 #if __cplusplus >= 201703L
             if constexpr (detail::is_string_v<COMMAND_KEY>)
             {
@@ -65,15 +65,15 @@ public:
             }
 #endif
             break;
-        case REDIS_MSG_TYPE::TASK_REDIS_GET:
+        case REDIS_COMMAND_TYPE::TASK_REDIS_GET:
             break;
-        case REDIS_MSG_TYPE::TASK_REDIS_DEL:
+        case REDIS_COMMAND_TYPE::TASK_REDIS_DEL:
             break;
-        case REDIS_MSG_TYPE::TASK_REDIS_ADD_CONN:
+        case REDIS_COMMAND_TYPE::TASK_REDIS_ADD_CONN:
             break;
-        case REDIS_MSG_TYPE::TASK_REDIS_DEL_CONN:
+        case REDIS_COMMAND_TYPE::TASK_REDIS_DEL_CONN:
             break;
-        case REDIS_MSG_TYPE::TASK_REDIS_PING:
+        case REDIS_COMMAND_TYPE::TASK_REDIS_PING:
             break;
         default:
             __LOG(warn, "unsupport message type!");

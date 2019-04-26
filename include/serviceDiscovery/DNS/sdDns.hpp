@@ -88,10 +88,10 @@ public:
         for (auto _tmp_host : ipList)
         {
             auto ret = host2connInfo(_tmp_host);
-            std::string _port = config_center<void *>::instance()->get_properties_fields(get_genetic_gene(), PROP_PORT, DEFAULT_PORT_STR);
+            std::string _port = config_center<void *>::instance()->getPropertiesField(getGeneticGene(), PROP_PORT, DEFAULT_PORT_STR);
             ret.first.port = _port;
 
-            unsigned int dscp = config_center<void *>::instance()->get_properties_fields(get_genetic_gene(), PROP_DSCP, DEFAULT_DSCP);
+            unsigned int dscp = config_center<void *>::instance()->getPropertiesField(getGeneticGene(), PROP_DSCP, DEFAULT_DSCP);
             ret.first.dscp = dscp;
 
             if (ret.second)
@@ -115,10 +115,10 @@ public:
         
         // if er run into here, that means the PROP_HOST in the configration is FQDN
         // get FQND from configuration, is FQDN is not empty, then call DNS related function
-        std::string _host = config_center<void *>::instance()->get_properties_fields(get_genetic_gene(), PROP_HOST, DEFAULT_HOST);
+        std::string _host = config_center<void *>::instance()->getPropertiesField(getGeneticGene(), PROP_HOST, DEFAULT_HOST);
 
         // call DNS resolve callback and call it
-        auto ret = any_saver<void *>::instance()->get_data(get_genetic_gene(), DNS_RESOLVE_FQDN);
+        auto ret = any_saver<void *>::instance()->get_data(getGeneticGene(), DNS_RESOLVE_FQDN);
         if (ret.second)
         {
             try
@@ -145,7 +145,7 @@ public:
     void do_dns_with_timer()
     {
         do_dns();
-        std::string _refresh = config_center<void *>::instance()->get_properties_fields(get_genetic_gene(), PROP_DNS_REFRESHMENT_IND, DEFAULT_DNS_REFRESH_IND);
+        std::string _refresh = config_center<void *>::instance()->getPropertiesField(getGeneticGene(), PROP_DNS_REFRESHMENT_IND, DEFAULT_DNS_REFRESH_IND);
         if (!_refresh.compare("False"))
         {
             if (_dns_timer)
@@ -170,7 +170,7 @@ public:
         __LOG(debug, "[sdDns] init is called");
         boost::function<bool()> _cfg_change_fn = boost::bind(&sdDns::stop, this);
         // register callback to any saver
-        auto cfg_change_ret = any_saver<void *>::instance()->save_data(get_genetic_gene(), CFG_CHANGE_SERVICE_DISCOVERY_MESSAGE, _cfg_change_fn);
+        auto cfg_change_ret = any_saver<void *>::instance()->save_data(getGeneticGene(), CFG_CHANGE_SERVICE_DISCOVERY_MESSAGE, _cfg_change_fn);
 
         if (!cfg_change_ret)
         {
@@ -178,22 +178,22 @@ public:
         }
 
         __LOG(debug, "[sdDns] sdDns init");
-        unsigned int _default_ttl = config_center<void *>::instance()->get_properties_fields(get_genetic_gene(), PROP_TTL_VALUE, DEFAULT_TTL_VALUE);
+        unsigned int _default_ttl = config_center<void *>::instance()->getPropertiesField(getGeneticGene(), PROP_TTL_VALUE, DEFAULT_TTL_VALUE);
         _dns_ttl = _default_ttl;
         boost::function<void(List &, int)> _dns_resolve_fn = boost::bind(&sdDns::dnsResolveCallback, this, _1, _2);
 
         // register callback to any saver
-        auto ret = any_saver<void *>::instance()->save_data(get_genetic_gene(), DNS_RESP_IP_LIST, _dns_resolve_fn);
+        auto ret = any_saver<void *>::instance()->save_data(getGeneticGene(), DNS_RESP_IP_LIST, _dns_resolve_fn);
         if (!ret)
         {
             return false;
         }
 
         // get FQND from configuration, if FQDN is not empty, then call DNS related function
-        std::string _host = config_center<void *>::instance()->get_properties_fields(get_genetic_gene(), PROP_HOST, DEFAULT_HOST);
+        std::string _host = config_center<void *>::instance()->getPropertiesField(getGeneticGene(), PROP_HOST, DEFAULT_HOST);
         __LOG(debug, "get host : " << _host);
 
-        std::string _port = config_center<void *>::instance()->get_properties_fields(get_genetic_gene(), PROP_PORT, DEFAULT_PORT_STR);
+        std::string _port = config_center<void *>::instance()->getPropertiesField(getGeneticGene(), PROP_PORT, DEFAULT_PORT_STR);
 
         // get host list
         List hosts;

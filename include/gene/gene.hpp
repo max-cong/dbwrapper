@@ -7,11 +7,11 @@ class gene
   public:
 	gene() {}
 	virtual ~gene() {}
-	void set_genetic_gene(GENETIC_TYPE gen)
+	void setGeneticGene(GENETIC_TYPE gen)
 	{
 		_genetic_gen = gen;
 	}
-	GENETIC_TYPE get_genetic_gene()
+	GENETIC_TYPE getGeneticGene()
 	{
 		return _genetic_gen;
 	}

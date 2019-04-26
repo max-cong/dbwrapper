@@ -43,20 +43,20 @@ class lbStrategy
 public:
     virtual ~lbStrategy() {}
     // Interface
-    virtual std::pair<LB_OBJ, retStatus> get_obj() = 0;
+    virtual std::pair<LB_OBJ, retStatus> getObj() = 0;
     virtual bool init() = 0;
     virtual retStatus update() = 0;
 
-    void set_no_avaliable_cb(std::function<void()> const &cb)
+    void setNoAvaliableCb(std::function<void()> const &cb)
     {
         _no_avaliable_cb = cb;
     }
-    void set_first_avaliable_cb(std::function<void()> const &cb)
+    void setFirstAvaliableCb(std::function<void()> const &cb)
     {
         _first_avaliable_cb = cb;
     }
 
-    std::pair<LB_OBJ, retStatus> get_obj_with_index(unsigned int index)
+    std::pair<LB_OBJ, retStatus> getObjWithIndex(unsigned int index)
     {
         LB_OBJ obj;
         if (_obj_vector.empty())
@@ -77,15 +77,15 @@ public:
     }
 
     // common function
-    virtual retStatus add_obj(LB_OBJ obj, unsigned int weight = 0)
+    virtual retStatus addObj(LB_OBJ obj, unsigned int weight = 0)
     {
         __LOG(debug, "now add one object!");
-        return update_obj(obj, weight);
+        return updateObj(obj, weight);
     }
 
-    retStatus del_obj(const LB_OBJ obj)
+    retStatus delObj(const LB_OBJ obj)
     {
-        unsigned int _avaliable_obj_before = get_avaliable_obj().size();
+        unsigned int _avaliable_obj_before = getAvaliableObj().size();
 
         for (auto it = _obj_vector.begin(); it != _obj_vector.end();)
 
@@ -115,7 +115,7 @@ public:
         }
 
         __LOG(warn, " size of _obj_vector is : " << _obj_vector.size() << ", size of _inactive_obj_vector is : " << _inactive_obj_vector.size());
-        unsigned int _avaliable_obj_after = get_avaliable_obj().size();
+        unsigned int _avaliable_obj_after = getAvaliableObj().size();
 
         if (_avaliable_obj_before && !_avaliable_obj_after && _no_avaliable_cb)
         {
@@ -126,7 +126,7 @@ public:
         return update();
     }
 
-    unsigned int get_weight(LB_OBJ obj)
+    unsigned int getWeight(LB_OBJ obj)
     {
 
         for (auto it : _obj_vector)
@@ -139,21 +139,21 @@ public:
         return 0;
     }
 
-    retStatus update_obj(LB_OBJ obj, unsigned int weight = 0)
+    retStatus updateObj(LB_OBJ obj, unsigned int weight = 0)
     {
         __LOG(debug, " update obj is called, weight is : " << weight);
-        unsigned int _avaliable_obj_before = get_avaliable_obj().size();
+        unsigned int _avaliable_obj_before = getAvaliableObj().size();
 
         if (!weight)
         {
-            update_obj_zero(obj);
+            updateObjZero(obj);
         }
         else // weight is not 0
         {
-            update_obj_not_zero(obj, weight);
+            updateObjNotZero(obj, weight);
         }
 
-        unsigned int _avaliable_obj_after = get_avaliable_obj().size();
+        unsigned int _avaliable_obj_after = getAvaliableObj().size();
         if (!_avaliable_obj_after && _avaliable_obj_before && _no_avaliable_cb)
         {
             _no_avaliable_cb();
@@ -169,27 +169,27 @@ public:
         return update();
     }
 
-    virtual retStatus inc_weight(LB_OBJ obj, unsigned int weight)
+    virtual retStatus incWeight(LB_OBJ obj, unsigned int weight)
     {
         unsigned int _weight = 0;
-        _weight = get_weight(obj);
+        _weight = getWeight(obj);
         _weight += weight;
-        return update_obj(obj, _weight);
+        return updateObj(obj, _weight);
     }
-    virtual retStatus dec_weight(LB_OBJ obj, unsigned int weight)
+    virtual retStatus decWeight(LB_OBJ obj, unsigned int weight)
     {
         unsigned int _weight = 0;
-        _weight = get_weight(obj);
+        _weight = getWeight(obj);
         _weight -= weight;
         if (_weight < 0)
         {
             _weight = 0;
         }
-        return update_obj(obj, _weight);
+        return updateObj(obj, _weight);
     }
 
     // get all the object, include active and inactive
-    virtual std::vector<std::pair<LB_OBJ, unsigned int>> get_all_obj()
+    virtual std::vector<std::pair<LB_OBJ, unsigned int>> getAllObj()
     {
         std::vector<std::pair<LB_OBJ, unsigned int>> ret;
         ret.insert(ret.begin(), _obj_vector.begin(), _obj_vector.end());
@@ -199,7 +199,7 @@ public:
         }
         return ret;
     }
-    virtual bool clear_info()
+    virtual bool clearInfo()
     {
         __LOG(debug, "[clear info]--------------")
         _obj_vector.clear();
@@ -208,7 +208,7 @@ public:
         return true;
     }
 
-    std::vector<std::pair<LB_OBJ, unsigned int>> get_avaliable_obj()
+    std::vector<std::pair<LB_OBJ, unsigned int>> getAvaliableObj()
     {
         return _obj_vector;
     }
@@ -220,7 +220,7 @@ public:
     std::function<void()> _first_avaliable_cb;
 
 private:
-    void update_obj_zero(LB_OBJ obj)
+    void updateObjZero(LB_OBJ obj)
     {
         // if the obj is in active list, remove it
         for (auto it = _obj_vector.begin(); it != _obj_vector.end();)
@@ -258,7 +258,7 @@ private:
             _inactive_obj_vector.push_back(obj);
         }
     }
-    void update_obj_not_zero(LB_OBJ obj, unsigned int weight)
+    void updateObjNotZero(LB_OBJ obj, unsigned int weight)
     {
         for (auto it = _inactive_obj_vector.begin(); it != _inactive_obj_vector.end();)
         {
