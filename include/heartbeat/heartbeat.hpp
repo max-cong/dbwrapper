@@ -39,24 +39,34 @@ namespace heartBeat
 class heartBeat : public gene::gene<void *>, public std::enable_shared_from_this<heartBeat>
 {
 public:
-    using ping_f = std::function<void(std::shared_ptr<heartBeat>)>;
+    using ping_f = std::function<void()>;
     using hbSuccCb = std::function<void(void)>;
     using hbLostCb = std::function<void(void)>;
     heartBeat() = delete;
-    explicit heartBeat(std::shared_ptr<loop::loop> loopIn) : _interval(5000), _loop(loopIn), _success(false), _retryNum(5)
+    explicit heartBeat(std::shared_ptr<loop::loop> loopIn) : _interval(3000), _loop(loopIn), _success(false), _retryNum(5)
     {
         __LOG(debug, "start heartBeat, this is :" << (void *)this);
     }
-   
+
     bool init()
     {
         _tManager.reset(new timer::timerManager(_loop.lock()));
         start();
         return true;
     }
+    void setRetryNum(unsigned int retryNum)
+    {
+        _retryNum = retryNum;
+    }
+    unsigned int getRetryNum()
+    {
+        __LOG(debug, "[getRetryNum] this is : " << (void *)this);
+        return _retryNum;
+    }
     void onHeartbeatLost()
     {
         __LOG(debug, "onHeartbeatLost");
+        _hbTimer->stop();
         if (_hbLostCb)
         {
             _hbLostCb();
@@ -79,17 +89,28 @@ public:
         // At this time we should not call the ping function
         // as the connection may not set up yet
         // the worest case is to detect APP not avaliable net heart beat
-        setHbSuccess(true);
-        __LOG(debug, "start heartBeat!");
-
-        auto timer = _tManager->getTimer();
-        if (!timer)
+        setHbSuccess(false);
+        __LOG(debug, "start heartBeat and send heartbeat!");
+        if (getPingCb())
         {
-            __LOG(error, "[heartbeat] get timer fail");
+            getPingCb()();
+        }
+
+        _hbTimer = _tManager->getTimer();
+        if (!_hbTimer)
+        {
+            __LOG(error, "[heartbeat] get _hbTimer fail");
             return;
         }
-        auto this_sptr = shared_from_this();
-        timer->startForever(_interval, [this_sptr]() {
+        auto self_wptr = getThisWptr();
+
+        _processHb = [self_wptr]() {
+            if (self_wptr.expired())
+            {
+                __LOG(warn, "heart beat timer: heat beat weak ptr is expired");
+                return;
+            }
+            auto this_sptr = self_wptr.lock();
             if (this_sptr->getHbSuccess())
             {
                 this_sptr->onHeartbeatSuccess();
@@ -102,7 +123,9 @@ public:
             }
             else
             {
+
                 this_sptr->_retryNum--;
+                __LOG(warn, "heartbeat fail, retry time left : " << this_sptr->_retryNum << ", this is : " << (void *)this_sptr.get());
                 if (this_sptr->_retryNum < 1)
                 {
                     this_sptr->_retryNum = 0;
@@ -114,7 +137,6 @@ public:
 
             if (this_sptr->_retryNum < 1)
             {
-
                 std::string hbLostNum = configCenter::configCenter<void *>::instance()->getPropertiesField(this_sptr->getGeneticGene(), PROP_HB_LOST_NUM, DEFAULT_HB_LOST_NUM);
                 std::string::size_type sz; // alias of size_t
 
@@ -126,9 +148,11 @@ public:
 
             if (this_sptr->getPingCb())
             {
-                (this_sptr->getPingCb())(this_sptr);
+                (this_sptr->getPingCb())();
             }
-        });
+            this_sptr->_hbTimer->startOnce(this_sptr->_interval, this_sptr->_processHb);
+        };
+        _hbTimer->startOnce(_interval, _processHb);
     }
     bool stop()
     {
@@ -152,6 +176,11 @@ public:
         bool ret = _success;
         return ret;
     }
+    std::weak_ptr<heartBeat> getThisWptr()
+    {
+        std::weak_ptr<heartBeat> self_wptr(shared_from_this());
+        return self_wptr;
+    }
 
 private:
     uint32_t _interval;
@@ -162,6 +191,8 @@ private:
     std::weak_ptr<loop::loop> _loop;
     std::atomic<bool> _success;
     std::atomic<unsigned int> _retryNum;
+    std::shared_ptr<timer::timer> _hbTimer;
     std::shared_ptr<timer::timerManager> _tManager;
+    std::function<void()> _processHb;
 };
 } // namespace heartBeat

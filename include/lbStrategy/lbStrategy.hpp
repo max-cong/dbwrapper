@@ -24,18 +24,13 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "logger/logger.hpp"
+#include "util/defs.hpp"
 #include <algorithm>
 #include <utility>
 #include <functional>
 namespace lbStrategy
 {
-enum class retStatus : std::uint32_t
-{
-    SUCCESS = 0,
-    FAIL,
-    NO_ENTRY,
-    FIRST_ENTRY
-};
+
 // note: this is not thread safe
 template <typename LB_OBJ>
 class lbStrategy
@@ -43,9 +38,9 @@ class lbStrategy
 public:
     virtual ~lbStrategy() {}
     // Interface
-    virtual std::pair<LB_OBJ, retStatus> getObj() = 0;
+    virtual std::pair<LB_OBJ, medis::retStatus> getObj() = 0;
     virtual bool init() = 0;
-    virtual retStatus update() = 0;
+    virtual medis::retStatus update() = 0;
 
     void setNoAvaliableCb(std::function<void()> const &cb)
     {
@@ -56,13 +51,13 @@ public:
         _first_avaliable_cb = cb;
     }
 
-    std::pair<LB_OBJ, retStatus> getObjWithIndex(unsigned int index)
+    std::pair<LB_OBJ, medis::retStatus> getObjWithIndex(unsigned int index)
     {
         LB_OBJ obj;
         if (_obj_vector.empty())
         {
             __LOG(warn, "there is no entry here!");
-            return std::make_pair(obj, retStatus::NO_ENTRY);
+            return std::make_pair(obj, medis::retStatus::NO_ENTRY);
         }
         try
         {
@@ -71,19 +66,19 @@ public:
         catch (const std::out_of_range &oor)
         {
             __LOG(error, "Out of Range error: " << oor.what());
-            return std::make_pair(obj, retStatus::FAIL);
+            return std::make_pair(obj, medis::retStatus::FAIL);
         }
-        return std::make_pair(obj, retStatus::SUCCESS);
+        return std::make_pair(obj, medis::retStatus::SUCCESS);
     }
 
     // common function
-    virtual retStatus addObj(LB_OBJ obj, unsigned int weight = 0)
+    virtual medis::retStatus addObj(LB_OBJ obj, unsigned int weight = 0)
     {
         __LOG(debug, "now add one object!");
         return updateObj(obj, weight);
     }
 
-    retStatus delObj(const LB_OBJ obj)
+    medis::retStatus delObj(const LB_OBJ obj)
     {
         unsigned int _avaliable_obj_before = getAvaliableObj().size();
 
@@ -116,10 +111,10 @@ public:
 
         __LOG(warn, " size of _obj_vector is : " << _obj_vector.size() << ", size of _inactive_obj_vector is : " << _inactive_obj_vector.size());
         unsigned int _avaliable_obj_after = getAvaliableObj().size();
-
-        if (_avaliable_obj_before && !_avaliable_obj_after && _no_avaliable_cb)
+        // note: you need to make sure there is connection before and then there is no connection, we call no avaliable callback
+        // that is : if you do not have connection form the first time. no avaliable callback will not triger
+        if (_avaliable_obj_before&&!_avaliable_obj_after && _no_avaliable_cb)
         {
-
             _no_avaliable_cb();
         }
 
@@ -139,7 +134,7 @@ public:
         return 0;
     }
 
-    retStatus updateObj(LB_OBJ obj, unsigned int weight = 0)
+    medis::retStatus updateObj(LB_OBJ obj, unsigned int weight = 0)
     {
         __LOG(debug, " update obj is called, weight is : " << weight);
         unsigned int _avaliable_obj_before = getAvaliableObj().size();
@@ -169,14 +164,14 @@ public:
         return update();
     }
 
-    virtual retStatus incWeight(LB_OBJ obj, unsigned int weight)
+    virtual medis::retStatus incWeight(LB_OBJ obj, unsigned int weight)
     {
         unsigned int _weight = 0;
         _weight = getWeight(obj);
         _weight += weight;
         return updateObj(obj, _weight);
     }
-    virtual retStatus decWeight(LB_OBJ obj, unsigned int weight)
+    virtual medis::retStatus decWeight(LB_OBJ obj, unsigned int weight)
     {
         unsigned int _weight = 0;
         _weight = getWeight(obj);
@@ -238,12 +233,11 @@ private:
         }
 
         bool found = false;
+        __LOG(debug, "loop inactive vector, there are [" << _inactive_obj_vector.size() << "] obj in the inactive vector");
         for (auto it = _inactive_obj_vector.begin(); it != _inactive_obj_vector.end();)
         {
-            __LOG(debug, "loop inactive thread");
             if ((*it) == obj)
             {
-
                 __LOG(warn, "obj is in the inactive obj");
                 found = true;
                 it++;

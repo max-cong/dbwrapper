@@ -36,32 +36,32 @@ public:
     }
     ~roundRobbin() {}
     // note: there is no lock here
-    std::pair<LB_OBJ, retStatus> getObj() override
+    std::pair<LB_OBJ, medis::retStatus> getObj() override
     {
         LB_OBJ obj;
         // note: do this to supress build warning. this is redisAsyncContext*
         obj = NULL;
         if (this->_obj_vector.empty() || !_max_index)
         {
-            return std::make_pair(obj, retStatus::NO_ENTRY);
+            return std::make_pair(obj, medis::retStatus::NO_ENTRY);
         }
         try
         {
             _index++;
-            return std::make_pair(std::get<0>(this->_obj_vector.at(_index % (this->_max_index))), retStatus::SUCCESS);
+            return std::make_pair(std::get<0>(this->_obj_vector.at(_index % (this->_max_index))), medis::retStatus::SUCCESS);
         }
         catch (const std::out_of_range &oor)
         {
             __LOG(error, "Out of Range error: " << oor.what());
 
-            return std::make_pair(obj, retStatus::FAIL);
+            return std::make_pair(obj, medis::retStatus::FAIL);
         }
-        return std::make_pair(obj, retStatus::SUCCESS);
+        return std::make_pair(obj, medis::retStatus::SUCCESS);
     }
 
     // for round robbin, if the weight is 0, that mean we should delete the obj the default weight_ is 10
-    
-    virtual retStatus addObj(LB_OBJ obj, unsigned int weight = 10)
+
+    virtual medis::retStatus addObj(LB_OBJ obj, unsigned int weight = 1)
     {
         return this->updateObj(obj, weight);
     }
@@ -71,10 +71,10 @@ public:
         return true;
     }
 
-    retStatus update() override
+    medis::retStatus update() override
     {
         _max_index = this->_obj_vector.size();
-        return retStatus::SUCCESS;
+        return ((_max_index > 0) ? medis::retStatus::SUCCESS : medis::retStatus::NO_ENTRY);
     }
 
 private:

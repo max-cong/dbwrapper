@@ -40,7 +40,95 @@ public:
             _evfd = -1;
         }
     }
+    bool init()
+    {
+        __LOG(debug, "init task with gene : " << (void *)getGeneticGene());
+        if (_loop.expired())
+        {
+            __LOG(error, "loop is invalid!");
+            return false;
+        }
+        _evfd = eventfd(0, EFD_NONBLOCK | EFD_CLOEXEC);
+        if (_evfd < 0)
+        {
+            __LOG(error, "!!!!!!!!create event fd fail!");
+            return false;
+        }
+        __LOG(debug, "init taskImp with ID :" << _evfd);
+        // start eventfd server
 
+        _evfdServer = std::make_shared<evfdServer>(getLoop(), _evfd, evfdCallback, (void *)this);
+        if (!_evfdServer->init())
+        {
+            return false;
+        }
+
+        // start evfd client
+
+        _evfdClient = std::make_shared<evfdClient>(_evfd);
+
+        _connManager = std::make_shared<connManager::connManager<medis::CONN_INFO>>(getLoop());
+        if (!_connManager)
+        {
+            __LOG(error, "create connection manager fail");
+            return false;
+        }
+        _connManager->setGeneticGene(getGeneticGene());
+        __LOG(debug, "create connection manager with gene : " << _connManager->getGeneticGene());
+
+        auto sef_wptr = getThisWptr();
+        _connManager->setAddConnCb([sef_wptr](medis::CONN_INFO connInfo) {
+            if (!sef_wptr.expired())
+            {
+                __LOG(debug, "there is a new connection, send message to task with type TASK_REDIS_ADD_CONN");
+                return sef_wptr.lock()->sendMsg(task::taskMsgType::TASK_REDIS_ADD_CONN, connInfo);
+            }
+            else
+            {
+                __LOG(warn, "conn add, task weak ptr is expired");
+                return false;
+            }
+        });
+        _connManager->setDecConnCb([sef_wptr](medis::CONN_INFO connInfo) {
+            if (!sef_wptr.expired())
+            {
+                return sef_wptr.lock()->sendMsg(task::taskMsgType::TASK_REDIS_DEL_CONN, connInfo);
+            }
+            else
+            {
+                __LOG(warn, "conn del, task weak ptr is expired");
+                return false;
+            }
+        });
+
+        _connManager->setAvaliableCb([sef_wptr]() {
+            if (!sef_wptr.expired())
+            {
+                sef_wptr.lock()->_connected = true;
+            }
+            else
+            {
+                __LOG(warn, "connection avaliable : task weak ptr is expired");
+            }
+        });
+        _connManager->setUnavaliableCb([sef_wptr]() {
+            if (!sef_wptr.expired())
+            {
+                sef_wptr.lock()->_connected = false;
+            }
+            else
+            {
+                __LOG(warn, "connection unavaliable : task weak ptr is expired");
+            }
+        });
+
+        _connManager->init();
+
+        // timer manager
+        _timerManager.reset(new timer::timerManager(getLoop()));
+
+        return true;
+    }
     static void evfdCallback(int fd, short event, void *args)
     {
         uint64_t one;
@@ -65,12 +153,24 @@ public:
             return;
         }
         __LOG(debug, "argv: " << (char *)privdata << ", string is " << reply->str);
+
         auto ctxSaver = medis::contextSaver<void *, std::shared_ptr<medis::redisContext>>::instance();
         auto ctxRet = ctxSaver->getCtx(c);
         if (std::get<1>(ctxRet))
         {
             auto rdxCtx = std::get<0>(ctxRet);
-            rdxCtx->_hb->setHbSuccess(true);
+
+            if (c->err != REDIS_OK)
+            {
+                __LOG(warn, "ping has error, error is : " << c->err << ", error string  is : " << std::string(c->errstr));
+                rdxCtx->_hb->setHbSuccess(false);
+            }
+            else
+            {
+                __LOG(debug, "ping success");
+
+                rdxCtx->_hb->setHbSuccess(true);
+            }
         }
         else
         {
@@ -80,12 +180,18 @@ public:
 
     static void connectCallback(const redisAsyncContext *c, int status)
     {
-        if (status != REDIS_OK)
+        bool connected = false;
+        if (status != REDIS_OK || c->err != REDIS_OK)
         {
-            __LOG(error, "Error: " << c->errstr);
-            return;
+            connected = false;
+            __LOG(error, "error code is : " << c->err << ", errstr is : " << c->errstr);
         }
-        __LOG(debug, "Connected...");
+        else
+        {
+            connected = true;
+            __LOG(debug, "Connected...");
+        }
+
         redisAsyncContext *_aCtx = const_cast<redisAsyncContext *>(c);
         auto ctxSaver = medis::contextSaver<void *, std::shared_ptr<medis::redisContext>>::instance();
 
@@ -93,13 +199,19 @@ public:
         if (std::get<1>(contextRet))
         {
             std::shared_ptr<medis::redisContext> rdsCtx = std::get<0>(contextRet);
-
-            rdsCtx->_lbs->updateObj(_aCtx, rdsCtx->_priority);
+            if (connected)
+            {
+                rdsCtx->_lbs->updateObj(_aCtx, rdsCtx->_priority);
+            }
+            else
+            {
+                __LOG(warn, "connect return fail, call disconnect callback and disconnect callback will connect again");
+                taskImp::disconnectCallback(_aCtx, REDIS_OK);
+            }
         }
         else
         {
-
-            return;
+            __LOG(error, "did not find the context!! please check!!");
         }
     }
 
@@ -108,9 +220,8 @@ public:
         if (status != REDIS_OK)
         {
             __LOG(error, "Error: " << c->errstr);
-            return;
         }
-        __LOG(warn, "Disconnected...\n");
+        __LOG(warn, "Disconnected... status is :" << status);
         redisAsyncContext *_aCtx = const_cast<redisAsyncContext *>(c);
         auto ctxSaver = medis::contextSaver<void *, std::shared_ptr<medis::redisContext>>::instance();
 
@@ -118,12 +229,15 @@ public:
         if (std::get<1>(contextRet))
         {
             auto rdsCtx = std::get<0>(contextRet);
-            rdsCtx->_lbs->updateObj(_aCtx, 0);
+            rdsCtx->_lbs->delObj(_aCtx);
             std::string innerIp = rdsCtx->ip;
             unsigned short innerPort = rdsCtx->port;
             int priority = rdsCtx->_priority;
             auto gene = rdsCtx->_hb->getGeneticGene();
-            rdsCtx->_retryTimerManager->getTimer()->startOnce(5000, [gene, innerIp, innerPort, priority]() {
+            std::weak_ptr<medis::redisContext> ctxWptr(rdsCtx);
+
+            rdsCtx->_retryTimerManager->getTimer()->startOnce(5000, [gene, innerIp, innerPort, priority, _aCtx, ctxWptr]() {
+                __LOG(debug, "in the reconnect timer");
                 auto taskPair = medis::taskSaver<void *, std::shared_ptr<task::taskImp>>::instance()->getTask(gene);
 
                 if (std::get<1>(taskPair))
@@ -133,14 +247,22 @@ public:
                     connInfo.ip = innerIp;
                     connInfo.port = innerPort;
                     connInfo.priority = priority;
+                    if (!ctxWptr.expired())
+                    {
+                        connInfo.hbTime = ctxWptr.lock()->_hb->getRetryNum();
+                        __LOG(debug, "heartbeat retry time left is : " << connInfo.hbTime);
+                    }
+
                     task_sptr->sendMsg(taskMsgType::TASK_REDIS_ADD_CONN, connInfo);
                 }
-             
+                auto ctxSaver = medis::contextSaver<void *, std::shared_ptr<medis::redisContext>>::instance();
+                ctxSaver->del(_aCtx);
             });
+            // remove the related info in the context saver
         }
         else
         {
-            __LOG(debug, "did not get the context info in the context saver");
+            __LOG(debug, "did not get the context info in the context saver, context is : " << (void *)_aCtx);
         }
         // reconnect
     }
@@ -178,6 +300,7 @@ public:
         }
         return ret;
     }
+
     bool processRedisConnAvaliable()
     {
         // to do
@@ -190,7 +313,7 @@ public:
                          << msg.body);
 
         auto conn = _connManager->get_conn();
-        if (std::get<1>(conn) != lbStrategy::retStatus::SUCCESS)
+        if (std::get<1>(conn) != medis::retStatus::SUCCESS)
         {
             __LOG(warn, "did not get connection!");
             return false;
@@ -215,7 +338,7 @@ public:
                          << msg.body);
 
         auto conn = _connManager->get_conn();
-        if (std::get<1>(conn) != lbStrategy::retStatus::SUCCESS)
+        if (std::get<1>(conn) != medis::retStatus::SUCCESS)
         {
             __LOG(debug, "did not get a connection");
             return false;
@@ -239,23 +362,63 @@ public:
         __LOG(debug, "connect to : " << payload.ip << ":" << payload.port);
 
         redisAsyncContext *_context = redisAsyncConnect(payload.ip.c_str(), payload.port);
-        if (_context->err)
+        if (_context->err != REDIS_OK)
         {
             __LOG(error, "connect to : " << payload.ip << ":" << payload.port << " return error");
             return false;
         }
 
         std::shared_ptr<medis::redisContext> rdsCtx = std::make_shared<medis::redisContext>();
+        std::weak_ptr<medis::redisContext> rdsCtx_wptr(rdsCtx);
         rdsCtx->_ctx = _context;
         rdsCtx->_priority = payload.priority;
         rdsCtx->ip = payload.ip;
         rdsCtx->port = payload.port;
         rdsCtx->_hb = std::make_shared<heartBeat::heartBeat>(getLoop());
         rdsCtx->_hb->setGeneticGene(getGeneticGene());
-        rdsCtx->_hb->setPingCb([_context](std::shared_ptr<heartBeat::heartBeat>) {
-            __LOG(debug, "now send ping");
-            std::string pingMsg("PING");
-            redisAsyncCommand(_context, taskImp::pingCallback, (void *)_context, pingMsg.c_str(), pingMsg.size());
+        if (payload.hbTime)
+        { // if there is heartbeat info, set accordingly
+            rdsCtx->_hb->setRetryNum(payload.hbTime);
+        }
+        rdsCtx->_hb->setPingCb([rdsCtx_wptr]() {
+            if (!rdsCtx_wptr.expired())
+            {
+                auto rdsCtx = rdsCtx_wptr.lock();
+                __LOG(debug, "now send ping");
+                std::string pingMsg("PING");
+                redisAsyncCommand(rdsCtx->_ctx, taskImp::pingCallback, (void *)(rdsCtx->_ctx), pingMsg.c_str(), pingMsg.size());
+            }
+            else
+            {
+                __LOG(warn, "the redis context is expired!");
+            }
+        });
+        std::weak_ptr<connManager::connManager<medis::CONN_INFO>> _connManager_wptr(_connManager);
+        rdsCtx->_hb->setHbLostCb([rdsCtx_wptr, _connManager_wptr]() {
+            if (!rdsCtx_wptr.expired())
+            {
+                __LOG(warn, "heart beat lost, call disconnect callback");
+                auto rdsCtx = rdsCtx_wptr.lock();
+                taskImp::disconnectCallback(rdsCtx->_ctx, REDIS_OK);
+            }
+            else
+            {
+                __LOG(warn, "the redis context is expired!");
+            }
+            // call connection manager onUnavaliable
+
+            if (!_connManager_wptr.expired())
+            {
+                __LOG(warn, "there is no avaliable connection");
+                _connManager_wptr.lock()->onUnavaliable();
+            }
+        });
+        rdsCtx->_hb->setHbSuccCb([rdsCtx_wptr]() {
+            if (!rdsCtx_wptr.expired())
+            {
+                auto rdsCtx = rdsCtx_wptr.lock();
+                __LOG(debug, "heartbeat success on context : " << (void *)rdsCtx->_ctx << "(note: maybe this is the first timer hb. if this log happens more than once, it means success)");
+            }
         });
         rdsCtx->_hb->init();
         rdsCtx->_retryTimerManager = std::make_shared<timer::timerManager>(getLoop());
@@ -288,70 +451,20 @@ public:
         for (auto it : ctxList)
         {
             // need to delete related info from load balancer
-            it->_lbs->delObj(it->_ctx);
-            // need to stop the hiredis connection here
-            redisAsyncDisconnect(it->_ctx);
+            if (it->_lbs->delObj(it->_ctx) == medis::retStatus::SUCCESS)
+            {
+                // need to stop the hiredis connection here
+                redisAsyncDisconnect(it->_ctx);
+            }
+            else
+            {
+                // there is no connection in the lb
+                __LOG(debug, "there is not connection in the connection mananger");
+            }
         }
         return true;
     }
 
-    bool init()
-    {
-
-        if (_loop.expired())
-        {
-            __LOG(error, "loop is invalid!");
-            return false;
-        }
-        _evfd = eventfd(0, EFD_NONBLOCK | EFD_CLOEXEC);
-        if (_evfd < 0)
-        {
-            __LOG(error, "!!!!!!!!create event fd fail!");
-            return false;
-        }
-        __LOG(debug, "init taskImp with ID :" << _evfd);
-        // start eventfd server
-
-        _evfdServer = std::make_shared<evfdServer>(getLoop(), _evfd, evfdCallback, (void *)this);
-        if (!_evfdServer->init())
-        {
-            return false;
-        }
-
-        // start evfd client
-
-        _evfdClient = std::make_shared<evfdClient>(_evfd);
-
-        _connManager = std::make_shared<connManager::connManager<medis::CONN_INFO>>(getLoop());
-        if (!_connManager)
-        {
-            return false;
-        }
-        _connManager->setGeneticGene(this);
-
-        auto sef_sptr = this->shared_from_this();
-        _connManager->setAddConnCb([sef_sptr](medis::CONN_INFO connInfo) {
-            __LOG(debug, "there is a new connection, send message to task with type TASK_REDIS_ADD_CONN");
-            return sef_sptr->sendMsg(task::taskMsgType::TASK_REDIS_ADD_CONN, connInfo);
-        });
-        _connManager->setDecConnCb([sef_sptr](medis::CONN_INFO connInfo) {
-            return sef_sptr->sendMsg(task::taskMsgType::TASK_REDIS_DEL_CONN, connInfo);
-        });
-
-        _connManager->setAvaliableCb([sef_sptr]() {
-            sef_sptr->_connected = true;
-        });
-        _connManager->setUnavaliableCb([sef_sptr]() {
-            sef_sptr->_connected = false;
-        });
-
-        _connManager->init();
-
-        // timer manager
-        _timerManager.reset(new timer::timerManager(getLoop()));
-
-        return true;
-    }
     void process_msg(uint64_t num)
     {
         for (uint64_t i = 0; i < num; i++)
@@ -363,9 +476,17 @@ public:
                 __LOG(warn, "process task message return fail!");
                 // the message process return fail
                 // start a timer to send message to task again
-                auto self_sptr = shared_from_this();
-                _timerManager->getTimer()->startOnce(500, [self_sptr, tmpTaskMsg]() {
-                    self_sptr->sendMsg(tmpTaskMsg);
+
+                auto self_wptr = getThisWptr();
+                _timerManager->getTimer()->startOnce(500, [self_wptr, tmpTaskMsg]() {
+                    if (!self_wptr.expired())
+                    {
+                        self_wptr.lock()->sendMsg(tmpTaskMsg);
+                    }
+                    else
+                    {
+                        __LOG(warn, "task process message, task weak ptr is expired");
+                    }
                 });
             }
             _taskQueue.pop();
@@ -429,6 +550,12 @@ public:
     bool getConnStatus()
     {
         return _connected;
+    }
+
+    std::weak_ptr<taskImp> getThisWptr()
+    {
+        std::weak_ptr<taskImp> self_wptr(shared_from_this());
+        return self_wptr;
     }
     std::atomic<bool> _connected;
     int _evfd;

@@ -42,12 +42,10 @@ public:
 
 	timer() = delete;
 	explicit timer(std::shared_ptr<loop::loop> loop) : _loop(loop),
-													 
 													   _interval(0),
 													   _round(1),
 													   _curRound(0),
 													   _handler(NULL),
-
 													   _tid(0),
 													   _isRunning(false)
 
@@ -66,8 +64,9 @@ public:
 	{
 		if (_event_sptr)
 		{
-			__LOG(error, "_event_sptr is not valid, the timer is running, please stop first then start");
-			return false;
+			__LOG(error, "_event_sptr is valid, the timer is running, stop first then start");
+			stop();
+			//return false;
 		}
 		if (_loop.expired())
 		{
@@ -128,9 +127,16 @@ public:
 		uint64_t rund,
 		timer::timer::Handler const &handler)
 	{
-		auto this_sptr = this->shared_from_this();
-		return startOnce(after, [intval, rund, handler, this_sptr]() {
-			this_sptr->startRounds(intval, rund, handler);
+		auto self_wptr = getThisWptr();
+		return startOnce(after, [intval, rund, handler, self_wptr]() {
+			if (!self_wptr.expired())
+			{
+				self_wptr.lock()->startRounds(intval, rund, handler);
+			}
+			else
+			{
+				__LOG(warn, "timer: timer weak_ptr is exipred");
+			}
 		});
 	}
 
@@ -167,6 +173,13 @@ public:
 	std::shared_ptr<loop::loop> getLoop()
 	{
 		return _loop.lock();
+	}
+	std::weak_ptr<timer> getThisWptr()
+	{
+
+		std::weak_ptr<timer> timer_wptr(shared_from_this());
+
+		return timer_wptr;
 	}
 
 private:

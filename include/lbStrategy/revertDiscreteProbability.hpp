@@ -45,7 +45,7 @@ public:
         return true;
     }
     // note: there is no lock here
-    std::pair<DIST_OBJ, retStatus> getObj() override
+    std::pair<DIST_OBJ, medis::retStatus> getObj() override
     {
 
         DIST_OBJ obj;
@@ -53,7 +53,7 @@ public:
         obj = NULL;
         if (this->_obj_vector.empty())
         {
-            return std::make_pair(obj, retStatus::NO_ENTRY);
+            return std::make_pair(obj, medis::retStatus::NO_ENTRY);
         }
         try
         {
@@ -62,19 +62,19 @@ public:
         catch (const std::out_of_range &oor)
         {
             __LOG(error, "Out of Range error: " << oor.what());
-            return std::make_pair(obj, retStatus::FAIL);
+            return std::make_pair(obj, medis::retStatus::FAIL);
         }
-        return std::make_pair(obj, retStatus::SUCCESS);
+        return std::make_pair(obj, medis::retStatus::SUCCESS);
     }
 
-    retStatus update() override
+    medis::retStatus update() override
     {
 
         int vector_size = this->_obj_vector.size();
         if (!vector_size)
         {
             __LOG(debug, "this->_obj_vector is empty!");
-            return retStatus::NO_ENTRY;
+            return medis::retStatus::NO_ENTRY;
         }
         std::vector<double> init_list;
         unsigned int max_weight = std::get<1>(*std::max_element(this->_obj_vector.begin(), this->_obj_vector.end()));
@@ -91,8 +91,9 @@ public:
 
         std::discrete_distribution<int> second_dist(init_list.begin(), init_list.end());
         _dist.param(second_dist.param());
-
-        return retStatus::SUCCESS;
+ int _max_index = this->_obj_vector.size();
+        return ((_max_index > 0) ? medis::retStatus::SUCCESS : medis::retStatus::NO_ENTRY);
+        return medis::retStatus::SUCCESS;
     }
 
     std::random_device _rd;

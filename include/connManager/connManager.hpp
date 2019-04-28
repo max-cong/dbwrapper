@@ -54,29 +54,61 @@ public:
     bool init()
     {
         __LOG(debug, "[connManager] init is called");
-        auto this_sptr = this->shared_from_this();
+        std::weak_ptr<connManager<DBConn>> self_wptr = getThisWptr();
+         
         // load balance related
         _lbs_sptr = lbStrategy::lbsFactory<redisAsyncContext *>::create("RR");
         _lbs_sptr->init();
 
-        _lbs_sptr->setFirstAvaliableCb([this_sptr]() {
-            this_sptr->onAvaliable();
+        _lbs_sptr->setFirstAvaliableCb([self_wptr]() {
+            if (!self_wptr.expired())
+            {
+                self_wptr.lock()->onAvaliable();
+            }
+            else
+            {
+                __LOG(warn, " avaliable callback : connManager wptr is expired");
+            }
         });
-        _lbs_sptr->setNoAvaliableCb([this_sptr]() {
-            this_sptr->onUnavaliable();
+        _lbs_sptr->setNoAvaliableCb([self_wptr]() {
+            __LOG(warn, "there is no avaliable connection");
+            if (!self_wptr.expired())
+            {
+                self_wptr.lock()->onUnavaliable();
+            }
+            else
+            {
+                __LOG(warn, " no avaliable callback : connManager wptr is expired");
+            }
         });
         // service discovery related
         std::string sdsName = configCenter::configCenter<void *>::instance()->getPropertiesField(getGeneticGene(), PROP_SERVICE_DISCOVERY_MODE, DEFAULT_SERVICE_DISCOVERY_MODE);
 
         _srvc_sptr = serviceDiscovery::serviceDiscoveryFactory<DBConn>::create(getLoop(), sdsName, getGeneticGene());
 
-        _srvc_sptr->setOnConnInc([this_sptr](DBConn connInfo) {
-            __LOG(debug, "new there is a new connection, add it to connection manager");
-            return this_sptr->addConn(connInfo);
+        _srvc_sptr->setOnConnInc([self_wptr](DBConn connInfo) {
+            if (!self_wptr.expired())
+            {
+                __LOG(debug, "now there is a new connection, add it to connection manager");
+                return self_wptr.lock()->addConn(connInfo);
+            }
+            else
+            {
+                __LOG(warn, "on connect inc : service discovery is expired");
+                return false;
+            }
         });
-        _srvc_sptr->setOnConnDec([this_sptr](DBConn connInfo) {
-            __LOG(debug, "delete a connection");
-            return this_sptr->delConn(connInfo);
+        _srvc_sptr->setOnConnDec([self_wptr](DBConn connInfo) {
+            if (!self_wptr.expired())
+            {
+                __LOG(debug, "delete a connection");
+                return self_wptr.lock()->delConn(connInfo);
+            }
+            else
+            {
+                __LOG(warn, "on connect dev : service discovery is expired");
+                return false;
+            }
         });
         _srvc_sptr->init();
 
@@ -90,6 +122,9 @@ public:
         {
             _unavaliable_cb();
         }
+        // there is not avaliable connection
+        // retriger service discovery
+        _srvc_sptr->retriger();
     }
     void onAvaliable()
     {
@@ -117,7 +152,7 @@ public:
         return _unavaliable_cb;
     }
 
-    std::pair<redisAsyncContext *, lbStrategy::retStatus> get_conn()
+    std::pair<redisAsyncContext *, medis::retStatus> get_conn()
     {
         return _lbs_sptr->getObj();
     }
@@ -150,9 +185,13 @@ public:
     {
         return _loop.lock();
     }
+    std::weak_ptr<connManager<DBConn>> getThisWptr()
+    {
+        std::weak_ptr<connManager<DBConn>> self_wptr(this->shared_from_this());
+        return self_wptr;
+    }
 
 private:
-
     std::weak_ptr<loop::loop> _loop;
     std::shared_ptr<lbStrategy::lbStrategy<redisAsyncContext *>> _lbs_sptr;
     std::shared_ptr<serviceDiscovery::serviceDiscovery<DBConn>> _srvc_sptr;

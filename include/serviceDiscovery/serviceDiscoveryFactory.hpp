@@ -41,10 +41,11 @@ public:
     serviceDiscoveryFactory(){};
     virtual ~serviceDiscoveryFactory(){};
 
-    static std::shared_ptr<serviceDiscovery<connInfo>> create(std::shared_ptr<loop::loop> loopIn, std::string name, void * gene)
+    static std::shared_ptr<serviceDiscovery<connInfo>> create(std::shared_ptr<loop::loop> loopIn, std::string name, void *gene)
     {
+        __LOG(debug, "set create service discover obj with name : " << name << ", gene is : " << (void *)gene);
+
         std::shared_ptr<serviceDiscovery<connInfo>> ret = nullptr;
-        
 
         if (!name.compare("DNS"))
         {
