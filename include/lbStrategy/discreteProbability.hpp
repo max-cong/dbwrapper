@@ -41,7 +41,7 @@ public:
     }
     // note: there is no lock here
     // for performance, please check the return code during usage
-    std::pair<DIST_OBJ, retStatus> getObj() override
+    std::pair<DIST_OBJ, medis::retStatus> getObj() override
     {
         DIST_OBJ obj;
         // note: do this to supress build warning. this is redisAsyncContext*
@@ -49,7 +49,7 @@ public:
         if (this->_obj_vector.empty())
         {
             __LOG(warn, "there is no object to get!");
-            return std::make_pair(obj, retStatus::NO_ENTRY);
+            return std::make_pair(obj, medis::retStatus::NO_ENTRY);
         }
         try
         {
@@ -58,18 +58,18 @@ public:
         catch (const std::out_of_range &oor)
         {
             __LOG(error, "Out of Range error: " << oor.what());
-            return std::make_pair(obj, retStatus::FAIL);
+            return std::make_pair(obj, medis::retStatus::FAIL);
         }
-        return std::make_pair(obj, retStatus::SUCCESS);
+        return std::make_pair(obj, medis::retStatus::SUCCESS);
     }
 
-    retStatus update() override
+    medis::retStatus update() override
     {
         int vector_size = this->_obj_vector.size();
         if (!vector_size)
         {
             __LOG(debug, "this->_obj_vector is empty!");
-            return retStatus::NO_ENTRY;
+            return medis::retStatus::NO_ENTRY;
         }
         std::vector<double> init_list;
         __LOG(debug, "weight is :");
@@ -82,7 +82,9 @@ public:
         auto _param = second_dist.param();
         _dist.param(_param);
         _dist.reset();
-        return retStatus::SUCCESS;
+
+        int _max_index = this->_obj_vector.size();
+        return ((_max_index > 0) ? medis::retStatus::SUCCESS : medis::retStatus::NO_ENTRY);
     }
 
     std::random_device _rd;

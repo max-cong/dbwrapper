@@ -37,7 +37,7 @@ namespace serviceDiscovery
 {
 // note: this is not thread safe. need to work with task
 template <typename connInfo>
-class serviceDiscovery : public gene::gene<void *>, public nonCopyable
+class serviceDiscovery : public gene::gene<void *>, public std::enable_shared_from_this<serviceDiscovery<connInfo>>, public nonCopyable
 {
 public:
     typedef std::list<connInfo> connList;
@@ -46,8 +46,6 @@ public:
     typedef connInfo connInfo_type_t;
     serviceDiscovery<connInfo>() = delete;
 
-
-
     explicit serviceDiscovery<connInfo>(std::shared_ptr<loop::loop> loopIn)
     {
         _timerManager.reset(new timer::timerManager(loopIn));
@@ -55,14 +53,15 @@ public:
         _retrigerTimer = _timerManager->getTimer();
     }
 
-   
     virtual bool init() = 0;
 
     virtual bool stop()
     {
         __LOG(warn, "[serviceDiscovery] stop is called");
+        _retrigerTimer->stop();
         for (auto it : _conn_list)
         {
+            __LOG(warn, "[service Discovery] : now delete ip : " << it.ip << ", port : " << it.port);
             onConnInfoDec(it);
         }
         _conn_list.clear();
@@ -86,10 +85,18 @@ public:
             std::string reccItval = configCenter::configCenter<void *>::instance()->getPropertiesField(getGeneticGene(), PROP_RECONN_INTERVAL, DEFAULT_RECONN_INTERVAL);
             std::string::size_type sz; // alias of size_t
             int _reconnect_interval = std::stoi(reccItval, &sz);
+            auto self_wptr = getThisWptr();
 
-            _retrigerTimer->startOnce(_reconnect_interval, [this]() {
-                __LOG(error, "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!restart!!!!!!!!!!!!!!!!!!!!!!!!!");
-                this->restart();
+            _retrigerTimer->startOnce(_reconnect_interval, [self_wptr]() {
+                if (!self_wptr.expired())
+                {
+                    __LOG(warn, "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!restart service discovery!!!!!!!!!!!!!!!!!!!!!!!!!");
+                    self_wptr.lock()->restart();
+                }
+                else
+                {
+                    __LOG(warn, "service discovery : this wptr is expired!");
+                }
             });
         }
         else
@@ -181,7 +188,6 @@ public:
             if (std::find(std::begin(update_list), std::end(update_list), tmp) == update_list.end())
             {
                 onConnInfoDec(tmp);
-    
                 tmplist_not_in_tmp_list.push_back(tmp);
             }
             else
@@ -193,10 +199,15 @@ public:
         for (auto to_rm : tmplist_not_in_tmp_list)
         {
             std::remove(_conn_list.begin(), _conn_list.end(), to_rm);
-            
         }
 
         return true;
+    }
+
+    std::weak_ptr<serviceDiscovery<connInfo>> getThisWptr()
+    {
+        std::weak_ptr<serviceDiscovery<connInfo>> self_wptr(this->shared_from_this());
+        return self_wptr;
     }
 
     connList _conn_list;

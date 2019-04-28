@@ -38,6 +38,7 @@ public:
             __LOG(error, "create task fail");
             return false;
         }
+        _task_sptr->setGeneticGene(getThis());
         _task_sptr->init();
 
         medis::taskSaver<void *, std::shared_ptr<task::taskImp>>::instance()->save(getThis(), _task_sptr);

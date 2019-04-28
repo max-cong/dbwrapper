@@ -15,7 +15,7 @@ public:
 
         std::string connHost = configCenter::configCenter<void *>::instance()->getPropertiesField(this->getGeneticGene(), PROP_HOST, DEFAULT_HOST);
         std::string connPort = configCenter::configCenter<void *>::instance()->getPropertiesField(this->getGeneticGene(), PROP_PORT, DEFAULT_PORT);
-
+        __LOG(debug, "get host : " << connHost << ", port is : " << connPort);
         // build connInfo
         connInfo _connInfo;
 

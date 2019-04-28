@@ -1,19 +1,17 @@
 #pragma once
 #include "lbStrategy/lbStrategy.hpp"
-#include "heartbeat/heartbeat.hpp"
+#include "timer/timerManager.hpp"
 namespace medis
 {
-struct redisContext
-{
-    int _priority;
-    std::string ip;
-    unsigned short port;
-    redisAsyncContext *_ctx;
-    std::shared_ptr<heartBeat::heartBeat> _hb;
-    std::shared_ptr<lbStrategy::lbStrategy<redisAsyncContext *>> _lbs;
-    std::shared_ptr<timer::timerManager> _retryTimerManager;
-};
 
+
+enum class retStatus : std::uint32_t
+{
+    SUCCESS = 0,
+    FAIL,
+    NO_ENTRY,
+    FIRST_ENTRY
+};
 enum class CONN_TYPE : std::uint32_t
 {
     IP,
@@ -24,12 +22,13 @@ enum class CONN_TYPE : std::uint32_t
 class CONN_INFO
 {
 public:
-    CONN_INFO() : type(CONN_TYPE::IP), priority(1) {}
+    CONN_INFO() : type(CONN_TYPE::IP), priority(1), hbTime(0) {}
     CONN_TYPE type;
     std::string ip;
     std::string path;
     unsigned short port;
     int priority;
+    unsigned int hbTime;
     bool operator==(const CONN_INFO &rhs)
     {
         return this->type == rhs.type && this->ip == rhs.ip && this->path == rhs.path && this->port == rhs.port && this->priority == rhs.priority;
@@ -52,6 +51,7 @@ public:
     }
     void del(OBJ obj)
     {
+        __LOG(debug, "delete one object");
         _geneMap.erase(obj);
     }
     std::list<RDS_CTX> getIpPortThenDel(std::string ip, unsigned short port)
