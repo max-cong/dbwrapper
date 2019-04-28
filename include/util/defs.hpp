@@ -1,19 +1,10 @@
 #pragma once
 #include "lbStrategy/lbStrategy.hpp"
-#include "heartbeat/heartbeat.hpp"
+#include "timer/timerManager.hpp"
 namespace medis
 {
 
-struct redisContext
-{
-    int _priority;
-    std::string ip;
-    unsigned short port;
-    redisAsyncContext *_ctx;
-    std::shared_ptr<heartBeat::heartBeat> _hb;
-    std::shared_ptr<lbStrategy::lbStrategy<redisAsyncContext *>> _lbs;
-    std::shared_ptr<timer::timerManager> _retryTimerManager;
-};
+
 enum class retStatus : std::uint32_t
 {
     SUCCESS = 0,

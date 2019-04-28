@@ -6,13 +6,14 @@
 #include <queue>
 namespace task
 {
+
 enum class taskMsgType : std::uint32_t
 {
     TASK_REDIS_FORMAT_RAW,
     TASK_REDIS_RAW,
 
     TASK_REDIS_ADD_CONN,
- 
+
     TASK_REDIS_DEL_CONN,
     // when the first connection avaliable, need to clean the message queueu.
     TASK_REDIS_CONN_AVALIABLE,
@@ -26,7 +27,6 @@ struct taskMsg
     std::string to;
     DBW_ANY body;
 };
-
 
 struct TASK_REDIS_FORMAT_RAW_MSG_BODY
 {

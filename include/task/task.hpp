@@ -25,6 +25,16 @@
 
 namespace task
 {
+struct redisContext
+{
+    int _priority;
+    std::string ip;
+    unsigned short port;
+    redisAsyncContext *_ctx;
+    std::shared_ptr<heartBeat::heartBeat> _hb;
+    std::shared_ptr<lbStrategy::lbStrategy<redisAsyncContext *>> _lbs;
+    std::shared_ptr<timer::timerManager> _retryTimerManager;
+};
 class taskImp : public gene::gene<void *>, public std::enable_shared_from_this<taskImp>, public nonCopyable
 {
 public:
@@ -154,7 +164,7 @@ public:
         }
         __LOG(debug, "argv: " << (char *)privdata << ", string is " << reply->str);
 
-        auto ctxSaver = medis::contextSaver<void *, std::shared_ptr<medis::redisContext>>::instance();
+        auto ctxSaver = medis::contextSaver<void *, std::shared_ptr<redisContext>>::instance();
         auto ctxRet = ctxSaver->getCtx(c);
         if (std::get<1>(ctxRet))
         {
@@ -193,12 +203,12 @@ public:
         }
 
         redisAsyncContext *_aCtx = const_cast<redisAsyncContext *>(c);
-        auto ctxSaver = medis::contextSaver<void *, std::shared_ptr<medis::redisContext>>::instance();
+        auto ctxSaver = medis::contextSaver<void *, std::shared_ptr<redisContext>>::instance();
 
-        std::pair<std::shared_ptr<medis::redisContext>, bool> contextRet = ctxSaver->getCtx((void *)_aCtx);
+        std::pair<std::shared_ptr<redisContext>, bool> contextRet = ctxSaver->getCtx((void *)_aCtx);
         if (std::get<1>(contextRet))
         {
-            std::shared_ptr<medis::redisContext> rdsCtx = std::get<0>(contextRet);
+            std::shared_ptr<redisContext> rdsCtx = std::get<0>(contextRet);
             if (connected)
             {
                 rdsCtx->_lbs->updateObj(_aCtx, rdsCtx->_priority);
@@ -223,7 +233,7 @@ public:
         }
         __LOG(warn, "Disconnected... status is :" << status);
         redisAsyncContext *_aCtx = const_cast<redisAsyncContext *>(c);
-        auto ctxSaver = medis::contextSaver<void *, std::shared_ptr<medis::redisContext>>::instance();
+        auto ctxSaver = medis::contextSaver<void *, std::shared_ptr<redisContext>>::instance();
 
         auto contextRet = ctxSaver->getCtx(_aCtx);
         if (std::get<1>(contextRet))
@@ -234,7 +244,7 @@ public:
             unsigned short innerPort = rdsCtx->port;
             int priority = rdsCtx->_priority;
             auto gene = rdsCtx->_hb->getGeneticGene();
-            std::weak_ptr<medis::redisContext> ctxWptr(rdsCtx);
+            std::weak_ptr<redisContext> ctxWptr(rdsCtx);
 
             rdsCtx->_retryTimerManager->getTimer()->startOnce(5000, [gene, innerIp, innerPort, priority, _aCtx, ctxWptr]() {
                 __LOG(debug, "in the reconnect timer");
@@ -255,7 +265,7 @@ public:
 
                     task_sptr->sendMsg(taskMsgType::TASK_REDIS_ADD_CONN, connInfo);
                 }
-                auto ctxSaver = medis::contextSaver<void *, std::shared_ptr<medis::redisContext>>::instance();
+                auto ctxSaver = medis::contextSaver<void *, std::shared_ptr<redisContext>>::instance();
                 ctxSaver->del(_aCtx);
             });
             // remove the related info in the context saver
@@ -368,8 +378,8 @@ public:
             return false;
         }
 
-        std::shared_ptr<medis::redisContext> rdsCtx = std::make_shared<medis::redisContext>();
-        std::weak_ptr<medis::redisContext> rdsCtx_wptr(rdsCtx);
+        std::shared_ptr<redisContext> rdsCtx = std::make_shared<redisContext>();
+        std::weak_ptr<redisContext> rdsCtx_wptr(rdsCtx);
         rdsCtx->_ctx = _context;
         rdsCtx->_priority = payload.priority;
         rdsCtx->ip = payload.ip;
@@ -424,7 +434,7 @@ public:
         rdsCtx->_retryTimerManager = std::make_shared<timer::timerManager>(getLoop());
         rdsCtx->_lbs = _connManager->getLbs();
 
-        auto ctxSaver = medis::contextSaver<void *, std::shared_ptr<medis::redisContext>>::instance();
+        auto ctxSaver = medis::contextSaver<void *, std::shared_ptr<redisContext>>::instance();
         ctxSaver->save(_context, rdsCtx);
 
         int ret = REDIS_ERR;
@@ -446,7 +456,7 @@ public:
         medis::CONN_INFO payload = DBW_ANY_CAST<medis::CONN_INFO>(task_msg.body);
         __LOG(debug, "disconnect to : " << payload.ip << ":" << payload.port);
 
-        auto ctxSaver = medis::contextSaver<void *, std::shared_ptr<medis::redisContext>>::instance();
+        auto ctxSaver = medis::contextSaver<void *, std::shared_ptr<redisContext>>::instance();
         auto ctxList = ctxSaver->getIpPortThenDel(payload.ip, payload.port);
         for (auto it : ctxList)
         {
