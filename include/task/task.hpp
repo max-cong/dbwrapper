@@ -246,7 +246,12 @@ public:
             auto gene = rdsCtx->_hb->getGeneticGene();
             std::weak_ptr<redisContext> ctxWptr(rdsCtx);
 
-            rdsCtx->_retryTimerManager->getTimer()->startOnce(5000, [gene, innerIp, innerPort, priority, _aCtx, ctxWptr]() {
+            // get reconnect timer config
+            std::string reconnectItvalStr = configCenter::configCenter<void *>::instance()->getPropertiesField(gene, PROP_RECONN_INTERVAL, DEFAULT_HB_INTERVAL);
+            std::string::size_type sz; // alias of size_t
+            int _interval = std::stoi(reconnectItvalStr, &sz) * 1000;
+            __LOG(debug, "now start reconnect timer [" << _interval << "ms]");
+            rdsCtx->_retryTimerManager->getTimer()->startOnce(_interval, [gene, innerIp, innerPort, priority, _aCtx, ctxWptr]() {
                 __LOG(debug, "in the reconnect timer");
                 auto taskPair = medis::taskSaver<void *, std::shared_ptr<task::taskImp>>::instance()->getTask(gene);
 

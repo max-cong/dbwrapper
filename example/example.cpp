@@ -26,7 +26,7 @@ int main()
 
     configCenter::cfgPropMap _config;
     _config[PROP_HOST] = "127.0.0.1";
-    _config[PROP_PORT] = "6380";
+    _config[PROP_PORT] = "6379";
     configCenter::configCenter<void *>::instance()->setProperties(aclient.getThis(), _config);
     __LOG(debug, "start redis async client and set config with gene : "<<(void *)aclient.getThis());
 

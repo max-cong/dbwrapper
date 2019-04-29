@@ -64,7 +64,7 @@ public:
 	{
 		if (_event_sptr)
 		{
-			__LOG(error, "_event_sptr is valid, the timer is running, stop first then start");
+			__LOG(debug, "_event_sptr is valid, the timer is running, stop first then start");
 			stop();
 			//return false;
 		}
