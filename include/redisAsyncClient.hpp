@@ -74,7 +74,7 @@ public:
         {
             return false;
         }
-        std::string command2send = buildRedisCommand::buildRedisCommand<std::string, std::string>::get_format_command(REDIS_COMMAND_TYPE::TASK_REDIS_PUT, key, value);
+        std::string command2send = buildRedisCommand::buildRedisCommand<std::string, std::string>::get_format_command(key, value);
         __LOG(debug, "get command :\n"
                          << command2send);
         return sendFormatRawCommand(command2send, usr_data, fn);

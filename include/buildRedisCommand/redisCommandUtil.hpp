@@ -23,13 +23,41 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #pragma once
-class nonCopyable
+#include "logger/logger.hpp"
+enum class REDIS_COMMAND_TYPE : std::uint32_t
 {
-public:
-	nonCopyable(const nonCopyable &) = delete;			  // deleted
-	nonCopyable &operator=(const nonCopyable &) = delete; // deleted
-	nonCopyable() = default;							  // available
-	nonCopyable(nonCopyable &&fp) = delete;
-	nonCopyable const &operator=(nonCopyable &&fp) = delete;
+    TASK_REDIS_PUT,
+    TASK_REDIS_MPUT,
+    TASK_REDIS_GET,
+    TASK_REDIS_MGET,
+    TASK_REDIS_DEL,
+    TASK_REDIS_MDEL,
+    TASK_REDIS_PING,
+    TASK_REDIS_ADD_CONN,
+    TASK_REDIS_DEL_CONN,
+
+    TASK_REDIS_MAX
 };
 
+class redis_formatCommand
+{
+public:
+    static std::string toString(std::list<std::string> &argv)
+    {
+        __LOG(debug, "[redis_formatCommand]");
+        if(argv.empty())
+        {
+            __LOG(warn, "command list is empty");
+            return "";
+        }
+        std::ostringstream buffer;
+        buffer << "*" << argv.size() << "\r\n";
+        std::list<std::string>::const_iterator iter = argv.begin();
+        while (iter != argv.end())
+        {
+            buffer << "$" << iter->size() << "\r\n";
+            buffer << *iter++ << "\r\n";
+        }
+        return buffer.str();
+    }
+};
