@@ -1,6 +1,5 @@
 /*
- * Copyright (c) 2016-20017 Max Cong <savagecm@qq.com>
- * this code can be found at https://github.com/maxcong001/connection_manager
+ * Copyright (c) 2016-20019 Max Cong <savagecm@qq.com>
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -80,13 +79,11 @@ public:
         __LOG(debug, "[serviceDiscovery] [retriger]");
         if (!(_retrigerTimer->getIsRunning()))
         {
-            __LOG(debug, "retriger timer is finished, start a new timer");
-
-            std::string reccItval = configCenter::configCenter<void *>::instance()->getPropertiesField(getGeneticGene(), PROP_RECONN_INTERVAL, DEFAULT_RECONN_INTERVAL);
+            std::string reccItval = configCenter::configCenter<void *>::instance()->getPropertiesField(getGeneticGene(), PROP_SD_RETRIGER_INTERVAL, DEFAULT_SD_RETRIGER_INTERVAL);
             std::string::size_type sz; // alias of size_t
-            int _reconnect_interval = std::stoi(reccItval, &sz);
+            int _reconnect_interval = std::stoi(reccItval, &sz) * 1000;
             auto self_wptr = getThisWptr();
-
+            __LOG(debug, "service discovery retriger timer is finished, start a new timer [" << _reconnect_interval << "ms]");
             _retrigerTimer->startOnce(_reconnect_interval, [self_wptr]() {
                 if (!self_wptr.expired())
                 {

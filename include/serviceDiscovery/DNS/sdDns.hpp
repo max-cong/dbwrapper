@@ -1,8 +1,5 @@
-#pragma once
-
 /*
- * Copyright (c) 2016-20017 Max Cong <savagecm@qq.com>
- * this code can be found at https://github.com/maxcong001/connection_manager
+ * Copyright (c) 2016-20019 Max Cong <savagecm@qq.com>
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -39,9 +36,9 @@
 #include <boost/algorithm/string.hpp>
 #include <typeinfo>
 #include <list>
+
 namespace serviceDiscovery
 {
-
 using List = std::list<std::string>;
 template <typename connInfo>
 class sdDns : public serviceDiscovery<connInfo>
@@ -53,7 +50,6 @@ public:
         _dns_timer = this->_timerManager->getTimer();
         _dns_ttl = 0;
     }
-
 
     virtual bool retriger() override
     {

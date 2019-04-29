@@ -32,6 +32,7 @@
 #include <event2/event.h>
 #include <event2/thread.h>
 #include "logger/logger.hpp"
+
 namespace loop
 {
 enum class loopStatus : std::uint32_t
