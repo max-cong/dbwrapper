@@ -91,9 +91,8 @@ public:
 
         std::discrete_distribution<int> second_dist(init_list.begin(), init_list.end());
         _dist.param(second_dist.param());
- int _max_index = this->_obj_vector.size();
+        int _max_index = this->_obj_vector.size();
         return ((_max_index > 0) ? medis::retStatus::SUCCESS : medis::retStatus::NO_ENTRY);
-        return medis::retStatus::SUCCESS;
     }
 
     std::random_device _rd;
