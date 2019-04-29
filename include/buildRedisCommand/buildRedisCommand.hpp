@@ -71,9 +71,10 @@ public:
     {
         return (std::is_same<typename std::decay<TYPE>::type, COMMAND_ARGS>::value);
     }
+
     buildRedisCommand() = default;
 
-    static std::string get_format_command(REDIS_COMMAND_TYPE type, COMMAND_KEY key, COMMAND_VALUE value, COMMAND_ARGS args = nullptr) // to do COMMAND_ARGS... args)
+    static std::string get_format_command(REDIS_COMMAND_TYPE type, COMMAND_KEY key, COMMAND_VALUE value, COMMAND_ARGS args = nullptr) 
     {
         switch (type)
         {
