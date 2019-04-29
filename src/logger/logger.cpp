@@ -1,6 +1,5 @@
 /*
- * Copyright (c) 2016-20017 Max Cong <savagecm@qq.com>
- * this code can be found at https://github.com/maxcong001/logger
+ * Copyright (c) 2016-20019 Max Cong <savagecm@qq.com>
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -23,7 +22,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
 #include "logger/logger.hpp"
 static const char black[] = {0x1b, '[', '1', ';', '3', '0', 'm', 0};
 static const char red[] = {0x1b, '[', '1', ';', '3', '1', 'm', 0};
