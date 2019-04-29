@@ -24,7 +24,8 @@
  */
 #pragma once
 #include <list>
-
+#include <type_traits>
+#include <stdexcept>
 enum class REDIS_COMMAND_TYPE : std::uint32_t
 {
     TASK_REDIS_PUT,
@@ -36,6 +37,15 @@ enum class REDIS_COMMAND_TYPE : std::uint32_t
     TASK_REDIS_MAX
 
 };
+
+struct test
+{
+};
+#if __cplusplus >= 201703L
+#define medisConstExpr constexpr
+#else
+#define medisConstExpr
+#endif
 namespace buildRedisCommand
 {
 
@@ -46,10 +56,21 @@ class buildRedisCommand
     using List = std::list<std::string>;
 
 public:
-#if __cplusplus >= 201703L
-    using key_type = std::remove_const_t<std::remove_reference_t<COMMAND_KEY>>;
-    using value_type = std::remove_const_t<std::remove_reference_t<COMMAND_VALUE>>;
-#endif
+    template <typename TYPE>
+    static constexpr bool keyCheck()
+    {
+        return (std::is_same<typename std::decay<TYPE>::type, COMMAND_KEY>::value);
+    }
+    template <typename TYPE>
+    static constexpr bool valueCheck()
+    {
+        return (std::is_same<typename std::decay<TYPE>::type, COMMAND_VALUE>::value);
+    }
+    template <typename TYPE>
+    static constexpr bool argCheck()
+    {
+        return (std::is_same<typename std::decay<TYPE>::type, COMMAND_ARGS>::value);
+    }
     buildRedisCommand() = default;
 
     static std::string get_format_command(REDIS_COMMAND_TYPE type, COMMAND_KEY key, COMMAND_VALUE value, COMMAND_ARGS args = nullptr) // to do COMMAND_ARGS... args)
@@ -57,37 +78,22 @@ public:
         switch (type)
         {
         case REDIS_COMMAND_TYPE::TASK_REDIS_PUT:
-#if __cplusplus >= 201703L
-            if constexpr (detail::is_string_v<COMMAND_KEY>)
-            {
-                if constexpr (detail::is_string_v<COMMAND_VALUE>)
-                {
-                    __LOG(error, "Put command");
-                    List _list;
-                    _list.emplace_back("SET");
-                    _list.emplace_back(key);
-                    _list.emplace_back(value);
-                    return redis_formatCommand(_list);
-                }
-                else
-                {
-                }
-            }
-            else
-            {
-            }
-#else
-            if (std::is_same<COMMAND_KEY, std::string>::value && std::is_same<COMMAND_VALUE, std::string>::value)
+
+            if medisConstExpr (keyCheck<std::string>() && valueCheck<std::string>())
             {
 
-                __LOG(debug, "Put command, key is : " << key << ", value is : " << value);
+                __LOG(debug, "Put command, key and value both string. key is : " << key << ", value is : " << value);
                 List _list;
                 _list.emplace_back("SET");
                 _list.emplace_back(key);
                 _list.emplace_back(value);
                 return redis_formatCommand(_list);
             }
-#endif
+            else if medisConstExpr (keyCheck<std::string>() && valueCheck<test>())
+            {
+                __LOG(debug, "Put command, key is string(" << key << "). value type is : " << typeid(value).name());
+            }
+
             break;
         case REDIS_COMMAND_TYPE::TASK_REDIS_GET:
             break;
