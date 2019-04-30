@@ -5,7 +5,8 @@ env:
   global:
     # COVERITY_SCAN_TOKEN
     # ** specific to your project **
-    - secure: "QSsN1bIW+xAb/qGjM+5kkWrmN2bYDJsDVmJ2K0Kn/zysv/TIKmk3lTvPghVHx7xzveD3j3RVViALnDOEQabvyNbLwvXsr0WTc9IqOfbLFDmpaAxGucaIDkOZpah7PN0Z7sBMJyMlzxqxy8aNlgHkxfEbgL91JbJiqqL3yMkJqluxDldPVme/BNW+HVW2i0FklFfRv3qU0F1eRBo/Sw5igbhKmyMpOkFQdr5sDkl/6cBXWzvZcxCf461nQ9PohVo+k6dZ389rwC2dwH7OvUKuUmJuU+8WoFrxz+m2EZ0EvCnG4yMcFOsIugINzKD5aGUG/uC1DvDSQPN0e1jdj04J3GpmMZgXYSosv8tRdtiTsYalA8JnzuYLW7+gRJgFp9D3cb++RHNh7p/RZbSbBRjyom8MbMDdeThhSPyWcKNIVMRwJfpTPWyxsBvH8h4oqMJZ6uEYFrZp1XczP/Mi40+wjZ3HwpFwYfp9fUiAoLNvIuJe/gEgbQyqMF/yDf3Vj3c+Gl+bdNbK9ckyAVlUsgkCZWDDc9PlS95Qt4oYVZ2Fz10hQtfpObWF8Mn6HzIXL+mlsloOwswdORMJqZFCE+/LFdruPc9ihKWUqTQzDeGU/TE0xulMBuNbSID8JAp774KxOvn3VWUDnCemTcgHc7ui0SOT86LlQNoEuxpTFAY7SYU="
+    - secure: "ns8i2qNB/TFe+7rAJUvbHeX+iFJxZ54YTo1hIKPF+/4CU/OWaLXiCXCa2EiVL8IVM9ZLQYU17rXkb7UyN8hvjfE3iou2vrFBks3AZwsu8x/cbi42pjI4qluBoT88xvAepd7s2iJhW84cBxvSJqirkluiHcmcaVrSRJTSI193kqoaln5Ky2MYh5TiE33l1ANqHQqolqBJKzSKcRmBMqbH4zHIqhxhO1+yvbTYmriob9ZHd5UZeUfUC8o0i3zm66TNROO2RiAPJdHPqwjy9RuJRCaMAjJnimyTadugxmClZEFJAwH4stJf8Ei83cZsje/PEq/86pezTMr1c0TM3auBIInl/Wbb7kGEHedgvIj/ClUKz3T5MwUZHZD6ISJQU41tNN0Bs8qvY+WiAywxXmqch7Nso2C84Li2TWn8uFQQ1kPY3JgaXcQuZvnyGR+66yl4kUO03aLTEgihqJOzRhTDwtT83vscWSprQqxY6vg81n/whFpXUc8NswVwBcGokeJA2FT0AZZKI/mw3MEh8SbOoOgNRcwAOZBj489UpQbYv4JxFtzBiGJYQeCI9xmkyhyB6ylTVKAlW7duvI4lqp6xtBFDg2s0bYPtQ0ywaE8coSo2O+yNJWINjshXcilitYnbqchiu20q42lKk2HOZptKQ5sxCS+qHafT2TBaTPZNoxI="
+
 
 
 # safelist
@@ -42,9 +43,6 @@ addons:
     project:
       name: "max-cong/medis"
       description: "redis C++ client"
-    token:
-      secure: "QSsN1bIW+xAb/qGjM+5kkWrmN2bYDJsDVmJ2K0Kn/zysv/TIKmk3lTvPghVHx7xzveD3j3RVViALnDOEQabvyNbLwvXsr0WTc9IqOfbLFDmpaAxGucaIDkOZpah7PN0Z7sBMJyMlzxqxy8aNlgHkxfEbgL91JbJiqqL3yMkJqluxDldPVme/BNW+HVW2i0FklFfRv3qU0F1eRBo/Sw5igbhKmyMpOkFQdr5sDkl/6cBXWzvZcxCf461nQ9PohVo+k6dZ389rwC2dwH7OvUKuUmJuU+8WoFrxz+m2EZ0EvCnG4yMcFOsIugINzKD5aGUG/uC1DvDSQPN0e1jdj04J3GpmMZgXYSosv8tRdtiTsYalA8JnzuYLW7+gRJgFp9D3cb++RHNh7p/RZbSbBRjyom8MbMDdeThhSPyWcKNIVMRwJfpTPWyxsBvH8h4oqMJZ6uEYFrZp1XczP/Mi40+wjZ3HwpFwYfp9fUiAoLNvIuJe/gEgbQyqMF/yDf3Vj3c+Gl+bdNbK9ckyAVlUsgkCZWDDc9PlS95Qt4oYVZ2Fz10hQtfpObWF8Mn6HzIXL+mlsloOwswdORMJqZFCE+/LFdruPc9ihKWUqTQzDeGU/TE0xulMBuNbSID8JAp774KxOvn3VWUDnCemTcgHc7ui0SOT86LlQNoEuxpTFAY7SYU="
-
     notification_email: savagecm@qq.com
     build_command_prepend: "mkdir -p buildCoverity&&cd buildCoverity&&cmake .."
     build_command: "make"
@@ -70,7 +68,7 @@ before_install:
   - sudo cp -a libgtest_main.so libgtest.so /usr/lib/
   - which valgrind
   - cd "${TRAVIS_BUILD_DIR}"
-  - echo -n | openssl s_client -connect www.scan.coverity.com:443 | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' | sudo tee -a /etc/ssl/certs/ca-
+  #- echo -n | openssl s_client -connect www.scan.coverity.com:443 | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' | sudo tee -a /etc/ssl/certs/ca-
 
 install:
   
