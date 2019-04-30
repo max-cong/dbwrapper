@@ -1,6 +1,13 @@
 dist: trusty
 language: cpp
 
+
+env:
+  global:
+   # The next declaration is the encrypted COVERITY_SCAN_TOKEN, created
+   #   via the "travis encrypt" command using the project repo's public key
+   - secure: "0Cx6210ad3G6TWsMqgEtGvjVje42LUS/nTyzMFfKvm4D1tMI9kjUEC8zmIRrIsxgYixfLKLnKqnAIISu7BuzftauYrV2rns8flYicAQpgBN8YEnsbKBLMdhDVW5/yon/OhgzS70ahnFTyRtnNLZ1/injkJpuerzVhM6lpC9NPFP6TFp+/GVqo03IUPSuIznpdXk2Z/7sqDmA8xHw63PTeuyNSbet6ZkyweU63eUZ+KV3i/btw5EsA10Ja/DuJth/l/9pg7102sXqzWaQp0F8XfUT2CX0XorCwUO+iHyx+A5u1RqtY/zNGKdOU1Pz5On0KLhTHFVvGdlat9/1tfE04CT/YqqB9WseuLFReFCjhTBRJOneqnPDqC9QHDy2thV5NFFdncsyCIdvqiiqsaPI8iVeqrVaDzchOfpOo+Op9uuPLWr0Nx/G+rfBmSHne+14aong08Pf4cpheleCA6PWTL3/hWjByx9uUHTpKAYHp6ylRLOggTlig7ieGT4zA7wtAgf+1Y5zUFTB1TWBU/SOWigkBVR9HtRFEjlxCqdK/x6kj74sOVGg1BNg1NrRiL5Ad+nxPNBYet4d88dBa9THcvyjN0Ekapfw4mZXlzeCNjchRgD/3Uy4CV30GWj3A13mbNLrLWWoY7e5jBLRKyfS/KLDPjABskIz6N2/20Ho/Hc="
+
 # safelist
 branches:
   only:
@@ -31,7 +38,14 @@ addons:
 
     token:
       secure: "get1DoumRkai7SbqBw5kWe8b2fEuBRvD5iDzMFQcxX7KRZrZuSYO2LZspZjCHv6pyFuBLVxNbanyESVZr9h8Qe6oORtFoNviVsgA7lPTCWtT/5ylJP2N98xA0aIHbaQ1RsDvacE29hxJVueNe6JfHzbLDcJq7GMHXiCcSk75PSl6E3OShuoKtLeoq/E4cXMm3f5LYh1DmeXs6PClEyZYXSkl1rIiGyhgCezcyJFgC5VTRpeien3Vs4Z/RrLyj7WNwSKM/NtB9YGS5mAHHxDNgXT5QnYRP8v/PTlhDGxmB218w5QI4BloD3aGQ0HzPtnR7FfIMbLqehG5gd5dbks64XVsjrLBtAOrwIU7HykUtqXPFUeYTHMbdhf0nArJlGgMlu29M2sR5OP30Vco8auFRG6PKzkN9wF2ats0aZtq+k2jN98EGUMUgP4l4LvZIR2Ze/PKTAPj6Hse0aEdXwxd7TVf2b1boH0DRfoKJ5h58HCKOHpItqxnxGTV6B8jxxE5oKvWtfYDfl+FXmxNwK4D0eqWssGbjcMkJvy6xitMTTYvHJfGtCBz3U1qN4dFnVP4o5Xf6NqDmlfLe3lmucpH5cdAHmkITvIuJNK6R4lv/l2PKYy1NL0WP+43McnWvJToIYTcVXxmMKp2K2tnPS3uPYqKTRYwDWCWXXe6g3W9+0A="
-
+  coverity_scan:
+    project:
+      name: "max-cong/medis"
+      description: "redis C++ client"
+    notification_email: savagecm@qq.com
+    build_command_prepend: "mkdir -p buildCoverity&&cd buildCoverity&&cmake .."
+    build_command: "make"
+    branch_pattern: master
 
 
 before_install:
@@ -53,6 +67,8 @@ before_install:
   - sudo cp -a libgtest_main.so libgtest.so /usr/lib/
   - which valgrind
   - cd "${TRAVIS_BUILD_DIR}"
+  - echo -n | openssl s_client -connect https://scan.coverity.com:443 | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' | sudo tee -a /etc/ssl/certs/ca-
+
 install:
   
 
