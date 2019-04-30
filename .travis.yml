@@ -1,6 +1,11 @@
 dist: trusty
 language: cpp
 
+env:
+  global:
+    # COVERITY_SCAN_TOKEN
+    # ** specific to your project **
+    - secure: "QSsN1bIW+xAb/qGjM+5kkWrmN2bYDJsDVmJ2K0Kn/zysv/TIKmk3lTvPghVHx7xzveD3j3RVViALnDOEQabvyNbLwvXsr0WTc9IqOfbLFDmpaAxGucaIDkOZpah7PN0Z7sBMJyMlzxqxy8aNlgHkxfEbgL91JbJiqqL3yMkJqluxDldPVme/BNW+HVW2i0FklFfRv3qU0F1eRBo/Sw5igbhKmyMpOkFQdr5sDkl/6cBXWzvZcxCf461nQ9PohVo+k6dZ389rwC2dwH7OvUKuUmJuU+8WoFrxz+m2EZ0EvCnG4yMcFOsIugINzKD5aGUG/uC1DvDSQPN0e1jdj04J3GpmMZgXYSosv8tRdtiTsYalA8JnzuYLW7+gRJgFp9D3cb++RHNh7p/RZbSbBRjyom8MbMDdeThhSPyWcKNIVMRwJfpTPWyxsBvH8h4oqMJZ6uEYFrZp1XczP/Mi40+wjZ3HwpFwYfp9fUiAoLNvIuJe/gEgbQyqMF/yDf3Vj3c+Gl+bdNbK9ckyAVlUsgkCZWDDc9PlS95Qt4oYVZ2Fz10hQtfpObWF8Mn6HzIXL+mlsloOwswdORMJqZFCE+/LFdruPc9ihKWUqTQzDeGU/TE0xulMBuNbSID8JAp774KxOvn3VWUDnCemTcgHc7ui0SOT86LlQNoEuxpTFAY7SYU="
 
 
 # safelist
@@ -38,7 +43,7 @@ addons:
       name: "max-cong/medis"
       description: "redis C++ client"
     token:
-      secure: "Ic5WDw/Jg/uEctCivCf2f0pPXQBJa3HBctaiOcGLlTb/SUn2Qf0l7XEBsMH5nkrTtBIgFnjMTFNHYYl3UcWOgJLXDbAqY5fqtvztB9wwvFABjwyP6HHYRIjIIZul8NNMhgm1MTOz0X6kVVox4POEy3H91z5KHUldLv/E8lqnJPkUd8Wk/9ovhGaHodqjTWUB5opsg2/l/UAaNrNlVznOl2wH5QUUe9pdCD6S9JKJrB0j8mLTZ/aFZevLSo+YqJFv427CtC/YVThJLGEdy8GjfICjO3YN7MzL1RJR0X89VkVbXJQl07amF85K28WAtJy8EjA6wcDFsqasg85umAiYNXlBNdy8xw1ctHovB6IW+J6g0tW/Q1+8uq1PZzb42tWZ7v/7jembStV4UQDO/R+inFyyy5P90VaP12NNpN8oGg+g9AMyLL9jUfgfsn4jpdBCgHbCNcwx+ttcO6LjjieA0SeLs1/Ssze0EsdKnBYGc5srond8GwJ6+6RETu4nJJkI5i3UBa0JcOgfpH00Y/qMnGFoIGOU3Mg6qad6bxwtU3nM8b2UY5+xScxCjo+la/YLVkchUvc/xuX50wBo3HUO0/WK+dk6Nj/PQ95XpMOY7vp38cfC9pxAlx8V+JWW4tWbqB2O7WNgB5eJdOiKD5g75/N4j6PImZ2A2/6cmhvApX8="
+      secure: "QSsN1bIW+xAb/qGjM+5kkWrmN2bYDJsDVmJ2K0Kn/zysv/TIKmk3lTvPghVHx7xzveD3j3RVViALnDOEQabvyNbLwvXsr0WTc9IqOfbLFDmpaAxGucaIDkOZpah7PN0Z7sBMJyMlzxqxy8aNlgHkxfEbgL91JbJiqqL3yMkJqluxDldPVme/BNW+HVW2i0FklFfRv3qU0F1eRBo/Sw5igbhKmyMpOkFQdr5sDkl/6cBXWzvZcxCf461nQ9PohVo+k6dZ389rwC2dwH7OvUKuUmJuU+8WoFrxz+m2EZ0EvCnG4yMcFOsIugINzKD5aGUG/uC1DvDSQPN0e1jdj04J3GpmMZgXYSosv8tRdtiTsYalA8JnzuYLW7+gRJgFp9D3cb++RHNh7p/RZbSbBRjyom8MbMDdeThhSPyWcKNIVMRwJfpTPWyxsBvH8h4oqMJZ6uEYFrZp1XczP/Mi40+wjZ3HwpFwYfp9fUiAoLNvIuJe/gEgbQyqMF/yDf3Vj3c+Gl+bdNbK9ckyAVlUsgkCZWDDc9PlS95Qt4oYVZ2Fz10hQtfpObWF8Mn6HzIXL+mlsloOwswdORMJqZFCE+/LFdruPc9ihKWUqTQzDeGU/TE0xulMBuNbSID8JAp774KxOvn3VWUDnCemTcgHc7ui0SOT86LlQNoEuxpTFAY7SYU="
 
     notification_email: savagecm@qq.com
     build_command_prepend: "mkdir -p buildCoverity&&cd buildCoverity&&cmake .."
