@@ -57,7 +57,7 @@ public:
 
             return std::make_pair(obj, medis::retStatus::FAIL);
         }
-        return std::make_pair(obj, medis::retStatus::SUCCESS);
+        
     }
 
     // for round robbin, if the weight is 0, that mean we should delete the obj the default weight_ is 10
