@@ -47,7 +47,7 @@ addons:
     notification_email: savagecm@qq.com
     build_command_prepend: "mkdir -p buildCoverity&&cd buildCoverity&&cmake .."
     build_command: "make"
-    branch_pattern: coverity_scan
+    branch_pattern: master
 
 
 before_install:
