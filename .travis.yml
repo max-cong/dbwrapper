@@ -38,7 +38,7 @@ addons:
       name: "max-cong/medis"
       description: "redis C++ client"
     token:
-      secure: "EjIZNOIURripQUN9VcjO5tN+h1aZDnEPCnIwDpWs+XzwL7mg/t3CMWd5iA6M1y9n6sjtuqyhS0A3F/lWQgaNzlq6Z9TiQfyxfYZ6R+MKBCGB7wgJWejJIcBSp3jtIjh7o436HkQXZPZxXcpGdFIpX7rOmRq1I0T5ovxKpeHXThWg36zrKU+x6JERYpFs6KnZMSUXb57T3zOCYe4PgN0HuA8s4Xvupe3ERUvMG17piJklex7cmRGsRl62kh1Crs9gNmCPXOogQiGCjEAgQXXofBRgvKOFcZ9dfsVrPyjnSl6WX+fDkVVNJPLrulZXVaZ4+zj+4t+Y+8NdoywQAT7WsQ8LyJ7z5SlvXNKqqp7nvybJbrbGHa0aWQHnRMHdcxD9uFB6tPwBfBqnt3MJeBmn1DqYrIX2H7c8BvH0qHbI/G9yU3oXS4XcI+TG3jnbLOKdlZt9ubJqKuSmIRqPN92RObORQVw7/CnNJVkSCM6fdzxEFQqP57Wt6mrq8GFhcDkDRsp8sKfjou+mper2XKSAvmBUXKVL5AX4TyBZNoLEXWbR0OCaYQwDclGDsiWIOudsF/uYAh67kj/q/tS4yMdZNHVvr2Wvpv/uCCR9LLoYmtn6S+2IZwEEQi5MpkYzOgfPW2444LJh1BLKr0tNFz0g++7+ZOu/wSJDlZvhGGehpZw="
+      secure: "Ic5WDw/Jg/uEctCivCf2f0pPXQBJa3HBctaiOcGLlTb/SUn2Qf0l7XEBsMH5nkrTtBIgFnjMTFNHYYl3UcWOgJLXDbAqY5fqtvztB9wwvFABjwyP6HHYRIjIIZul8NNMhgm1MTOz0X6kVVox4POEy3H91z5KHUldLv/E8lqnJPkUd8Wk/9ovhGaHodqjTWUB5opsg2/l/UAaNrNlVznOl2wH5QUUe9pdCD6S9JKJrB0j8mLTZ/aFZevLSo+YqJFv427CtC/YVThJLGEdy8GjfICjO3YN7MzL1RJR0X89VkVbXJQl07amF85K28WAtJy8EjA6wcDFsqasg85umAiYNXlBNdy8xw1ctHovB6IW+J6g0tW/Q1+8uq1PZzb42tWZ7v/7jembStV4UQDO/R+inFyyy5P90VaP12NNpN8oGg+g9AMyLL9jUfgfsn4jpdBCgHbCNcwx+ttcO6LjjieA0SeLs1/Ssze0EsdKnBYGc5srond8GwJ6+6RETu4nJJkI5i3UBa0JcOgfpH00Y/qMnGFoIGOU3Mg6qad6bxwtU3nM8b2UY5+xScxCjo+la/YLVkchUvc/xuX50wBo3HUO0/WK+dk6Nj/PQ95XpMOY7vp38cfC9pxAlx8V+JWW4tWbqB2O7WNgB5eJdOiKD5g75/N4j6PImZ2A2/6cmhvApX8="
 
     notification_email: savagecm@qq.com
     build_command_prepend: "mkdir -p buildCoverity&&cd buildCoverity&&cmake .."
