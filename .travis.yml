@@ -14,6 +14,7 @@ branches:
   only:
   - master
   - dev
+  - coverity_scan
 
 compiler:
   - gcc
