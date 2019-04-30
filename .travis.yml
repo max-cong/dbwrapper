@@ -2,11 +2,6 @@ dist: trusty
 language: cpp
 
 
-env:
-  global:
-   # The next declaration is the encrypted COVERITY_SCAN_TOKEN, created
-   #   via the "travis encrypt" command using the project repo's public key
-   - secure: "0Cx6210ad3G6TWsMqgEtGvjVje42LUS/nTyzMFfKvm4D1tMI9kjUEC8zmIRrIsxgYixfLKLnKqnAIISu7BuzftauYrV2rns8flYicAQpgBN8YEnsbKBLMdhDVW5/yon/OhgzS70ahnFTyRtnNLZ1/injkJpuerzVhM6lpC9NPFP6TFp+/GVqo03IUPSuIznpdXk2Z/7sqDmA8xHw63PTeuyNSbet6ZkyweU63eUZ+KV3i/btw5EsA10Ja/DuJth/l/9pg7102sXqzWaQp0F8XfUT2CX0XorCwUO+iHyx+A5u1RqtY/zNGKdOU1Pz5On0KLhTHFVvGdlat9/1tfE04CT/YqqB9WseuLFReFCjhTBRJOneqnPDqC9QHDy2thV5NFFdncsyCIdvqiiqsaPI8iVeqrVaDzchOfpOo+Op9uuPLWr0Nx/G+rfBmSHne+14aong08Pf4cpheleCA6PWTL3/hWjByx9uUHTpKAYHp6ylRLOggTlig7ieGT4zA7wtAgf+1Y5zUFTB1TWBU/SOWigkBVR9HtRFEjlxCqdK/x6kj74sOVGg1BNg1NrRiL5Ad+nxPNBYet4d88dBa9THcvyjN0Ekapfw4mZXlzeCNjchRgD/3Uy4CV30GWj3A13mbNLrLWWoY7e5jBLRKyfS/KLDPjABskIz6N2/20Ho/Hc="
 
 # safelist
 branches:
@@ -42,6 +37,9 @@ addons:
     project:
       name: "max-cong/medis"
       description: "redis C++ client"
+    token:
+      secure: "EjIZNOIURripQUN9VcjO5tN+h1aZDnEPCnIwDpWs+XzwL7mg/t3CMWd5iA6M1y9n6sjtuqyhS0A3F/lWQgaNzlq6Z9TiQfyxfYZ6R+MKBCGB7wgJWejJIcBSp3jtIjh7o436HkQXZPZxXcpGdFIpX7rOmRq1I0T5ovxKpeHXThWg36zrKU+x6JERYpFs6KnZMSUXb57T3zOCYe4PgN0HuA8s4Xvupe3ERUvMG17piJklex7cmRGsRl62kh1Crs9gNmCPXOogQiGCjEAgQXXofBRgvKOFcZ9dfsVrPyjnSl6WX+fDkVVNJPLrulZXVaZ4+zj+4t+Y+8NdoywQAT7WsQ8LyJ7z5SlvXNKqqp7nvybJbrbGHa0aWQHnRMHdcxD9uFB6tPwBfBqnt3MJeBmn1DqYrIX2H7c8BvH0qHbI/G9yU3oXS4XcI+TG3jnbLOKdlZt9ubJqKuSmIRqPN92RObORQVw7/CnNJVkSCM6fdzxEFQqP57Wt6mrq8GFhcDkDRsp8sKfjou+mper2XKSAvmBUXKVL5AX4TyBZNoLEXWbR0OCaYQwDclGDsiWIOudsF/uYAh67kj/q/tS4yMdZNHVvr2Wvpv/uCCR9LLoYmtn6S+2IZwEEQi5MpkYzOgfPW2444LJh1BLKr0tNFz0g++7+ZOu/wSJDlZvhGGehpZw="
+
     notification_email: savagecm@qq.com
     build_command_prepend: "mkdir -p buildCoverity&&cd buildCoverity&&cmake .."
     build_command: "make"
