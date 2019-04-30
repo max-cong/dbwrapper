@@ -48,7 +48,7 @@ public:
 };
 
 template <>
-class redisSet<std::string, std::string> : public nonCopyable
+class redisSet<std::string, std::string> : public nonCopyable 
 {
 public:
     redisSet() = delete;
