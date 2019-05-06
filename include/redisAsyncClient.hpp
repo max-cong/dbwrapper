@@ -68,15 +68,56 @@ public:
         medis::taskSaver<void *, std::shared_ptr<task::taskImp>>::instance()->save(getThis(), _task_sptr);
         return _loop_sptr->start(true);
     }
-    bool put(std::string key, std::string value, void *usr_data, redisCallbackFn *fn)
+    template <typename COMMAND_KEY, typename COMMAND_VALUE>
+    bool put(COMMAND_KEY key, COMMAND_VALUE value, void *usr_data, redisCallbackFn *fn)
     {
         if (!getConnStatus())
         {
             return false;
         }
-        std::string command2send = buildRedisCommand::buildRedisCommand<std::string, std::string>::get_format_command(key, value);
+        std::string command2send = buildRedisCommand::buildRedisCommand<COMMAND_KEY, COMMAND_VALUE>::get_format_command(REDIS_COMMAND_TYPE::TASK_REDIS_PUT, key, value);
         __LOG(debug, "get command :\n"
                          << command2send);
+        if (command2send.empty())
+        {
+            __LOG(warn, "did not get redis command, please check the key type and value type");
+            return false;
+        }
+        return sendFormatRawCommand(command2send, usr_data, fn);
+    }
+    template <typename COMMAND_KEY, typename COMMAND_VALUE>
+    bool get(COMMAND_KEY key, COMMAND_VALUE value, void *usr_data, redisCallbackFn *fn)
+    {
+        if (!getConnStatus())
+        {
+            return false;
+        }
+        std::string command2send = buildRedisCommand::buildRedisCommand<COMMAND_KEY, COMMAND_VALUE>::get_format_command(REDIS_COMMAND_TYPE::TASK_REDIS_GET, key, value);
+        __LOG(debug, "get command :\n"
+                         << command2send);
+        if (command2send.empty())
+        {
+            __LOG(warn, "did not get redis command, please check the key type and value type");
+            return false;
+        }
+        return sendFormatRawCommand(command2send, usr_data, fn);
+    }
+
+    template <typename COMMAND_KEY, typename COMMAND_VALUE>
+    bool del(COMMAND_KEY key, COMMAND_VALUE value, void *usr_data, redisCallbackFn *fn)
+    {
+        if (!getConnStatus())
+        {
+            return false;
+        }
+        std::string command2send = buildRedisCommand::buildRedisCommand<COMMAND_KEY, COMMAND_VALUE>::get_format_command(REDIS_COMMAND_TYPE::TASK_REDIS_DEL, key, value);
+        __LOG(debug, "del command :\n"
+                         << command2send);
+        if (command2send.empty())
+        {
+            __LOG(warn, "did not get redis command, please check the key type and value type");
+            return false;
+        }
         return sendFormatRawCommand(command2send, usr_data, fn);
     }
 

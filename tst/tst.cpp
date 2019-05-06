@@ -68,10 +68,19 @@ protected:
 
 TEST_F(redisAsyncClientTest, put)
 {
-    _aclient_sptr->put("hello", "world", NULL, getCallback);
-    EXPECT_EQ(0, 0);
+    bool ret = _aclient_sptr->put(std::string("hello"), std::string("world"), NULL, getCallback);
+    EXPECT_TRUE(ret);
 }
-
+TEST_F(redisAsyncClientTest, get)
+{
+    bool ret = _aclient_sptr->get(std::string("hello"), nullptr, NULL, getCallback);
+    EXPECT_TRUE(ret);
+}
+TEST_F(redisAsyncClientTest, del)
+{
+    bool ret = _aclient_sptr->del(std::string("hello"), nullptr, NULL, getCallback);
+    EXPECT_TRUE(ret);
+}
 int main(int argc, char *argv[])
 {
     ::testing::InitGoogleTest(&argc, argv);
