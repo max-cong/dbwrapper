@@ -28,7 +28,7 @@
 #include <chrono>
 #include "redisAsyncClient.hpp"
 #include "hiredis/hiredis.h"
-int i =0;
+int i = 0;
 void getCallback(redisAsyncContext *c, void *r, void *privdata)
 {
     redisReply *reply = (redisReply *)r;
@@ -41,7 +41,7 @@ void getCallback(redisAsyncContext *c, void *r, void *privdata)
         return;
     }
     i++;
-    __LOG(debug, "private data is : " << (void *)privdata << ", string is : " << reply->str<<", index is : "<<i);
+    __LOG(debug, "private data is : " << (void *)privdata << ", string is : " << reply->str << ", index is : " << i);
 }
 int main()
 {
@@ -52,14 +52,16 @@ int main()
     _config[PROP_HOST] = "127.0.0.1";
     _config[PROP_PORT] = "6379";
     configCenter::configCenter<void *>::instance()->setProperties(aclient.getThis(), _config);
-    __LOG(debug, "start redis async client and set config with gene : "<<(void *)aclient.getThis());
+    __LOG(debug, "start redis async client and set config with gene : " << (void *)aclient.getThis());
 
     aclient.init();
 
     std::this_thread::sleep_for(std::chrono::milliseconds(500));
-   // for (int i = 0; i < 10000; i++)
+    // for (int i = 0; i < 10000; i++)
     {
-        aclient.put("hello", "world", NULL, getCallback);
+        aclient.put(std::string("hello"), std::string("world"), NULL, getCallback);
+        aclient.get(std::string("hello"), nullptr, NULL, getCallback);
+        aclient.del(std::string("hello"), nullptr, NULL, getCallback);
     }
     std::this_thread::sleep_for(std::chrono::milliseconds(50000));
 }

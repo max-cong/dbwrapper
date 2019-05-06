@@ -48,7 +48,7 @@ public:
 };
 
 template <>
-class redisSet<std::string, std::string> : public nonCopyable 
+class redisSet<std::string, std::string> : public nonCopyable
 {
 public:
     redisSet() = delete;
@@ -103,6 +103,68 @@ public:
     std::list<std::string> _list;
 };
 
+template <typename KEY_TYPE, typename VALUE_TYPE>
+class redisGet : public nonCopyable
+{
+public:
+    redisGet() = delete;
+    redisGet(KEY_TYPE key, VALUE_TYPE value)
+    {
+    }
+    std::string toString() { return ""; }
+};
+
+template <>
+class redisGet<std::string, std::nullptr_t> : public nonCopyable
+{
+public:
+    redisGet() = delete;
+    redisGet(std::string key, std::nullptr_t null_ptr)
+    {
+        // may use ostream for performance
+        // to do
+        __LOG(debug, "[redisGet] key is : " << key);
+        _list.emplace_back("GET");
+        _list.emplace_back(key);
+    }
+    std::string toString()
+    {
+        return redis_formatCommand::toString(_list);
+    }
+    std::list<std::string> _list;
+};
+
+template <typename KEY_TYPE, typename VALUE_TYPE>
+class redisDel : public nonCopyable
+{
+public:
+    redisDel() = delete;
+    redisDel(KEY_TYPE key, VALUE_TYPE value)
+    {
+    }
+    std::string toString() { return ""; }
+};
+
+template <>
+class redisDel<std::string, std::nullptr_t> : public nonCopyable
+{
+public:
+    redisDel() = delete;
+    redisDel(std::string key, std::nullptr_t null_ptr)
+    {
+        // may use ostream for performance
+        // to do
+        __LOG(debug, "[redisDel] key is : " << key);
+        _list.emplace_back("DEL");
+        _list.emplace_back(key);
+    }
+    std::string toString()
+    {
+        return redis_formatCommand::toString(_list);
+    }
+    std::list<std::string> _list;
+};
+
 // interface form APP API to redis RSP message
 template <typename COMMAND_KEY, typename COMMAND_VALUE>
 class buildRedisCommand
@@ -122,24 +184,65 @@ public:
 
     buildRedisCommand() = default;
 
-    static std::string get_format_command(COMMAND_KEY key, COMMAND_VALUE value)
+    static std::string get_format_command(REDIS_COMMAND_TYPE type, COMMAND_KEY key, COMMAND_VALUE value)
     {
-        if
-            medisConstExpr(keyCheck<std::string>() && valueCheck<std::string>())
-            {
-                __LOG(debug, "Put command, key and value both string. key is : " << key << ", value is : " << value);
-                return redisSet<COMMAND_KEY, COMMAND_VALUE>(key, value).toString();
-            }
-        else if
-            medisConstExpr(keyCheck<std::list<std::string>>() && valueCheck<std::list<std::string>>())
-            {
-                return redisMSet<COMMAND_KEY, COMMAND_VALUE>(key, value).toString();
-            }
-        else
+        switch (type)
         {
-            __LOG(debug, "Put command, key or value type is not matched, key type is : " << typeid(key).name() << ". value type is : " << typeid(value).name());
+        case REDIS_COMMAND_TYPE::TASK_REDIS_PUT:
+            if
+                medisConstExpr(keyCheck<std::string>() && valueCheck<std::string>())
+                {
+                    __LOG(debug, "Put command, key and value both string. key is : " << key);
+                    return redisSet<COMMAND_KEY, COMMAND_VALUE>(key, value).toString();
+                }
+            else if
+                medisConstExpr(keyCheck<std::list<std::string>>() && valueCheck<std::list<std::string>>())
+                {
+                    return redisMSet<COMMAND_KEY, COMMAND_VALUE>(key, value).toString();
+                }
+            else
+            {
+                __LOG(debug, "Put command, key or value type is not matched, key type is : " << typeid(key).name() << ". value type is : " << typeid(value).name());
+            }
+            break;
+        case REDIS_COMMAND_TYPE::TASK_REDIS_GET:
+            if
+                medisConstExpr(keyCheck<std::string>() && valueCheck<std::nullptr_t>())
+                {
+                    __LOG(debug, "Get command, key is string. key is : " << key);
+                    return redisGet<COMMAND_KEY, COMMAND_VALUE>(key, value).toString();
+                }
+            else if
+                medisConstExpr(keyCheck<std::list<std::string>>() && valueCheck<std::list<std::string>>())
+                {
+                    __LOG(debug, "todo");
+                }
+            else
+            {
+                __LOG(debug, "Get command, key or value type is not matched, key type is : " << typeid(key).name() << ". value type is : " << typeid(value).name());
+            }
+            break;
+        case REDIS_COMMAND_TYPE::TASK_REDIS_DEL:
+            if
+                medisConstExpr(keyCheck<std::string>() && valueCheck<std::nullptr_t>())
+                {
+                    __LOG(debug, "Del command, key is string. key is : " << key);
+                    return redisDel<COMMAND_KEY, COMMAND_VALUE>(key, value).toString();
+                }
+            else if
+                medisConstExpr(keyCheck<std::list<std::string>>() && valueCheck<std::list<std::string>>())
+                {
+                    __LOG(debug, "todo");
+                }
+            else
+            {
+                __LOG(debug, "Del command, key or value type is not matched, key type is : " << typeid(key).name() << ". value type is : " << typeid(value).name());
+            }
+            break;
+        default:
+            __LOG(warn, "not support type");
+            return "";
         }
-
         return "";
     }
 };
