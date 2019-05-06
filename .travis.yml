@@ -81,6 +81,7 @@ before_script:
 script: 
   - export LD_LIBRARY_PATH=/usr/local/lib
   - export GCOV_DIR=$PWD/build/tst/CMakeFiles/_medis_tests.dir
+  - git fetch --unshallow --quiet
   - mkdir -p build &&mkdir -p gcov&& cd build
   - cd $BASE_DIR/build&&rm -rf *&&cmake -DCODE_COVERAGE=ON -DBUILD_TESTING=ON ..  &&build-wrapper-linux-x86-64 --out-dir ../bw-output make clean all&&bin/medis_tests
   - cd $GCOV_DIR&& gcov -a tst.cpp.gcno
