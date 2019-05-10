@@ -520,7 +520,7 @@ public:
                 _timerManager->getTimer()->startOnce(500, [self_wptr, tmpTaskMsg]() {
                     if (!self_wptr.expired())
                     {
-                        self_wptr.lock()->sendMsg(tmpTaskMsg);
+                        self_wptr.lock()->sendMsg(std::move(tmpTaskMsg));
                     }
                     else
                     {
@@ -534,7 +534,7 @@ public:
 
     bool sendMsg(taskMsg &&msg)
     {
-        _taskQueue.emplace(msg);
+        _taskQueue.emplace(std::move(msg));
         if (!_evfdClient)
         {
             return false;
@@ -547,7 +547,7 @@ public:
     }
     bool sendMsg(taskMsg const &msg)
     {
-        _taskQueue.push(msg);
+        _taskQueue.emplace(std::move(msg));
         if (!_evfdClient)
         {
             return false;
