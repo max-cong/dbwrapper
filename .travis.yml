@@ -27,8 +27,10 @@ os:
 addons:
   apt:
     sources:
+      - sourceline: 'ppa:mhier/libboost-latest'
       - ubuntu-toolchain-r-test
     packages:
+      - boost1.67
      # - gcc-4.8
      # - g++-4.8
   sonarcloud:
@@ -51,7 +53,7 @@ addons:
 before_install:
   - sudo apt-get update -qq
   - sudo apt-get install -y valgrind cmake
-  - sudo apt-get install libboost-all-dev
+  #- sudo apt-get install libboost-all-dev
   - sudo apt-get install libevent-dev
   - export BASE_DIR=$PWD
   # the hiredis in the travis ci(sudo apt-cache search hiredis) is 0.10.0, that is too old, install the v0.14.0 instead
