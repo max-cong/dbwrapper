@@ -37,18 +37,16 @@ public:
     }
     ~roundRobbin() {}
     // note: there is no lock here
-    std::pair<LB_OBJ, medis::retStatus> getObj() override
+    DBW_OPT<LB_OBJ> getObj() override
     {
         if (this->_obj_vector.empty() || !_max_index)
         {
-            LB_OBJ obj;
-            // note: do this to supress build warning. this is redisAsyncContext*
-            obj = NULL;
-            return std::make_pair(obj, medis::retStatus::NO_ENTRY);
+            
+            return DBW_NONE_OPT;
         }
 
         _index++;
-        return std::make_pair(std::get<0>((this->_obj_vector)[_index % (this->_max_index)]), medis::retStatus::SUCCESS);
+        return std::get<0>((this->_obj_vector)[_index % (this->_max_index)]);
     }
 
     // for round robbin, if the weight is 0, that mean we should delete the obj the default weight_ is 10

@@ -351,13 +351,13 @@ public:
         __LOG(debug, "get command :\n"
                          << msg.body);
 
-        auto conn = _connManager->get_conn();
-        if (std::get<1>(conn) != medis::retStatus::SUCCESS)
+
+        redisAsyncContext *_context =(redisAsyncContext *) (_connManager->get_conn()).value_or(nullptr);
+        if (!_context)
         {
             __LOG(warn, "did not get connection!");
             return false;
         }
-        redisAsyncContext *_context = std::get<0>(conn);
 
         int ret = redisAsyncFormattedCommand(_context, msg.fn, msg.usr_data, msg.body.c_str(), msg.body.size());
         if (ret != REDIS_OK)
@@ -376,14 +376,13 @@ public:
         __LOG(debug, "get command :\n"
                          << msg.body);
 
-        auto conn = _connManager->get_conn();
-        if (std::get<1>(conn) != medis::retStatus::SUCCESS)
+        redisAsyncContext *_context = (_connManager->get_conn()).value_or(nullptr);
+        if (!_context)
         {
-            __LOG(debug, "did not get a connection");
+            __LOG(warn, "did not get connection!");
             return false;
         }
 
-        redisAsyncContext *_context = std::get<0>(conn);
         int ret = redisAsyncCommand(_context, msg.fn, msg.usr_data, msg.body.c_str());
         if (ret != REDIS_OK)
         {
