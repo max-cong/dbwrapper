@@ -45,7 +45,7 @@ enum class CONN_TYPE : std::uint32_t
 class CONN_INFO
 {
 public:
-    CONN_INFO() : type(CONN_TYPE::IP), port(0), priority(1), hbTime(0) {}
+    CONN_INFO() : type(CONN_TYPE::IP), priority(1), hbTime(0) {}
     CONN_TYPE type;
     std::string ip;
     std::string path;

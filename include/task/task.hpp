@@ -165,7 +165,7 @@ public:
     }
     static void evfdCallback(int fd, short event, void *args)
     {
-        uint64_t one = 0;
+        uint64_t one;
         int ret = read(fd, &one, sizeof one);
         if (ret != sizeof one)
         {
