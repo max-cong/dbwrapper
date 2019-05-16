@@ -303,10 +303,14 @@ public:
     }
 
     // set the callback function for evnet coming
-    virtual bool on_message(taskMsg const &task_msg)
+    virtual bool on_message(std::shared_ptr<taskMsg> task_msg)
     {
+        if(!task_msg)
+        {
+            __LOG(error, "message in the task queue is invalid");
+        }
         bool ret = false;
-        switch (task_msg.type)
+        switch (task_msg->type)
         {
         case taskMsgType::TASK_REDIS_FORMAT_RAW:
             ret = processRedisFormatRawCommand(task_msg);
@@ -341,11 +345,15 @@ public:
         // to do
         return false;
     }
-    bool processRedisFormatRawCommand(taskMsg const &task_msg)
+    bool processRedisFormatRawCommand(std::shared_ptr<taskMsg> task_msg)
     {
-        TASK_REDIS_FORMAT_RAW_MSG_BODY msg = DBW_ANY_CAST<TASK_REDIS_FORMAT_RAW_MSG_BODY>(task_msg.body);
+        if(!task_msg)
+        {
+             __LOG(error, "invalid task message!");
+        }
+        std::shared_ptr<TASK_REDIS_FORMAT_RAW_MSG_BODY> msg = DBW_ANY_CAST<std::shared_ptr<TASK_REDIS_FORMAT_RAW_MSG_BODY>>(task_msg->body);
         __LOG(debug, "get command :\n"
-                         << msg.body);
+                         << msg->body);
 
         redisAsyncContext *_context = (redisAsyncContext *)(_connManager->get_conn()).value_or(nullptr);
         if (!_context)
@@ -354,7 +362,7 @@ public:
             return false;
         }
 
-        int ret = redisAsyncFormattedCommand(_context, msg.fn, msg.usr_data, msg.body.c_str(), msg.body.size());
+        int ret = redisAsyncFormattedCommand(_context, msg->fn, msg->usr_data, msg->body.c_str(), msg->body.size());
         if (ret != REDIS_OK)
         {
             __LOG(warn, "send message return fail, check the connection!");
@@ -365,11 +373,15 @@ public:
             return true;
         }
     }
-    bool processRedisRawCommand(taskMsg const &task_msg)
+    bool processRedisRawCommand(std::shared_ptr<taskMsg> task_msg)
     {
-        TASK_REDIS_RAW_MSG_BODY msg = DBW_ANY_CAST<TASK_REDIS_RAW_MSG_BODY>(task_msg.body);
+         if(!task_msg)
+        {
+             __LOG(error, "invalid task message!");
+        }
+        std::shared_ptr<TASK_REDIS_RAW_MSG_BODY> msg = DBW_ANY_CAST<std::shared_ptr<TASK_REDIS_RAW_MSG_BODY>>(task_msg->body);
         __LOG(debug, "get command :\n"
-                         << msg.body);
+                         << msg->body);
 
         redisAsyncContext *_context = (_connManager->get_conn()).value_or(nullptr);
         if (!_context)
@@ -378,7 +390,7 @@ public:
             return false;
         }
 
-        int ret = redisAsyncCommand(_context, msg.fn, msg.usr_data, msg.body.c_str());
+        int ret = redisAsyncCommand(_context, msg->fn, msg->usr_data, msg->body.c_str());
         if (ret != REDIS_OK)
         {
             __LOG(warn, "send message return fail, check the connection!");
@@ -389,9 +401,13 @@ public:
             return true;
         }
     }
-    bool processRedisAddConnection(taskMsg const &task_msg)
+    bool processRedisAddConnection(std::shared_ptr<taskMsg> task_msg)
     {
-        medis::CONN_INFO payload = DBW_ANY_CAST<medis::CONN_INFO>(task_msg.body);
+         if(!task_msg)
+        {
+             __LOG(error, "invalid task message!");
+        }
+        medis::CONN_INFO payload = DBW_ANY_CAST<medis::CONN_INFO>(task_msg->body);
         __LOG(debug, "connect to : " << payload.ip << ":" << payload.port);
 
         redisAsyncContext *_context = redisAsyncConnect(payload.ip.c_str(), payload.port);
@@ -474,9 +490,13 @@ public:
         return true;
     }
 
-    bool processRedisDelConnection(taskMsg const &task_msg)
+    bool processRedisDelConnection(std::shared_ptr<taskMsg> task_msg)
     {
-        medis::CONN_INFO payload = DBW_ANY_CAST<medis::CONN_INFO>(task_msg.body);
+         if(!task_msg)
+        {
+             __LOG(error, "invalid task message!");
+        }
+        medis::CONN_INFO payload = DBW_ANY_CAST<medis::CONN_INFO>(task_msg->body);
         __LOG(debug, "disconnect to : " << payload.ip << ":" << payload.port);
 
         auto ctxSaver = medis::contextSaver<void *, std::shared_ptr<redisContext>>::instance();
@@ -504,6 +524,7 @@ public:
         {
             auto tmpTaskMsg = _taskQueue.front();
 
+
             if (!on_message(tmpTaskMsg))
             {
                 __LOG(warn, "process task message return fail!");
@@ -514,7 +535,7 @@ public:
                 _timerManager->getTimer()->startOnce(500, [self_wptr, tmpTaskMsg]() {
                     if (!self_wptr.expired())
                     {
-                        self_wptr.lock()->sendMsg(std::move(tmpTaskMsg));
+                        self_wptr.lock()->sendMsg(tmpTaskMsg);
                     }
                     else
                     {
@@ -526,9 +547,9 @@ public:
         }
     }
 
-    bool sendMsg(taskMsg &&msg)
+    bool sendMsg(std::shared_ptr<taskMsg> msg)
     {
-        _taskQueue.emplace(std::move(msg));
+        _taskQueue.emplace(msg);
         if (!_evfdClient)
         {
             return false;
@@ -539,28 +560,16 @@ public:
         }
         return true;
     }
-    bool sendMsg(taskMsg const &msg)
-    {
-        _taskQueue.emplace(std::move(msg));
-        if (!_evfdClient)
-        {
-            return false;
-        }
-        else
-        {
-            _evfdClient->send();
-        }
-        return true;
-    }
+    
     bool sendMsg(taskMsgType type, DBW_ANY &&body)
     {
-        taskMsg msg;
-        msg.type = type;
-        msg.body = body;
+        std::shared_ptr<taskMsg> msg_sptr = std::make_shared<taskMsg>();
+        msg_sptr->type = type;
+        msg_sptr->body = body;
 
-        return sendMsg(msg);
+        return sendMsg(msg_sptr);
     }
-    bool sendMsgList(std::list<taskMsg> &&msgList)
+    bool sendMsgList(std::list<std::shared_ptr<taskMsg>> &&msgList)
     {
         if (!_evfdClient)
         {

@@ -66,5 +66,5 @@ struct TASK_REDIS_RAW_MSG_BODY
     void *usr_data;
 };
 
-using TASK_QUEUE = std::queue<taskMsg>;
+using TASK_QUEUE = std::queue<std::shared_ptr<taskMsg>>;
 } // namespace task
