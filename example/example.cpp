@@ -26,6 +26,9 @@
 #include <string>
 #include <thread>
 #include <chrono>
+
+#include <ctime>
+#include <stdlib.h>
 #include "redisAsyncClient.hpp"
 #include "hiredis/hiredis.h"
 int i = 0;
@@ -56,11 +59,13 @@ int main()
 
     aclient.init();
 
-
     std::this_thread::sleep_for(std::chrono::milliseconds(500));
+    std::time_t startTime = std::time(nullptr);
+    std::cout << "start time : " << std::asctime(std::localtime(&startTime))
+              << startTime << "\n";
     for (int i = 0; i < 100000; i++)
     {
-        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        // std::this_thread::sleep_for(std::chrono::milliseconds(1));
         aclient.put(std::string("hello"), std::string("world"), NULL, getCallback);
         aclient.get(std::string("hello"), nullptr, NULL, getCallback);
         aclient.del(std::string("hello"), nullptr, NULL, getCallback);
@@ -72,5 +77,8 @@ int main()
         aclient.del(std::string("hello"), nullptr, NULL, getCallback);
         aclient.put(std::string("hello"), std::string("world"), NULL, getCallback);
     }
-    std::this_thread::sleep_for(std::chrono::milliseconds(50000));
+    std::time_t stopTime = std::time(nullptr);
+    std::cout << "stop time : " << std::asctime(std::localtime(&stopTime))
+              << stopTime << "\n";
+    //std::this_thread::sleep_for(std::chrono::milliseconds(50000));
 }
