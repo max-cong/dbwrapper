@@ -69,13 +69,13 @@ public:
         return _loop_sptr->start(true);
     }
     template <typename COMMAND_KEY, typename COMMAND_VALUE>
-    bool put(COMMAND_KEY key, COMMAND_VALUE value, void *usr_data, redisCallbackFn *fn)
+    bool put(COMMAND_KEY&& key, COMMAND_VALUE&& value, void *usr_data, redisCallbackFn *fn)
     {
         if (!getConnStatus())
         {
             return false;
         }
-        std::string command2send = std::move(buildRedisCommand::buildRedisCommand<COMMAND_KEY, COMMAND_VALUE>::get_format_command(REDIS_COMMAND_TYPE::TASK_REDIS_PUT, key, value));
+        std::string command2send = std::move(buildRedisCommand::buildRedisCommand<COMMAND_KEY, COMMAND_VALUE>::get_format_command(REDIS_COMMAND_TYPE::TASK_REDIS_PUT, std::forward<COMMAND_KEY>(key), std::forward<COMMAND_VALUE>(value)));
         __LOG(debug, "get command :\n"
                          << command2send);
         if (command2send.empty())
@@ -86,13 +86,13 @@ public:
         return sendFormatRawCommand(std::move(command2send), usr_data, fn);
     }
     template <typename COMMAND_KEY, typename COMMAND_VALUE>
-    bool get(COMMAND_KEY key, COMMAND_VALUE value, void *usr_data, redisCallbackFn *fn)
+    bool get(COMMAND_KEY &&key, COMMAND_VALUE &&value, void *usr_data, redisCallbackFn *fn)
     {
         if (!getConnStatus())
         {
             return false;
         }
-        std::string command2send = std::move(buildRedisCommand::buildRedisCommand<COMMAND_KEY, COMMAND_VALUE>::get_format_command(REDIS_COMMAND_TYPE::TASK_REDIS_GET, key, value));
+        std::string command2send = std::move(buildRedisCommand::buildRedisCommand<COMMAND_KEY, COMMAND_VALUE>::get_format_command(REDIS_COMMAND_TYPE::TASK_REDIS_GET, std::forward<COMMAND_KEY>(key), std::forward<COMMAND_VALUE>(value)));
         __LOG(debug, "get command :\n"
                          << command2send);
         if (command2send.empty())
@@ -104,13 +104,13 @@ public:
     }
 
     template <typename COMMAND_KEY, typename COMMAND_VALUE>
-    bool del(COMMAND_KEY key, COMMAND_VALUE value, void *usr_data, redisCallbackFn *fn)
+    bool del(COMMAND_KEY&& key, COMMAND_VALUE&& value, void *usr_data, redisCallbackFn *fn)
     {
         if (!getConnStatus())
         {
             return false;
         }
-        std::string command2send = std::move(buildRedisCommand::buildRedisCommand<COMMAND_KEY, COMMAND_VALUE>::get_format_command(REDIS_COMMAND_TYPE::TASK_REDIS_DEL, key, value));
+        std::string command2send = std::move(buildRedisCommand::buildRedisCommand<COMMAND_KEY, COMMAND_VALUE>::get_format_command(REDIS_COMMAND_TYPE::TASK_REDIS_DEL, std::forward<COMMAND_KEY>(key), std::forward<COMMAND_VALUE>(value)));
         __LOG(debug, "del command :\n"
                          << command2send);
         if (command2send.empty())

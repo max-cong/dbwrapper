@@ -41,7 +41,7 @@ class redisSet : public nonCopyable
 {
 public:
     redisSet() = delete;
-    redisSet(KEY_TYPE key, VALUE_TYPE value)
+    redisSet(KEY_TYPE &&key, VALUE_TYPE &&value)
     {
     }
     std::string toString() { return ""; }
@@ -52,7 +52,7 @@ class redisSet<std::string, std::string> : public nonCopyable
 {
 public:
     redisSet() = delete;
-    redisSet(std::string key, std::string value)
+    redisSet(std::string &&key, std::string &&value)
     {
         // may use ostream for performance
         // to do
@@ -72,7 +72,7 @@ class redisMSet : public nonCopyable
 {
 public:
     redisMSet() = delete;
-    redisMSet(KEY_TYPE key, VALUE_TYPE value)
+    redisMSet(KEY_TYPE &&key, VALUE_TYPE &&value)
     {
     }
     std::string toString() { return ""; }
@@ -82,16 +82,16 @@ class redisMSet<std::list<std::string>, std::list<std::string>> : public nonCopy
 {
 public:
     redisMSet() = delete;
-    redisMSet(std::list<std::string> key, std::list<std::string> value)
+    redisMSet(std::list<std::string> &&key, std::list<std::string> &&value)
     {
         if (key.size() == value.size())
         {
             _list.emplace_back("MSET");
             for (auto it : key)
             {
-                _list.push_back(key.front());
+                _list.emplace_back(key.front());
                 key.pop_front();
-                _list.push_back(value.front());
+                _list.emplace_back(value.front());
                 value.pop_front();
             }
         }
@@ -108,7 +108,7 @@ class redisGet : public nonCopyable
 {
 public:
     redisGet() = delete;
-    redisGet(KEY_TYPE key, VALUE_TYPE value)
+    redisGet(KEY_TYPE &&key, VALUE_TYPE &&value)
     {
     }
     std::string toString() { return ""; }
@@ -119,7 +119,7 @@ class redisGet<std::string, std::nullptr_t> : public nonCopyable
 {
 public:
     redisGet() = delete;
-    redisGet(std::string key, std::nullptr_t null_ptr)
+    redisGet(std::string &&key, std::nullptr_t null_ptr)
     {
         // may use ostream for performance
         // to do
@@ -139,7 +139,7 @@ class redisDel : public nonCopyable
 {
 public:
     redisDel() = delete;
-    redisDel(KEY_TYPE key, VALUE_TYPE value)
+    redisDel(KEY_TYPE &&key, VALUE_TYPE &&value)
     {
     }
     std::string toString() { return ""; }
@@ -150,7 +150,7 @@ class redisDel<std::string, std::nullptr_t> : public nonCopyable
 {
 public:
     redisDel() = delete;
-    redisDel(std::string key, std::nullptr_t null_ptr)
+    redisDel(std::string &&key, std::nullptr_t null_ptr)
     {
         // may use ostream for performance
         // to do
@@ -184,7 +184,7 @@ public:
 
     buildRedisCommand() = default;
 
-    static std::string get_format_command(REDIS_COMMAND_TYPE type, COMMAND_KEY key, COMMAND_VALUE value)
+    static std::string get_format_command(REDIS_COMMAND_TYPE type, COMMAND_KEY &&key, COMMAND_VALUE &&value)
     {
         switch (type)
         {
@@ -193,12 +193,12 @@ public:
                 medisConstExpr(keyCheck<std::string>() && valueCheck<std::string>())
                 {
                     __LOG(debug, "Put command, key and value both string. key is : " << key);
-                    return redisSet<COMMAND_KEY, COMMAND_VALUE>(key, value).toString();
+                    return redisSet<COMMAND_KEY, COMMAND_VALUE>(std::forward<COMMAND_KEY>(key), std::forward<COMMAND_VALUE>(value)).toString();
                 }
             else if
                 medisConstExpr(keyCheck<std::list<std::string>>() && valueCheck<std::list<std::string>>())
                 {
-                    return redisMSet<COMMAND_KEY, COMMAND_VALUE>(key, value).toString();
+                    return redisMSet<COMMAND_KEY, COMMAND_VALUE>(std::forward<COMMAND_KEY>(key), std::forward<COMMAND_VALUE>(value)).toString();
                 }
             else
             {
@@ -210,7 +210,7 @@ public:
                 medisConstExpr(keyCheck<std::string>() && valueCheck<std::nullptr_t>())
                 {
                     __LOG(debug, "Get command, key is string. key is : " << key);
-                    return redisGet<COMMAND_KEY, COMMAND_VALUE>(key, value).toString();
+                    return redisGet<COMMAND_KEY, COMMAND_VALUE>(std::forward<COMMAND_KEY>(key), std::forward<COMMAND_VALUE>(value)).toString();
                 }
             else if
                 medisConstExpr(keyCheck<std::list<std::string>>() && valueCheck<std::list<std::string>>())
@@ -227,7 +227,7 @@ public:
                 medisConstExpr(keyCheck<std::string>() && valueCheck<std::nullptr_t>())
                 {
                     __LOG(debug, "Del command, key is string. key is : " << key);
-                    return redisDel<COMMAND_KEY, COMMAND_VALUE>(key, value).toString();
+                    return redisDel<COMMAND_KEY, COMMAND_VALUE>(std::forward<COMMAND_KEY>(key), std::forward<COMMAND_VALUE>(value)).toString();
                 }
             else if
                 medisConstExpr(keyCheck<std::list<std::string>>() && valueCheck<std::list<std::string>>())
