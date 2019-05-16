@@ -38,7 +38,7 @@ class lbStrategy
 public:
     virtual ~lbStrategy() {}
     // Interface
-    virtual std::pair<LB_OBJ, medis::retStatus> getObj() = 0;
+    virtual DBW_OPT<LB_OBJ> getObj() = 0;
     virtual bool init() = 0;
     virtual medis::retStatus update() = 0;
 

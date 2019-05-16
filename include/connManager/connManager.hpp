@@ -148,7 +148,7 @@ public:
         return _unavaliable_cb;
     }
 
-    std::pair<redisAsyncContext *, medis::retStatus> get_conn()
+    DBW_OPT<redisAsyncContext *> get_conn()
     {
         return _lbs_sptr->getObj();
     }

@@ -1,20 +1,18 @@
 dist: trusty
 language: cpp
 
+
 env:
   global:
-    # COVERITY_SCAN_TOKEN
-    # ** specific to your project **
-    - secure: "ns8i2qNB/TFe+7rAJUvbHeX+iFJxZ54YTo1hIKPF+/4CU/OWaLXiCXCa2EiVL8IVM9ZLQYU17rXkb7UyN8hvjfE3iou2vrFBks3AZwsu8x/cbi42pjI4qluBoT88xvAepd7s2iJhW84cBxvSJqirkluiHcmcaVrSRJTSI193kqoaln5Ky2MYh5TiE33l1ANqHQqolqBJKzSKcRmBMqbH4zHIqhxhO1+yvbTYmriob9ZHd5UZeUfUC8o0i3zm66TNROO2RiAPJdHPqwjy9RuJRCaMAjJnimyTadugxmClZEFJAwH4stJf8Ei83cZsje/PEq/86pezTMr1c0TM3auBIInl/Wbb7kGEHedgvIj/ClUKz3T5MwUZHZD6ISJQU41tNN0Bs8qvY+WiAywxXmqch7Nso2C84Li2TWn8uFQQ1kPY3JgaXcQuZvnyGR+66yl4kUO03aLTEgihqJOzRhTDwtT83vscWSprQqxY6vg81n/whFpXUc8NswVwBcGokeJA2FT0AZZKI/mw3MEh8SbOoOgNRcwAOZBj489UpQbYv4JxFtzBiGJYQeCI9xmkyhyB6ylTVKAlW7duvI4lqp6xtBFDg2s0bYPtQ0ywaE8coSo2O+yNJWINjshXcilitYnbqchiu20q42lKk2HOZptKQ5sxCS+qHafT2TBaTPZNoxI="
-
-
+   # The next declaration is the encrypted COVERITY_SCAN_TOKEN, created
+   #   via the "travis encrypt" command using the project repo's public key
+   - secure: "DteqqMzN5uq3qloF3E5186kWzFuUCwdWDhnQRZefGFbYhl7exzb0NXwPm46TB5+PdtK4fE96cdcErb+WRbzE0H8BV42RzJTYXbt3cTxdJPfUM7CwFGCWgAutT6iDD1I9VO1Lw2PkUqwM8NtdmLGWmY0gmxew83NhnM+qQmU6WvXhoFlLhlbU4kwFuEu1Gs3hKLtS4Oe0XozBmrbJkmGbjOqlZ4A756I8spUgMoAm/q9jDMrmzOcffBP/t/2v/sO5S5OOKn7CVT/Bwt6l/cJAPw9eCo/5xJtULT3M8q1JOMDcCaqSdFinYJE8XPJtw7QxrbodAafIePeAuRw2rQi600d7UawubrUklGTAJunvhi80ZWUBG5qQEO9lmaVUvBrLOMW5BVHaNdsdjE/L6/zWF6w2xC6t11ys+elCmkQe/OoT3GrwroP0BTVyDQYJQLRxZ5OtrpOPDRQ15Dd5LgRx8jGzCq/Q6YPJ2pud9KyPhxI/+FHyet5g09Qt5bZ7JHyTcvpvLm+GNn1ZqnT87+krVZ3Wm1nsAjs9UkWo0hN7O4XW6uSSl3o5dsm6uv8U8Vgxew+5xtFs6bgKDSjNjlz+EZg1BZyyWUjT+5lw3CM7sY15BW1/epTAttZrJAEzQvMCtBkW5YoNEJLpKJ736US4zZDaAIuDbRfhEm+s2RzAhHY="
 
 # safelist
 branches:
   only:
   - master
   - dev
-  - coverity_scan
 
 compiler:
   - gcc
@@ -29,17 +27,19 @@ os:
 addons:
   apt:
     sources:
+      - sourceline: 'ppa:mhier/libboost-latest'
       - ubuntu-toolchain-r-test
     packages:
+      - boost1.67
      # - gcc-4.8
      # - g++-4.8
   sonarcloud:
     organization: "max-cong" # the key of the org you chose at step #3
     projectKey: "max-cong_medis"
     project: "medis"
+
     token:
       secure: "get1DoumRkai7SbqBw5kWe8b2fEuBRvD5iDzMFQcxX7KRZrZuSYO2LZspZjCHv6pyFuBLVxNbanyESVZr9h8Qe6oORtFoNviVsgA7lPTCWtT/5ylJP2N98xA0aIHbaQ1RsDvacE29hxJVueNe6JfHzbLDcJq7GMHXiCcSk75PSl6E3OShuoKtLeoq/E4cXMm3f5LYh1DmeXs6PClEyZYXSkl1rIiGyhgCezcyJFgC5VTRpeien3Vs4Z/RrLyj7WNwSKM/NtB9YGS5mAHHxDNgXT5QnYRP8v/PTlhDGxmB218w5QI4BloD3aGQ0HzPtnR7FfIMbLqehG5gd5dbks64XVsjrLBtAOrwIU7HykUtqXPFUeYTHMbdhf0nArJlGgMlu29M2sR5OP30Vco8auFRG6PKzkN9wF2ats0aZtq+k2jN98EGUMUgP4l4LvZIR2Ze/PKTAPj6Hse0aEdXwxd7TVf2b1boH0DRfoKJ5h58HCKOHpItqxnxGTV6B8jxxE5oKvWtfYDfl+FXmxNwK4D0eqWssGbjcMkJvy6xitMTTYvHJfGtCBz3U1qN4dFnVP4o5Xf6NqDmlfLe3lmucpH5cdAHmkITvIuJNK6R4lv/l2PKYy1NL0WP+43McnWvJToIYTcVXxmMKp2K2tnPS3uPYqKTRYwDWCWXXe6g3W9+0A="
-  
   coverity_scan:
     project:
       name: "max-cong/medis"
@@ -53,7 +53,7 @@ addons:
 before_install:
   - sudo apt-get update -qq
   - sudo apt-get install -y valgrind cmake
-  - sudo apt-get install libboost-all-dev
+  #- sudo apt-get install libboost-all-dev
   - sudo apt-get install libevent-dev
   - export BASE_DIR=$PWD
   # the hiredis in the travis ci(sudo apt-cache search hiredis) is 0.10.0, that is too old, install the v0.14.0 instead
@@ -69,7 +69,7 @@ before_install:
   - sudo cp -a libgtest_main.so libgtest.so /usr/lib/
   - which valgrind
   - cd "${TRAVIS_BUILD_DIR}"
-  #- echo -n | openssl s_client -connect www.scan.coverity.com:443 | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' | sudo tee -a /etc/ssl/certs/ca-
+  - echo -n | openssl s_client -connect https://scan.coverity.com:443 | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' | sudo tee -a /etc/ssl/certs/ca-
 
 install:
   
@@ -85,6 +85,6 @@ script:
   - mkdir -p build &&mkdir -p gcov&& cd build
   - cd $BASE_DIR/build&&rm -rf *&&cmake -DCODE_COVERAGE=ON -DBUILD_TESTING=ON ..  &&build-wrapper-linux-x86-64 --out-dir ../bw-output make clean all&&bin/medis_tests
   - cd $GCOV_DIR&& gcov -a tst.cpp.gcno
-  - cd $BASE_DIR&& sonar-scanner -Dsonar.projectKey=max-cong_medis -Dsonar.projectName=medis -Dsonar.projectVersion=1.0 -Dsonar.cfamily.build-wrapper-output=bw-output -Dsonar.sources=. -Dsonar.cfamily.gcov.reportsPath=build/tst/CMakeFiles/_medis_tests.dir -Dsonar.coverage.exclusions=example/**/*,tst/**/*,googletest-release-1.7.0/**/*,hireis/**/* -Dsonar.exclusions=example/**/*,tst/**/*,googletest-release-1.7.0/**/*,hireis/**/*,buildCoverity/**/*
+  - cd $BASE_DIR&& sonar-scanner -Dsonar.projectKey=max-cong_medis -Dsonar.projectName=medis -Dsonar.projectVersion=1.0 -Dsonar.cfamily.build-wrapper-output=bw-output -Dsonar.sources=. -Dsonar.cfamily.gcov.reportsPath=build/tst/CMakeFiles/_medis_tests.dir -Dsonar.coverage.exclusions=example/**/*,tst/**/*,googletest-release-1.7.0/**/*,hireis/**/* -Dsonar.exclusions=example/**/*,tst/**/*,googletest-release-1.7.0/**/*,hireis/**/*
 
 

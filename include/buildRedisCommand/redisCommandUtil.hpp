@@ -32,6 +32,8 @@ enum class REDIS_COMMAND_TYPE : std::uint32_t
     TASK_REDIS_MGET,
     TASK_REDIS_DEL,
     TASK_REDIS_MDEL,
+    TASK_REDIS_PUB,
+    TASK_REDIS_SUB,
     TASK_REDIS_PING,
     TASK_REDIS_ADD_CONN,
     TASK_REDIS_DEL_CONN,
@@ -45,7 +47,7 @@ public:
     static std::string toString(std::list<std::string> &argv)
     {
         __LOG(debug, "[redis_formatCommand]");
-        if(argv.empty())
+        if (argv.empty())
         {
             __LOG(warn, "command list is empty");
             return "";

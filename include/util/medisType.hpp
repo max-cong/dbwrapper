@@ -29,8 +29,17 @@
 #include <any>
 #define DBW_ANY std::any
 #define DBW_ANY_CAST std::any_cast
+#include <optional>
+#define DBW_OPT std::optional
+#define DBW_NONE_OPT std::nullopt
+#define DBW_OPT_EXCEPTION std::bad_optional_access
 #else
 #include <boost/any.hpp>
+#include <boost/none.hpp>
 #define DBW_ANY boost::any
 #define DBW_ANY_CAST boost::any_cast
+#include <boost/optional.hpp>
+#define DBW_OPT boost::optional
+#define DBW_NONE_OPT boost::none
+#define DBW_OPT_EXCEPTION boost::bad_optional_access
 #endif

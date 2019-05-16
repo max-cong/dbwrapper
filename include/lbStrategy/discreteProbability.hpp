@@ -41,16 +41,15 @@ public:
     }
     // note: there is no lock here
     // for performance, please check the return code during usage
-    std::pair<DIST_OBJ, medis::retStatus> getObj() override
+    DBW_OPT<DIST_OBJ> getObj() override
     {
-        DIST_OBJ obj;
-        // note: do this to supress build warning. this is redisAsyncContext*
-        obj = NULL;
+
         if (this->_obj_vector.empty())
         {
             __LOG(warn, "there is no object to get!");
-            return std::make_pair(obj, medis::retStatus::NO_ENTRY);
+            return DBW_NONE_OPT;
         }
+        DIST_OBJ obj;
         try
         {
             obj = std::get<0>(this->_obj_vector.at(_dist(_gen)));
@@ -58,9 +57,9 @@ public:
         catch (const std::out_of_range &oor)
         {
             __LOG(error, "Out of Range error: " << oor.what());
-            return std::make_pair(obj, medis::retStatus::FAIL);
+            return DBW_NONE_OPT;
         }
-        return std::make_pair(obj, medis::retStatus::SUCCESS);
+        return obj;
     }
 
     medis::retStatus update() override
