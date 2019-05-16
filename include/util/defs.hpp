@@ -95,14 +95,14 @@ public:
         }
         return ctxList;
     }
-    std::pair<RDS_CTX, bool> getCtx(const OBJ obj)
+    DBW_OPT<RDS_CTX> getCtx(const OBJ obj)
     {
         if (_geneMap.find(obj) != _geneMap.end())
         {
-            return std::make_pair(_geneMap[obj], true);
+            return _geneMap[obj];
         }
-        RDS_CTX gene;
-        return std::make_pair(gene, false);
+       
+        return DBW_NONE_OPT;
     }
 
     std::map<OBJ, RDS_CTX> _geneMap;
@@ -125,14 +125,13 @@ public:
     {
         _geneMap.erase(obj);
     }
-    std::pair<RDS_TASK_SPTR, bool> getTask(const OBJ obj)
+    DBW_OPT<RDS_TASK_SPTR> getTask(const OBJ obj)
     {
         if (_geneMap.find(obj) != _geneMap.end())
         {
-            return std::make_pair(_geneMap[obj], true);
+            return _geneMap[obj];
         }
-        RDS_TASK_SPTR gene;
-        return std::make_pair(gene, false);
+        return DBW_NONE_OPT;
     }
 
     std::map<OBJ, RDS_TASK_SPTR> _geneMap;
