@@ -6,7 +6,7 @@ env:
   global:
    # The next declaration is the encrypted COVERITY_SCAN_TOKEN, created
    #   via the "travis encrypt" command using the project repo's public key
-   - secure: "DteqqMzN5uq3qloF3E5186kWzFuUCwdWDhnQRZefGFbYhl7exzb0NXwPm46TB5+PdtK4fE96cdcErb+WRbzE0H8BV42RzJTYXbt3cTxdJPfUM7CwFGCWgAutT6iDD1I9VO1Lw2PkUqwM8NtdmLGWmY0gmxew83NhnM+qQmU6WvXhoFlLhlbU4kwFuEu1Gs3hKLtS4Oe0XozBmrbJkmGbjOqlZ4A756I8spUgMoAm/q9jDMrmzOcffBP/t/2v/sO5S5OOKn7CVT/Bwt6l/cJAPw9eCo/5xJtULT3M8q1JOMDcCaqSdFinYJE8XPJtw7QxrbodAafIePeAuRw2rQi600d7UawubrUklGTAJunvhi80ZWUBG5qQEO9lmaVUvBrLOMW5BVHaNdsdjE/L6/zWF6w2xC6t11ys+elCmkQe/OoT3GrwroP0BTVyDQYJQLRxZ5OtrpOPDRQ15Dd5LgRx8jGzCq/Q6YPJ2pud9KyPhxI/+FHyet5g09Qt5bZ7JHyTcvpvLm+GNn1ZqnT87+krVZ3Wm1nsAjs9UkWo0hN7O4XW6uSSl3o5dsm6uv8U8Vgxew+5xtFs6bgKDSjNjlz+EZg1BZyyWUjT+5lw3CM7sY15BW1/epTAttZrJAEzQvMCtBkW5YoNEJLpKJ736US4zZDaAIuDbRfhEm+s2RzAhHY="
+   #- secure: "DteqqMzN5uq3qloF3E5186kWzFuUCwdWDhnQRZefGFbYhl7exzb0NXwPm46TB5+PdtK4fE96cdcErb+WRbzE0H8BV42RzJTYXbt3cTxdJPfUM7CwFGCWgAutT6iDD1I9VO1Lw2PkUqwM8NtdmLGWmY0gmxew83NhnM+qQmU6WvXhoFlLhlbU4kwFuEu1Gs3hKLtS4Oe0XozBmrbJkmGbjOqlZ4A756I8spUgMoAm/q9jDMrmzOcffBP/t/2v/sO5S5OOKn7CVT/Bwt6l/cJAPw9eCo/5xJtULT3M8q1JOMDcCaqSdFinYJE8XPJtw7QxrbodAafIePeAuRw2rQi600d7UawubrUklGTAJunvhi80ZWUBG5qQEO9lmaVUvBrLOMW5BVHaNdsdjE/L6/zWF6w2xC6t11ys+elCmkQe/OoT3GrwroP0BTVyDQYJQLRxZ5OtrpOPDRQ15Dd5LgRx8jGzCq/Q6YPJ2pud9KyPhxI/+FHyet5g09Qt5bZ7JHyTcvpvLm+GNn1ZqnT87+krVZ3Wm1nsAjs9UkWo0hN7O4XW6uSSl3o5dsm6uv8U8Vgxew+5xtFs6bgKDSjNjlz+EZg1BZyyWUjT+5lw3CM7sY15BW1/epTAttZrJAEzQvMCtBkW5YoNEJLpKJ736US4zZDaAIuDbRfhEm+s2RzAhHY="
 
 # safelist
 branches:
@@ -40,14 +40,15 @@ addons:
 
     token:
       secure: "get1DoumRkai7SbqBw5kWe8b2fEuBRvD5iDzMFQcxX7KRZrZuSYO2LZspZjCHv6pyFuBLVxNbanyESVZr9h8Qe6oORtFoNviVsgA7lPTCWtT/5ylJP2N98xA0aIHbaQ1RsDvacE29hxJVueNe6JfHzbLDcJq7GMHXiCcSk75PSl6E3OShuoKtLeoq/E4cXMm3f5LYh1DmeXs6PClEyZYXSkl1rIiGyhgCezcyJFgC5VTRpeien3Vs4Z/RrLyj7WNwSKM/NtB9YGS5mAHHxDNgXT5QnYRP8v/PTlhDGxmB218w5QI4BloD3aGQ0HzPtnR7FfIMbLqehG5gd5dbks64XVsjrLBtAOrwIU7HykUtqXPFUeYTHMbdhf0nArJlGgMlu29M2sR5OP30Vco8auFRG6PKzkN9wF2ats0aZtq+k2jN98EGUMUgP4l4LvZIR2Ze/PKTAPj6Hse0aEdXwxd7TVf2b1boH0DRfoKJ5h58HCKOHpItqxnxGTV6B8jxxE5oKvWtfYDfl+FXmxNwK4D0eqWssGbjcMkJvy6xitMTTYvHJfGtCBz3U1qN4dFnVP4o5Xf6NqDmlfLe3lmucpH5cdAHmkITvIuJNK6R4lv/l2PKYy1NL0WP+43McnWvJToIYTcVXxmMKp2K2tnPS3uPYqKTRYwDWCWXXe6g3W9+0A="
-  coverity_scan:
-    project:
-      name: "max-cong/medis"
-      description: "redis C++ client"
-    notification_email: savagecm@qq.com
-    build_command_prepend: "mkdir -p buildCoverity&&cd buildCoverity&&cmake .."
-    build_command: "make"
-    branch_pattern: master
+  # coverity scan is really hard to use!!!!!!1
+  #coverity_scan:
+  #  project:
+  #    name: "max-cong/medis"
+  #    description: "redis C++ client"
+  #  notification_email: savagecm@qq.com
+  #  build_command_prepend: "mkdir -p buildCoverity&&cd buildCoverity&&cmake .."
+  #  build_command: "make"
+  #  branch_pattern: master
 
 
 before_install:
@@ -69,7 +70,7 @@ before_install:
   - sudo cp -a libgtest_main.so libgtest.so /usr/lib/
   - which valgrind
   - cd "${TRAVIS_BUILD_DIR}"
-  - echo -n | openssl s_client -connect https://scan.coverity.com:443 | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' | sudo tee -a /etc/ssl/certs/ca-
+  #- echo -n | openssl s_client -connect https://scan.coverity.com:443 | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' | sudo tee -a /etc/ssl/certs/ca-
 
 install:
   
