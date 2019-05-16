@@ -51,14 +51,15 @@ public:
         _first_avaliable_cb = cb;
     }
 
-    std::pair<LB_OBJ, medis::retStatus> getObjWithIndex(unsigned int index)
+    DBW_OPT<LB_OBJ> getObjWithIndex(unsigned int index)
     {
-        LB_OBJ obj;
+
         if (_obj_vector.empty())
         {
             __LOG(warn, "there is no entry here!");
-            return std::make_pair(obj, medis::retStatus::NO_ENTRY);
+            return DBW_NONE_OPT;
         }
+        LB_OBJ obj;
         try
         {
             obj = std::get<0>(_obj_vector.at(index % (_obj_vector.size())));
@@ -66,9 +67,9 @@ public:
         catch (const std::out_of_range &oor)
         {
             __LOG(error, "Out of Range error: " << oor.what());
-            return std::make_pair(obj, medis::retStatus::FAIL);
+            return DBW_NONE_OPT;
         }
-        return std::make_pair(obj, medis::retStatus::SUCCESS);
+        return obj;
     }
 
     // common function
@@ -113,7 +114,7 @@ public:
         unsigned int _avaliable_obj_after = getAvaliableObj().size();
         // note: you need to make sure there is connection before and then there is no connection, we call no avaliable callback
         // that is : if you do not have connection form the first time. no avaliable callback will not triger
-        if (_avaliable_obj_before&&!_avaliable_obj_after && _no_avaliable_cb)
+        if (_avaliable_obj_before && !_avaliable_obj_after && _no_avaliable_cb)
         {
             _no_avaliable_cb();
         }

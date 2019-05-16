@@ -189,11 +189,9 @@ public:
         __LOG(debug, "argv: " << (char *)privdata << ", string is " << reply->str);
 
         auto ctxSaver = medis::contextSaver<void *, std::shared_ptr<redisContext>>::instance();
-        auto ctxRet = ctxSaver->getCtx(c);
-        if (std::get<1>(ctxRet))
+        auto rdxCtx = ctxSaver->getCtx(c).value_or(nullptr);
+        if (rdxCtx)
         {
-            auto rdxCtx = std::get<0>(ctxRet);
-
             if (c->err != REDIS_OK)
             {
                 __LOG(warn, "ping has error, error is : " << c->err << ", error string  is : " << std::string(c->errstr));
@@ -209,6 +207,7 @@ public:
         else
         {
             // did not find redis context
+            __LOG(warn, " did not find redis context");
         }
     }
 
@@ -229,10 +228,9 @@ public:
         redisAsyncContext *_aCtx = const_cast<redisAsyncContext *>(c);
         auto ctxSaver = medis::contextSaver<void *, std::shared_ptr<redisContext>>::instance();
 
-        std::pair<std::shared_ptr<redisContext>, bool> contextRet = ctxSaver->getCtx((void *)_aCtx);
-        if (std::get<1>(contextRet))
+        std::shared_ptr<redisContext> rdsCtx = ctxSaver->getCtx((void *)_aCtx).value_or(nullptr);
+        if (rdsCtx)
         {
-            std::shared_ptr<redisContext> rdsCtx = std::get<0>(contextRet);
             if (connected)
             {
                 rdsCtx->_lbs->updateObj(_aCtx, rdsCtx->_priority);
@@ -259,10 +257,9 @@ public:
         redisAsyncContext *_aCtx = const_cast<redisAsyncContext *>(c);
         auto ctxSaver = medis::contextSaver<void *, std::shared_ptr<redisContext>>::instance();
 
-        auto contextRet = ctxSaver->getCtx(_aCtx);
-        if (std::get<1>(contextRet))
+        auto rdsCtx = ctxSaver->getCtx(_aCtx).value_or(nullptr);
+        if (rdsCtx)
         {
-            auto rdsCtx = std::get<0>(contextRet);
             rdsCtx->_lbs->delObj(_aCtx);
             std::string innerIp = rdsCtx->ip;
             unsigned short innerPort = rdsCtx->port;
@@ -277,11 +274,10 @@ public:
             __LOG(debug, "now start reconnect timer [" << _interval << "ms]");
             rdsCtx->_retryTimerManager->getTimer()->startOnce(_interval, [gene, innerIp, innerPort, priority, _aCtx, ctxWptr]() {
                 __LOG(debug, "in the reconnect timer");
-                auto taskPair = medis::taskSaver<void *, std::shared_ptr<task::taskImp>>::instance()->getTask(gene);
+                auto task_sptr = medis::taskSaver<void *, std::shared_ptr<task::taskImp>>::instance()->getTask(gene).value_or(nullptr);
 
-                if (std::get<1>(taskPair))
+                if (task_sptr)
                 {
-                    auto task_sptr = std::get<0>(taskPair);
                     medis::CONN_INFO connInfo;
                     connInfo.ip = innerIp;
                     connInfo.port = innerPort;
@@ -351,8 +347,7 @@ public:
         __LOG(debug, "get command :\n"
                          << msg.body);
 
-
-        redisAsyncContext *_context =(redisAsyncContext *) (_connManager->get_conn()).value_or(nullptr);
+        redisAsyncContext *_context = (redisAsyncContext *)(_connManager->get_conn()).value_or(nullptr);
         if (!_context)
         {
             __LOG(warn, "did not get connection!");
