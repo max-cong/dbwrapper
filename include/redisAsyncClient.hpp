@@ -75,7 +75,7 @@ public:
         {
             return false;
         }
-        std::string command2send = buildRedisCommand::buildRedisCommand<COMMAND_KEY, COMMAND_VALUE>::get_format_command(REDIS_COMMAND_TYPE::TASK_REDIS_PUT, key, value);
+        std::string command2send = std::move(buildRedisCommand::buildRedisCommand<COMMAND_KEY, COMMAND_VALUE>::get_format_command(REDIS_COMMAND_TYPE::TASK_REDIS_PUT, key, value));
         __LOG(debug, "get command :\n"
                          << command2send);
         if (command2send.empty())
@@ -83,7 +83,7 @@ public:
             __LOG(warn, "did not get redis command, please check the key type and value type");
             return false;
         }
-        return sendFormatRawCommand(command2send, usr_data, fn);
+        return sendFormatRawCommand(std::move(command2send), usr_data, fn);
     }
     template <typename COMMAND_KEY, typename COMMAND_VALUE>
     bool get(COMMAND_KEY key, COMMAND_VALUE value, void *usr_data, redisCallbackFn *fn)
@@ -92,7 +92,7 @@ public:
         {
             return false;
         }
-        std::string command2send = buildRedisCommand::buildRedisCommand<COMMAND_KEY, COMMAND_VALUE>::get_format_command(REDIS_COMMAND_TYPE::TASK_REDIS_GET, key, value);
+        std::string command2send = std::move(buildRedisCommand::buildRedisCommand<COMMAND_KEY, COMMAND_VALUE>::get_format_command(REDIS_COMMAND_TYPE::TASK_REDIS_GET, key, value));
         __LOG(debug, "get command :\n"
                          << command2send);
         if (command2send.empty())
@@ -100,7 +100,7 @@ public:
             __LOG(warn, "did not get redis command, please check the key type and value type");
             return false;
         }
-        return sendFormatRawCommand(command2send, usr_data, fn);
+        return sendFormatRawCommand(std::move(command2send), usr_data, fn);
     }
 
     template <typename COMMAND_KEY, typename COMMAND_VALUE>
@@ -110,7 +110,7 @@ public:
         {
             return false;
         }
-        std::string command2send = buildRedisCommand::buildRedisCommand<COMMAND_KEY, COMMAND_VALUE>::get_format_command(REDIS_COMMAND_TYPE::TASK_REDIS_DEL, key, value);
+        std::string command2send = std::move(buildRedisCommand::buildRedisCommand<COMMAND_KEY, COMMAND_VALUE>::get_format_command(REDIS_COMMAND_TYPE::TASK_REDIS_DEL, key, value));
         __LOG(debug, "del command :\n"
                          << command2send);
         if (command2send.empty())
@@ -118,24 +118,23 @@ public:
             __LOG(warn, "did not get redis command, please check the key type and value type");
             return false;
         }
-        return sendFormatRawCommand(command2send, usr_data, fn);
+        return sendFormatRawCommand(std::move(command2send), usr_data, fn);
     }
 
-    bool sendFormatRawCommand(std::string command, void *usr_data, redisCallbackFn *fn)
+    bool sendFormatRawCommand(std::string &&command, void *usr_data, redisCallbackFn *fn)
     {
-        task::TASK_REDIS_FORMAT_RAW_MSG_BODY msg;
-        msg.fn = fn;
-        msg.body = command;
-        msg.usr_data = usr_data;
-        _task_sptr->sendMsg(task::taskMsgType::TASK_REDIS_FORMAT_RAW, msg);
-        return true;
+        std::shared_ptr<task::TASK_REDIS_FORMAT_RAW_MSG_BODY> msg = std::make_shared<task::TASK_REDIS_FORMAT_RAW_MSG_BODY>();
+        msg->fn = fn;
+        msg->body = command;
+        msg->usr_data = usr_data;
+        return _task_sptr->sendMsg(task::taskMsgType::TASK_REDIS_FORMAT_RAW, msg);
     }
-    bool sendRawCommand(std::string command, void *usr_data, redisCallbackFn *fn)
+    bool sendRawCommand(std::string &&command, void *usr_data, redisCallbackFn *fn)
     {
-        task::TASK_REDIS_RAW_MSG_BODY msg;
-        msg.fn = fn;
-        msg.body = command;
-        msg.usr_data = usr_data;
+        std::shared_ptr<task::TASK_REDIS_RAW_MSG_BODY> msg = std::make_shared<task::TASK_REDIS_RAW_MSG_BODY>();
+        msg->fn = fn;
+        msg->body = command;
+        msg->usr_data = usr_data;
         return _task_sptr->sendMsg(task::taskMsgType::TASK_REDIS_RAW, msg);
     }
     void *getThis()
