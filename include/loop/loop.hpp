@@ -29,6 +29,7 @@
 #include <mutex>
 #include <thread>
 #include <string>
+#include <atomic>
 #include <event2/event.h>
 #include <event2/thread.h>
 #include "logger/logger.hpp"
@@ -78,8 +79,7 @@ public:
 	/** get status */
 	loopStatus status()
 	{
-		std::unique_lock<std::mutex> lck(_sMutex, std::defer_lock);
-		lck.lock();
+
 		return _status;
 	}
 
@@ -95,15 +95,13 @@ public:
 		{
 			return false;
 		}
-		std::unique_lock<std::mutex> lck(_sMutex, std::defer_lock);
 
-		lck.lock();
 		if (_status != loopStatus::statusInit)
 		{
 			__LOG(error, " conneciton status is not Init state, status is :" << _status);
 			return false;
 		}
-		lck.unlock();
+
 		if (!onBeforeStart())
 		{
 			__LOG(error, "onBeforeStart return fail");
@@ -126,23 +124,20 @@ public:
 	 */
 	void stop(bool waiting = true)
 	{
-		std::unique_lock<std::mutex> lck(_sMutex, std::defer_lock);
-		lck.lock();
+
 		if (loopStatus::statusFinished == _status)
 		{
 			return;
 		}
-		lck.unlock();
+
 		__LOG(warn, "now try to stop loop, event base is : " << (void *)_base_sptr.get());
 		waiting ? event_base_loopexit(_base_sptr.get(), NULL) : event_base_loopbreak(this->ev());
 		onAfterStop();
 
-		lck.lock();
 		if (_loopThread && loopStatus::statusFinished != _status)
 		{
 			_loopThread->join();
 		}
-		lck.unlock();
 	}
 
 protected:
@@ -157,24 +152,20 @@ protected:
 private:
 	void _run()
 	{
-		std::unique_lock<std::mutex> lck(_sMutex, std::defer_lock);
-		lck.lock();
+
 		_status = loopStatus::statusRunning;
-		lck.unlock();
+
 		onBeforeLoop();
 		__LOG(debug, " start loop!! base event is : " << (void *)ev());
 		event_base_loop(this->ev(), 0);
 		__LOG(warn, " exit loop!!");
 		onAfterLoop();
-		lck.lock();
+
 		_status = loopStatus::statusFinished;
-		lck.unlock();
 	}
-	std::mutex _sMutex;
 
 	std::shared_ptr<event_base> _base_sptr;
 	std::shared_ptr<std::thread> _loopThread;
-	loopStatus _status;
+	std::atomic<loopStatus> _status;
 };
-
 } // namespace loop
