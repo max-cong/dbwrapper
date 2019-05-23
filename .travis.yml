@@ -30,7 +30,7 @@ addons:
       - sourceline: 'ppa:mhier/libboost-latest'
       - ubuntu-toolchain-r-test
     packages:
-      - boost1.67
+      - boost1.68
      # - gcc-4.8
      # - g++-4.8
   sonarcloud:
