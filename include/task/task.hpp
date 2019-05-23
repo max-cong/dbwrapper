@@ -157,10 +157,23 @@ public:
         });
 
         _connManager->init();
-
-        // timer manager
         _timerManager.reset(new timer::timerManager(getLoop()));
-
+        // start a 100ms timer to guard A-B-A issue.
+        
+        _timerManager->getTimer()->startForever(100, [sef_wptr]() {
+            if (!sef_wptr.expired())
+            {
+                std::shared_ptr<taskImp> self_sptr = sef_wptr.lock();
+                if (self_sptr->_taskQueue.read_available() > 0)
+                {
+                    self_sptr->process_msg();
+                }
+            }
+            else
+            {
+                __LOG(warn, "task weak ptr is expired");
+            }
+        });
         return true;
     }
     static void evfdCallback(int fd, short event, void *args)
@@ -173,7 +186,7 @@ public:
             return;
         }
         taskImp *tmp = reinterpret_cast<taskImp *>(args);
-        tmp->process_msg(one);
+        tmp->process_msg();
     }
     static void pingCallback(redisAsyncContext *c, void *r, void *privdata)
     {
@@ -518,11 +531,11 @@ public:
         return true;
     }
 
-    void process_msg(uint64_t num)
+    void process_msg()
     {
         auto self_wptr = getThisWptr();
         _task_q_empty = _taskQueue.read_available() > 0 ? false : true;
-      
+
         _taskQueue.consume_all([self_wptr](std::shared_ptr<taskMsg> tmpTaskMsg) {
             std::shared_ptr<taskImp> self_sptr;
             if (!self_wptr.expired())
