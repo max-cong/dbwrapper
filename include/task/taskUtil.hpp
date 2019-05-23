@@ -28,7 +28,8 @@
 #include "util/medisType.hpp"
 #include <hiredis/adapters/libevent.h>
 #include <queue>
-
+#include <boost/thread/thread.hpp>
+#include <boost/lockfree/spsc_queue.hpp>
 namespace task
 {
 enum class taskMsgType : std::uint32_t
@@ -47,9 +48,9 @@ enum class taskMsgType : std::uint32_t
 struct taskMsg
 {
     taskMsgType type;
- //   std::uint32_t seq_id;
- //   std::string from;
-//    std::string to;
+    //   std::uint32_t seq_id;
+    //   std::string from;
+    //    std::string to;
     DBW_ANY body;
 };
 
@@ -66,5 +67,5 @@ struct TASK_REDIS_RAW_MSG_BODY
     void *usr_data;
 };
 
-using TASK_QUEUE = std::queue<std::shared_ptr<taskMsg>>;
+using TASK_QUEUE = boost::lockfree::spsc_queue<std::shared_ptr<taskMsg>, boost::lockfree::capacity<1024>>; // std::queue<std::shared_ptr<taskMsg>>;
 } // namespace task
