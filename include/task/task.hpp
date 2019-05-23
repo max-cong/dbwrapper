@@ -62,7 +62,7 @@ struct redisContext
 class taskImp : public gene::gene<void *>, public std::enable_shared_from_this<taskImp>, public nonCopyable
 {
 public:
-    explicit taskImp(std::shared_ptr<loop::loop> loopIn) : _connected(false), _task_queue_size(0), _evfd(-1), _loop(loopIn)
+    explicit taskImp(std::shared_ptr<loop::loop> loopIn) : _connected(false), _task_q_empty(true), _evfd(-1), _loop(loopIn)
     {
     }
     taskImp() = delete;
@@ -520,8 +520,9 @@ public:
 
     void process_msg(uint64_t num)
     {
-
         auto self_wptr = getThisWptr();
+        _task_q_empty = _taskQueue.read_available() > 0 ? false : true;
+      
         _taskQueue.consume_all([self_wptr](std::shared_ptr<taskMsg> tmpTaskMsg) {
             std::shared_ptr<taskImp> self_sptr;
             if (!self_wptr.expired())
@@ -552,8 +553,8 @@ public:
                 });
             }
         });
-
-      
+        // to do A-B-A issue
+        _task_q_empty = true;
     }
 
     bool sendMsg(std::shared_ptr<taskMsg> msg)
@@ -570,7 +571,10 @@ public:
         }
         else
         {
-            _evfdClient->send();
+            if (_task_q_empty)
+            {
+                _evfdClient->send();
+            }
         }
         return true;
     }
@@ -599,7 +603,7 @@ public:
         return self_wptr;
     }
     std::atomic<bool> _connected;
-    std::atomic<unsigned int> _task_queue_size;
+    std::atomic<bool> _task_q_empty;
     int _evfd;
     std::weak_ptr<loop::loop> _loop;
     std::shared_ptr<evfdClient> _evfdClient;
