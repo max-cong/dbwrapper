@@ -62,7 +62,7 @@ struct redisContext
 class taskImp : public gene::gene<void *>, public std::enable_shared_from_this<taskImp>, public nonCopyable
 {
 public:
-    explicit taskImp(std::shared_ptr<loop::loop> loopIn) : _connected(false), _evfd(-1), _loop(loopIn)
+    explicit taskImp(std::shared_ptr<loop::loop> loopIn) : _connected(false), _task_queue_size(0), _evfd(-1), _loop(loopIn)
     {
     }
     taskImp() = delete;
@@ -305,7 +305,7 @@ public:
     // set the callback function for evnet coming
     virtual bool on_message(std::shared_ptr<taskMsg> task_msg)
     {
-        if(!task_msg)
+        if (!task_msg)
         {
             __LOG(error, "message in the task queue is invalid");
         }
@@ -347,9 +347,9 @@ public:
     }
     bool processRedisFormatRawCommand(std::shared_ptr<taskMsg> task_msg)
     {
-        if(!task_msg)
+        if (!task_msg)
         {
-             __LOG(error, "invalid task message!");
+            __LOG(error, "invalid task message!");
         }
         std::shared_ptr<TASK_REDIS_FORMAT_RAW_MSG_BODY> msg = DBW_ANY_CAST<std::shared_ptr<TASK_REDIS_FORMAT_RAW_MSG_BODY>>(task_msg->body);
         __LOG(debug, "get command :\n"
@@ -375,9 +375,9 @@ public:
     }
     bool processRedisRawCommand(std::shared_ptr<taskMsg> task_msg)
     {
-         if(!task_msg)
+        if (!task_msg)
         {
-             __LOG(error, "invalid task message!");
+            __LOG(error, "invalid task message!");
         }
         std::shared_ptr<TASK_REDIS_RAW_MSG_BODY> msg = DBW_ANY_CAST<std::shared_ptr<TASK_REDIS_RAW_MSG_BODY>>(task_msg->body);
         __LOG(debug, "get command :\n"
@@ -403,9 +403,9 @@ public:
     }
     bool processRedisAddConnection(std::shared_ptr<taskMsg> task_msg)
     {
-         if(!task_msg)
+        if (!task_msg)
         {
-             __LOG(error, "invalid task message!");
+            __LOG(error, "invalid task message!");
         }
         medis::CONN_INFO payload = DBW_ANY_CAST<medis::CONN_INFO>(task_msg->body);
         __LOG(debug, "connect to : " << payload.ip << ":" << payload.port);
@@ -492,9 +492,9 @@ public:
 
     bool processRedisDelConnection(std::shared_ptr<taskMsg> task_msg)
     {
-         if(!task_msg)
+        if (!task_msg)
         {
-             __LOG(error, "invalid task message!");
+            __LOG(error, "invalid task message!");
         }
         medis::CONN_INFO payload = DBW_ANY_CAST<medis::CONN_INFO>(task_msg->body);
         __LOG(debug, "disconnect to : " << payload.ip << ":" << payload.port);
@@ -520,19 +520,27 @@ public:
 
     void process_msg(uint64_t num)
     {
-        for (uint64_t i = 0; i < num; i++)
-        {
-            auto tmpTaskMsg = _taskQueue.front();
 
+        auto self_wptr = getThisWptr();
+        _taskQueue.consume_all([self_wptr](std::shared_ptr<taskMsg> tmpTaskMsg) {
+            std::shared_ptr<taskImp> self_sptr;
+            if (!self_wptr.expired())
+            {
+                self_sptr = self_wptr.lock();
+            }
+            else
+            {
+                __LOG(warn, "task process message, task weak ptr is expired");
+                return;
+            }
 
-            if (!on_message(tmpTaskMsg))
+            if (!self_sptr->on_message(tmpTaskMsg))
             {
                 __LOG(warn, "process task message return fail!");
                 // the message process return fail
                 // start a timer to send message to task again
 
-                auto self_wptr = getThisWptr();
-                _timerManager->getTimer()->startOnce(500, [self_wptr, tmpTaskMsg]() {
+                self_sptr->_timerManager->getTimer()->startOnce(100, [self_wptr, tmpTaskMsg]() {
                     if (!self_wptr.expired())
                     {
                         self_wptr.lock()->sendMsg(tmpTaskMsg);
@@ -543,13 +551,19 @@ public:
                     }
                 });
             }
-            _taskQueue.pop();
-        }
+        });
+
+      
     }
 
     bool sendMsg(std::shared_ptr<taskMsg> msg)
     {
-        _taskQueue.emplace(msg);
+        // to do , now just make sure sent the message
+
+        while (!_taskQueue.push(msg))
+        {
+        }
+
         if (!_evfdClient)
         {
             return false;
@@ -560,7 +574,7 @@ public:
         }
         return true;
     }
-    
+
     bool sendMsg(taskMsgType type, DBW_ANY &&body)
     {
         std::shared_ptr<taskMsg> msg_sptr = std::make_shared<taskMsg>();
@@ -568,21 +582,6 @@ public:
         msg_sptr->body = body;
 
         return sendMsg(msg_sptr);
-    }
-    bool sendMsgList(std::list<std::shared_ptr<taskMsg>> &&msgList)
-    {
-        if (!_evfdClient)
-        {
-            return false;
-        }
-        std::size_t listSize = msgList.size();
-        for (auto &&it : msgList)
-        {
-            _taskQueue.emplace(it);
-        }
-        _evfdClient->send(listSize);
-
-        return true;
     }
 
     std::shared_ptr<loop::loop> getLoop()
@@ -600,6 +599,7 @@ public:
         return self_wptr;
     }
     std::atomic<bool> _connected;
+    std::atomic<unsigned int> _task_queue_size;
     int _evfd;
     std::weak_ptr<loop::loop> _loop;
     std::shared_ptr<evfdClient> _evfdClient;
