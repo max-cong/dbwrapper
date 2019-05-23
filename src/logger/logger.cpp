@@ -29,28 +29,28 @@ std::unique_ptr<loggerIface> _activeLogger(new logger(loggerIface::logLevel::err
 
 
 
-void debug(const std::string &msg, const std::string &file, std::size_t line)
+void debug(const std::string &msg)
 {
     if (_activeLogger)
-        _activeLogger->debug(msg, file, line);
+        _activeLogger->debug(msg);
 }
 
-void info(const std::string &msg, const std::string &file, std::size_t line)
+void info(const std::string &msg)
 {
     if (_activeLogger)
-        _activeLogger->info(msg, file, line);
+        _activeLogger->info(msg);
 }
 
-void warn(const std::string &msg, const std::string &file, std::size_t line)
+void warn(const std::string &msg)
 {
     if (_activeLogger)
-        _activeLogger->warn(msg, file, line);
+        _activeLogger->warn(msg);
 }
 
-void error(const std::string &msg, const std::string &file, std::size_t line)
+void error(const std::string &msg)
 {
     if (_activeLogger)
-        _activeLogger->error(msg, file, line);
+        _activeLogger->error(msg);
 }
 
 void set_logLevel(loggerIface::logLevel level)

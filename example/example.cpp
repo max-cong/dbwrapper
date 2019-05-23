@@ -50,7 +50,7 @@ int main()
 {
     set_logLevel(loggerIface::logLevel::debug);
     redisAsyncClient aclient;
-
+    int loop_time = 1;
     configCenter::cfgPropMap _config;
     _config[PROP_HOST] = "127.0.0.1";
     _config[PROP_PORT] = "6379";
@@ -63,7 +63,7 @@ int main()
     std::time_t startTime = std::time(nullptr);
     std::cout << "start time : " << std::asctime(std::localtime(&startTime))
               << startTime << "\n";
-    for (int i = 0; i < 100000; i++)
+    for (int i = 0; i < loop_time; i++)
     {
         // std::this_thread::sleep_for(std::chrono::milliseconds(1));
         aclient.put(std::string("hello"), std::string("world"), NULL, getCallback);
