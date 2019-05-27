@@ -39,10 +39,11 @@ template <typename connInfo>
 class serviceDiscovery : public gene::gene<void *>, public std::enable_shared_from_this<serviceDiscovery<connInfo>>, public nonCopyable
 {
 public:
-    typedef std::list<connInfo> connList;
+    typedef std::list<std::shared_ptr<connInfo>> connList;
+    
     typedef std::function<connList()> getConnFun;
-    using onConnInfoChangeCb = std::function<bool(connInfo)>;
-    typedef connInfo connInfo_type_t;
+    using onConnInfoChangeCb = std::function<bool(std::shared_ptr<connInfo>)>;
+  
     serviceDiscovery<connInfo>() = delete;
 
     explicit serviceDiscovery<connInfo>(std::shared_ptr<loop::loop> loopIn)
@@ -60,7 +61,7 @@ public:
         _retrigerTimer->stop();
         for (auto it : _conn_list)
         {
-            __LOG(warn, "[service Discovery] : now delete ip : " << it.ip << ", port : " << it.port);
+            __LOG(warn, "[service Discovery] : now delete ip : " << it->ip << ", port : " << it->port);
             onConnInfoDec(it);
         }
         _conn_list.clear();
@@ -103,7 +104,7 @@ public:
         return true;
     }
 
-    virtual void onConnInfoInc(connInfo info)
+    virtual void onConnInfoInc(std::shared_ptr<connInfo> info)
     {
         __LOG(debug, "[serviceDiscovery] onConnInfoInc");
         if (_cfgInc)
@@ -112,7 +113,7 @@ public:
             _cfgInc(info);
         }
     }
-    virtual void onConnInfoDec(connInfo info)
+    virtual void onConnInfoDec(std::shared_ptr<connInfo> info)
     {
         if (_cfgDec)
         {
@@ -134,13 +135,17 @@ public:
 
         updateConnInfo(_list);
     }
+    virtual connList getConnInfoList()
+    {
+        return _conn_list;
+    }
     virtual void deleteConnInfo(connList _list)
     {
 
         for (auto it : _list)
         {
-            _conn_list.remove_if([&it, this](connInfo _info) {
-                if (it == _info)
+            _conn_list.remove_if([&it, this](std::shared_ptr<connInfo> _info) {
+                if (*it == *_info)
                 {
                     onConnInfoDec(_info);
                     return true;
@@ -165,6 +170,8 @@ public:
             return true;
         }
         // in the update lost but not in the conn list
+        // note: the list contains shared pointer.
+        // the operator "==" means shared_ptr.get() contains the same pointer
         for (auto tmp : update_list)
         {
             if (std::find(std::begin(_conn_list), std::end(_conn_list), tmp) == _conn_list.end())

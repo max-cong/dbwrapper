@@ -51,7 +51,7 @@ void getCallback(redisAsyncContext *c, void *r, void *privdata)
     }
     i++;
     __LOG(debug, "private data is : " << (void *)privdata << ", string is : " << reply->str << ", index is : " << i);
-    //std::cout << "receive response with index : " << i << std::endl;
+    std::cout << "receive response with index : " << i << std::endl;
 }
 int main()
 {

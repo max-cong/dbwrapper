@@ -41,18 +41,18 @@ public:
         std::string connPort = configCenter::configCenter<void *>::instance()->getPropertiesField(this->getGeneticGene(), PROP_PORT, DEFAULT_PORT);
         __LOG(debug, "get host : " << connHost << ", port is : " << connPort);
         // build connInfo
-        connInfo _connInfo;
+        std::shared_ptr<connInfo> _connInfo_sptr = std::make_shared<connInfo>();
 
-        _connInfo.type = medis::CONN_TYPE::IP;
-        _connInfo.ip = connHost;
+        _connInfo_sptr->type = medis::CONN_TYPE::IP;
+        _connInfo_sptr->ip = connHost;
 
         std::string::size_type sz; // alias of size_t
 
         int port = std::stoi(connPort, &sz);
 
-        _connInfo.port = port;
-        std::list<connInfo> _connInfo_list;
-        _connInfo_list.push_back(_connInfo);
+        _connInfo_sptr->port = port;
+        std::list<std::shared_ptr<connInfo>> _connInfo_list;
+        _connInfo_list.push_back(_connInfo_sptr);
 
         return this->updateConnInfo(_connInfo_list);
     }

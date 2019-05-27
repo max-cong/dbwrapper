@@ -111,7 +111,8 @@ public:
         __LOG(debug, "create connection manager with gene : " << _connManager->getGeneticGene());
 
         auto sef_wptr = getThisWptr();
-        _connManager->setAddConnCb([sef_wptr](medis::CONN_INFO connInfo) {
+        
+        _connManager->setAddConnCb([sef_wptr](std::shared_ptr<medis::CONN_INFO> connInfo) {
             if (!sef_wptr.expired())
             {
                 __LOG(debug, "there is a new connection, send message to task with type TASK_REDIS_ADD_CONN");
@@ -123,7 +124,7 @@ public:
                 return false;
             }
         });
-        _connManager->setDecConnCb([sef_wptr](medis::CONN_INFO connInfo) {
+        _connManager->setDecConnCb([sef_wptr](std::shared_ptr<medis::CONN_INFO> connInfo) {
             if (!sef_wptr.expired())
             {
                 return sef_wptr.lock()->sendMsg(task::taskMsgType::TASK_REDIS_DEL_CONN, connInfo);
@@ -159,7 +160,7 @@ public:
         _connManager->init();
         _timerManager.reset(new timer::timerManager(getLoop()));
         // start a 100ms timer to guard A-B-A issue.
-        
+
         _timerManager->getTimer()->startForever(100, [sef_wptr]() {
             if (!sef_wptr.expired())
             {
@@ -291,17 +292,17 @@ public:
 
                 if (task_sptr)
                 {
-                    medis::CONN_INFO connInfo;
-                    connInfo.ip = innerIp;
-                    connInfo.port = innerPort;
-                    connInfo.priority = priority;
+                    std::shared_ptr<medis::CONN_INFO> connInfo_sptr;
+                    connInfo_sptr->ip = innerIp;
+                    connInfo_sptr->port = innerPort;
+                    connInfo_sptr->priority = priority;
                     if (!ctxWptr.expired())
                     {
-                        connInfo.hbTime = ctxWptr.lock()->_hb->getRetryNum();
-                        __LOG(debug, "heartbeat retry time left is : " << connInfo.hbTime);
+                        connInfo_sptr->hbTime = ctxWptr.lock()->_hb->getRetryNum();
+                        __LOG(debug, "heartbeat retry time left is : " << connInfo_sptr->hbTime);
                     }
 
-                    task_sptr->sendMsg(taskMsgType::TASK_REDIS_ADD_CONN, connInfo);
+                    task_sptr->sendMsg(taskMsgType::TASK_REDIS_ADD_CONN, connInfo_sptr);
                 }
                 auto ctxSaver = medis::contextSaver<void *, std::shared_ptr<redisContext>>::instance();
                 ctxSaver->del(_aCtx);
@@ -420,27 +421,27 @@ public:
         {
             __LOG(error, "invalid task message!");
         }
-        medis::CONN_INFO payload = DBW_ANY_CAST<medis::CONN_INFO>(task_msg->body);
-        __LOG(debug, "connect to : " << payload.ip << ":" << payload.port);
+        std::shared_ptr<medis::CONN_INFO> connInfo_sptr = DBW_ANY_CAST<std::shared_ptr<medis::CONN_INFO>>(task_msg->body);
+        __LOG(debug, "connect to : " << connInfo_sptr->ip << ":" << connInfo_sptr->port);
 
-        redisAsyncContext *_context = redisAsyncConnect(payload.ip.c_str(), payload.port);
+        redisAsyncContext *_context = redisAsyncConnect(connInfo_sptr->ip.c_str(), connInfo_sptr->port);
         if (_context->err != REDIS_OK)
         {
-            __LOG(error, "connect to : " << payload.ip << ":" << payload.port << " return error");
+            __LOG(error, "connect to : " << connInfo_sptr->ip << ":" << connInfo_sptr->port << " return error");
             return false;
         }
 
         std::shared_ptr<redisContext> rdsCtx = std::make_shared<redisContext>();
         std::weak_ptr<redisContext> rdsCtx_wptr(rdsCtx);
         rdsCtx->_ctx = _context;
-        rdsCtx->_priority = payload.priority;
-        rdsCtx->ip = payload.ip;
-        rdsCtx->port = payload.port;
+        rdsCtx->_priority = connInfo_sptr->priority;
+        rdsCtx->ip = connInfo_sptr->ip;
+        rdsCtx->port = connInfo_sptr->port;
         rdsCtx->_hb = std::make_shared<heartBeat::heartBeat>(getLoop());
         rdsCtx->_hb->setGeneticGene(getGeneticGene());
-        if (payload.hbTime)
+        if (connInfo_sptr->hbTime)
         { // if there is heartbeat info, set accordingly
-            rdsCtx->_hb->setRetryNum(payload.hbTime);
+            rdsCtx->_hb->setRetryNum(connInfo_sptr->hbTime);
         }
         rdsCtx->_hb->setPingCb([rdsCtx_wptr]() {
             if (!rdsCtx_wptr.expired())
@@ -468,12 +469,12 @@ public:
                 __LOG(warn, "the redis context is expired!");
             }
             // call connection manager onUnavaliable
-
+            /*
             if (!_connManager_wptr.expired())
             {
                 __LOG(warn, "there is no avaliable connection");
                 _connManager_wptr.lock()->onUnavaliable();
-            }
+            }*/
         });
         rdsCtx->_hb->setHbSuccCb([rdsCtx_wptr]() {
             if (!rdsCtx_wptr.expired())
@@ -509,11 +510,11 @@ public:
         {
             __LOG(error, "invalid task message!");
         }
-        medis::CONN_INFO payload = DBW_ANY_CAST<medis::CONN_INFO>(task_msg->body);
-        __LOG(debug, "disconnect to : " << payload.ip << ":" << payload.port);
+        std::shared_ptr<medis::CONN_INFO> connInfo_sptr = DBW_ANY_CAST<std::shared_ptr<medis::CONN_INFO>>(task_msg->body);
+        __LOG(debug, "disconnect to : " << connInfo_sptr->ip << ":" << connInfo_sptr->port);
 
         auto ctxSaver = medis::contextSaver<void *, std::shared_ptr<redisContext>>::instance();
-        auto ctxList = ctxSaver->getIpPortThenDel(payload.ip, payload.port);
+        auto ctxList = ctxSaver->getIpPortThenDel(connInfo_sptr->ip, connInfo_sptr->port);
         for (auto it : ctxList)
         {
             // need to delete related info from load balancer

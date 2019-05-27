@@ -23,32 +23,10 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #pragma once
-#include "serviceDiscovery/serviceDiscovery.hpp"
 
-namespace serviceDiscovery
-{
-template <typename connInfo>
-class sdUnixSocket : public serviceDiscovery<connInfo>
+class pubSub
 {
 public:
-	explicit sdUnixSocket(std::shared_ptr<loop::loop> loopIn) : serviceDiscovery<connInfo>(loopIn)
-	{
-	}
-	virtual bool init()
-	{
-		// get unix path
-		std::string _unix_socket_path = configCenter::configCenter<void *>::instance()->getPropertiesField(this->getGeneticGene(), PROP_UNIX_PATH, DEFAULT_REDIS_UNIX_PATH);
-
-		// build connInfo
-		std::shared_ptr<connInfo> _connInfo_sptr = std::make_shared<connInfo>();
-
-		_connInfo_sptr->type = medis::CONN_TYPE::UNIX_SOCKET;
-		_connInfo_sptr->path = _unix_socket_path;
-
-		std::list<std::shared_ptr<connInfo>> _connInfo_list;
-		_connInfo_list.push_back(_connInfo_sptr);
-
-		return this->updateConnInfo(_connInfo_list);
-	}
+void init()
+{}
 };
-} // namespace serviceDiscovery
