@@ -123,7 +123,7 @@ void warn(const std::string &msg);
 void error(const std::string &msg);
 void set_logLevel(loggerIface::logLevel level);
 
-#define __LOGGING_ENABLED
+//#define __LOGGING_ENABLED
 
 #ifdef __LOGGING_ENABLED
 #define __LOG(level, msg)                                                            \

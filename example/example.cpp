@@ -31,6 +31,12 @@
 #include <stdlib.h>
 #include "redisAsyncClient.hpp"
 #include "hiredis/hiredis.h"
+
+#include <random>
+std::random_device seeder;
+std::mt19937 rng(seeder());
+std::uniform_int_distribution<int> gen(0, 1000); // uniform, unbiased
+
 int i = 0;
 void getCallback(redisAsyncContext *c, void *r, void *privdata)
 {
@@ -45,12 +51,13 @@ void getCallback(redisAsyncContext *c, void *r, void *privdata)
     }
     i++;
     __LOG(debug, "private data is : " << (void *)privdata << ", string is : " << reply->str << ", index is : " << i);
+    //std::cout << "receive response with index : " << i << std::endl;
 }
 int main()
 {
     set_logLevel(loggerIface::logLevel::debug);
     redisAsyncClient aclient;
-    int loop_time = 1;
+    int loop_time = 100;
     configCenter::cfgPropMap _config;
     _config[PROP_HOST] = "127.0.0.1";
     _config[PROP_PORT] = "6379";
@@ -65,20 +72,15 @@ int main()
               << startTime << "\n";
     for (int i = 0; i < loop_time; i++)
     {
-        // std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        std::this_thread::sleep_for(std::chrono::milliseconds(gen(rng)));
         aclient.put(std::string("hello"), std::string("world"), NULL, getCallback);
         aclient.get(std::string("hello"), nullptr, NULL, getCallback);
         aclient.del(std::string("hello"), nullptr, NULL, getCallback);
-        aclient.put(std::string("hello"), std::string("world"), NULL, getCallback);
-        aclient.get(std::string("hello"), nullptr, NULL, getCallback);
-        aclient.del(std::string("hello"), nullptr, NULL, getCallback);
-        aclient.put(std::string("hello"), std::string("world"), NULL, getCallback);
-        aclient.get(std::string("hello"), nullptr, NULL, getCallback);
-        aclient.del(std::string("hello"), nullptr, NULL, getCallback);
-        aclient.put(std::string("hello"), std::string("world"), NULL, getCallback);
     }
     std::time_t stopTime = std::time(nullptr);
     std::cout << "stop time : " << std::asctime(std::localtime(&stopTime))
               << stopTime << "\n";
-    //std::this_thread::sleep_for(std::chrono::milliseconds(50000));
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(10000));
+    std::cout << "total receive response is : " << i << std::endl;
 }
