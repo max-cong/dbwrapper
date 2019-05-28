@@ -536,8 +536,8 @@ public:
     {
         _task_q_empty = _taskQueue.read_available() > 0 ? false : true;
         //auto self_wptr = getThisWptr();
-        auto self_sptr = shared_from_this();
-        _taskQueue.consume_all([self_sptr](std::shared_ptr<taskMsg> tmpTaskMsg) {
+        //auto self_sptr = shared_from_this();
+        _taskQueue.consume_all([this](std::shared_ptr<taskMsg> tmpTaskMsg) {
             /*
             std::shared_ptr<taskImp> self_sptr;
             if (!self_wptr.expired())
@@ -550,13 +550,14 @@ public:
                 return;
             }
             */
-            if (!self_sptr->on_message(tmpTaskMsg))
+            if (!on_message(tmpTaskMsg))
             {
                 __LOG(warn, "process task message return fail!");
                 // the message process return fail
                 // start a timer to send message to task again
-
-                self_sptr->_timerManager->getTimer()->startOnce(100, [self_wptr, tmpTaskMsg]() {
+              
+                auto self_wptr = getThisWptr();
+                _timerManager->getTimer()->startOnce(100, [self_wptr, tmpTaskMsg]() {
                     if (!self_wptr.expired())
                     {
                         self_wptr.lock()->sendMsg(tmpTaskMsg);
