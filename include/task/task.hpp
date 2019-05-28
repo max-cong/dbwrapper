@@ -534,10 +534,11 @@ public:
 
     void process_msg()
     {
-        auto self_wptr = getThisWptr();
         _task_q_empty = _taskQueue.read_available() > 0 ? false : true;
-
-        _taskQueue.consume_all([self_wptr](std::shared_ptr<taskMsg> tmpTaskMsg) {
+        //auto self_wptr = getThisWptr();
+        auto self_sptr = shared_from_this();
+        _taskQueue.consume_all([self_sptr](std::shared_ptr<taskMsg> tmpTaskMsg) {
+            /*
             std::shared_ptr<taskImp> self_sptr;
             if (!self_wptr.expired())
             {
@@ -548,7 +549,7 @@ public:
                 __LOG(warn, "task process message, task weak ptr is expired");
                 return;
             }
-
+            */
             if (!self_sptr->on_message(tmpTaskMsg))
             {
                 __LOG(warn, "process task message return fail!");
