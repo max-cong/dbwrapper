@@ -46,7 +46,10 @@ static const char normal[] = {0x1b, '[', '0', ';', '3', '9', 'm', 0};
 		active_logger = (std::move(loggerImpUptr)); \
 		active_logger->init();                      \
 	}
-#define CHECK_LOG_LEVEL(logLevel) (active_logger ? ((active_logger->get_log_level() <= log_level::logLevel##_level) ? true : false) : false)
+//#define CHECK_LOG_LEVEL(logLevel) (active_logger ? ((active_logger->get_log_level() <= log_level::logLevel##_level) ? true : false) : false)
+#define CHECK_LOG_LEVEL(logLevel) ((active_logger && active_logger->get_log_level() <= log_level::logLevel##_level) ? true : false)
+
+
 #define SET_LOG_LEVEL(logLevel)                                          \
 	{                                                                    \
 		if (active_logger)                                               \

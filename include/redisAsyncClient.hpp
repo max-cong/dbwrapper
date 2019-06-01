@@ -46,6 +46,7 @@ public:
             {
                 innerLoop->stop(true);
                 delete innerLoop;
+                innerLoop = NULL;
             }
         });
         if (!_loop_sptr)
