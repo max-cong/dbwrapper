@@ -14,7 +14,7 @@ SET(TESTS_BINARY ${PROJECT_NAME}_tests)
 SET(EXAMPLE_BINARY ${PROJECT_NAME}_example)
 
 
-
+add_definitions(-DBOOST_ERROR_CODE_HEADER_ONLY)
 
 IF(CODE_COVERAGE)
 	SET(CCXX_FLAGS "-O0 -g -Wall -std=c++11 -fPIC -lpthread -fprofile-arcs -ftest-coverage -DBOOST_LOG_DYN_LINK")
