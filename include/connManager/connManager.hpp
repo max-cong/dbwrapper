@@ -49,9 +49,12 @@ public:
 
     bool init()
     {
-        __LOG(debug, "[connManager] init is called");
+        if (CHECK_LOG_LEVEL(debug))
+        {
+            __LOG(debug, "[connManager] init is called");
+        }
         std::weak_ptr<connManager<DBConn>> self_wptr = getThisWptr();
-         
+
         // load balance related
         _lbs_sptr = lbStrategy::lbsFactory<redisAsyncContext *>::create("RR");
         _lbs_sptr->init();
@@ -85,7 +88,10 @@ public:
         _srvc_sptr->setOnConnInc([self_wptr](std::shared_ptr<DBConn> connInfo) {
             if (!self_wptr.expired())
             {
-                __LOG(debug, "now there is a new connection, add it to connection manager");
+                if (CHECK_LOG_LEVEL(debug))
+                {
+                    __LOG(debug, "now there is a new connection, add it to connection manager");
+                }
                 return self_wptr.lock()->addConn(connInfo);
             }
             else
@@ -97,7 +103,10 @@ public:
         _srvc_sptr->setOnConnDec([self_wptr](std::shared_ptr<DBConn> connInfo) {
             if (!self_wptr.expired())
             {
-                __LOG(debug, "delete a connection");
+                if (CHECK_LOG_LEVEL(debug))
+                {
+                    __LOG(debug, "delete a connection");
+                }
                 return self_wptr.lock()->delConn(connInfo);
             }
             else
@@ -113,7 +122,10 @@ public:
 
     void onUnavaliable()
     {
-        __LOG(debug, "onUnavaliable");
+        if (CHECK_LOG_LEVEL(debug))
+        {
+            __LOG(debug, "onUnavaliable");
+        }
         if (_unavaliable_cb)
         {
             _unavaliable_cb();
@@ -124,7 +136,10 @@ public:
     }
     void onAvaliable()
     {
-        __LOG(debug, "onAvaliable");
+        if (CHECK_LOG_LEVEL(debug))
+        {
+            __LOG(debug, "onAvaliable");
+        }
         if (_avaliable_cb)
         {
             _avaliable_cb();

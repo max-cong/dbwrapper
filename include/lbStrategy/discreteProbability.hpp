@@ -67,15 +67,24 @@ public:
         int vector_size = this->_obj_vector.size();
         if (!vector_size)
         {
-            __LOG(debug, "this->_obj_vector is empty!");
+            if (CHECK_LOG_LEVEL(debug))
+            {
+                __LOG(debug, "this->_obj_vector is empty!");
+            }
             return medis::retStatus::NO_ENTRY;
         }
         std::vector<double> init_list;
-        __LOG(debug, "weight is :");
+        if (CHECK_LOG_LEVEL(debug))
+        {
+            __LOG(debug, "weight is :");
+        }
         for (int i = 0; i < vector_size; i++)
         {
             init_list.push_back(std::get<1>(this->_obj_vector[i]));
-            __LOG(debug, "--> " << std::get<1>(this->_obj_vector[i]));
+            if (CHECK_LOG_LEVEL(debug))
+            {
+                __LOG(debug, "--> " << std::get<1>(this->_obj_vector[i]));
+            }
         }
         std::discrete_distribution<int> second_dist(init_list.begin(), init_list.end());
         auto _param = second_dist.param();

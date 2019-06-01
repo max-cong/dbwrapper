@@ -146,9 +146,27 @@ protected:
 	{
 		return true;
 	}
-	void onBeforeLoop() { __LOG(debug, "onBeforeLoop"); }
-	void onAfterLoop() { __LOG(debug, "onAfterLoop"); }
-	void onAfterStop() { __LOG(debug, "onAfterStop"); }
+	void onBeforeLoop()
+	{
+		if (CHECK_LOG_LEVEL(debug))
+		{
+			__LOG(debug, "onBeforeLoop");
+		}
+	}
+	void onAfterLoop()
+	{
+		if (CHECK_LOG_LEVEL(debug))
+		{
+			__LOG(debug, "onAfterLoop");
+		}
+	}
+	void onAfterStop()
+	{
+		if (CHECK_LOG_LEVEL(debug))
+		{
+			__LOG(debug, "onAfterStop");
+		}
+	}
 
 private:
 	void _run()
@@ -157,7 +175,10 @@ private:
 		_status = loopStatus::statusRunning;
 
 		onBeforeLoop();
-		__LOG(debug, " start loop!! base event is : " << (void *)ev());
+		if (CHECK_LOG_LEVEL(debug))
+		{
+			__LOG(debug, " start loop!! base event is : " << (void *)ev());
+		}
 		event_base_loop(this->ev(), 0);
 		__LOG(warn, " exit loop!!");
 		onAfterLoop();

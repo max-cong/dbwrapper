@@ -32,10 +32,13 @@ class evfdClient
 public:
     evfdClient() = delete;
     // Note:!! please make sure your fd is non-blocking
-    
+
     explicit evfdClient(int efd) : _evfd(efd)
     {
-        __LOG(debug, "event fd is " << _evfd);
+        if (CHECK_LOG_LEVEL(debug))
+        {
+            __LOG(debug, "event fd is " << _evfd);
+        }
     }
     virtual ~evfdClient() {}
 

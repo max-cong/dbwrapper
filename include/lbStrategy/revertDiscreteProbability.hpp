@@ -61,7 +61,7 @@ public:
         catch (const std::out_of_range &oor)
         {
             __LOG(error, "Out of Range error: " << oor.what());
-            return  DBW_NONE_OPT;
+            return DBW_NONE_OPT;
         }
         return obj;
     }
@@ -72,7 +72,10 @@ public:
         int vector_size = this->_obj_vector.size();
         if (!vector_size)
         {
-            __LOG(debug, "this->_obj_vector is empty!");
+            if (CHECK_LOG_LEVEL(debug))
+            {
+                __LOG(debug, "this->_obj_vector is empty!");
+            }
             return medis::retStatus::NO_ENTRY;
         }
         std::vector<double> init_list;

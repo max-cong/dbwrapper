@@ -63,7 +63,10 @@ public:
 	{
 		if (_event_sptr)
 		{
-			__LOG(debug, "_event_sptr is valid, the timer is running, stop first then start");
+			if (CHECK_LOG_LEVEL(debug))
+			{
+				__LOG(debug, "_event_sptr is valid, the timer is running, stop first then start");
+			}
 			stop();
 		}
 		if (_loop.expired())

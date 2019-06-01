@@ -76,7 +76,10 @@ public:
     }
     bool init()
     {
-        __LOG(debug, "init task with gene : " << (void *)getGeneticGene());
+        if (CHECK_LOG_LEVEL(debug))
+        {
+            __LOG(debug, "init task with gene : " << (void *)getGeneticGene());
+        }
         if (_loop.expired())
         {
             __LOG(error, "loop is invalid!");
@@ -88,7 +91,10 @@ public:
             __LOG(error, "!!!!!!!!create event fd fail!");
             return false;
         }
-        __LOG(debug, "init taskImp with ID :" << _evfd);
+        if (CHECK_LOG_LEVEL(debug))
+        {
+            __LOG(debug, "init taskImp with ID :" << _evfd);
+        }
         // start eventfd server
 
         _evfdServer = std::make_shared<evfdServer>(getLoop(), _evfd, evfdCallback, (void *)this);
@@ -108,14 +114,20 @@ public:
             return false;
         }
         _connManager->setGeneticGene(getGeneticGene());
-        __LOG(debug, "create connection manager with gene : " << _connManager->getGeneticGene());
+        if (CHECK_LOG_LEVEL(debug))
+        {
+            __LOG(debug, "create connection manager with gene : " << _connManager->getGeneticGene());
+        }
 
         auto sef_wptr = getThisWptr();
-        
+
         _connManager->setAddConnCb([sef_wptr](std::shared_ptr<medis::CONN_INFO> connInfo) {
             if (!sef_wptr.expired())
             {
-                __LOG(debug, "there is a new connection, send message to task with type TASK_REDIS_ADD_CONN");
+                if (CHECK_LOG_LEVEL(debug))
+                {
+                    __LOG(debug, "there is a new connection, send message to task with type TASK_REDIS_ADD_CONN");
+                }
                 return sef_wptr.lock()->sendMsg(task::taskMsgType::TASK_REDIS_ADD_CONN, connInfo);
             }
             else
@@ -200,7 +212,10 @@ public:
             }
             return;
         }
-        __LOG(debug, "argv: " << (char *)privdata << ", string is " << reply->str);
+        if (CHECK_LOG_LEVEL(debug))
+        {
+            __LOG(debug, "argv: " << (char *)privdata << ", string is " << reply->str);
+        }
 
         auto ctxSaver = medis::contextSaver<void *, std::shared_ptr<redisContext>>::instance();
         auto rdxCtx = ctxSaver->getCtx(c).value_or(nullptr);
@@ -213,7 +228,10 @@ public:
             }
             else
             {
-                __LOG(debug, "ping success");
+                if (CHECK_LOG_LEVEL(debug))
+                {
+                    __LOG(debug, "ping success");
+                }
 
                 rdxCtx->_hb->setHbSuccess(true);
             }
@@ -236,7 +254,10 @@ public:
         else
         {
             connected = true;
-            __LOG(debug, "Connected...");
+            if (CHECK_LOG_LEVEL(debug))
+            {
+                __LOG(debug, "Connected...");
+            }
         }
 
         redisAsyncContext *_aCtx = const_cast<redisAsyncContext *>(c);
@@ -285,9 +306,15 @@ public:
             std::string reconnectItvalStr = configCenter::configCenter<void *>::instance()->getPropertiesField(gene, PROP_RECONN_INTERVAL, DEFAULT_HB_INTERVAL);
             std::string::size_type sz; // alias of size_t
             int _interval = std::stoi(reconnectItvalStr, &sz) * 1000;
-            __LOG(debug, "now start reconnect timer [" << _interval << "ms]");
+            if (CHECK_LOG_LEVEL(debug))
+            {
+                __LOG(debug, "now start reconnect timer [" << _interval << "ms]");
+            }
             rdsCtx->_retryTimerManager->getTimer()->startOnce(_interval, [gene, innerIp, innerPort, priority, _aCtx, ctxWptr]() {
-                __LOG(debug, "in the reconnect timer");
+                if (CHECK_LOG_LEVEL(debug))
+                {
+                    __LOG(debug, "in the reconnect timer");
+                }
                 auto task_sptr = medis::taskSaver<void *, std::shared_ptr<task::taskImp>>::instance()->getTask(gene).value_or(nullptr);
 
                 if (task_sptr)
@@ -299,7 +326,10 @@ public:
                     if (!ctxWptr.expired())
                     {
                         connInfo_sptr->hbTime = ctxWptr.lock()->_hb->getRetryNum();
-                        __LOG(debug, "heartbeat retry time left is : " << connInfo_sptr->hbTime);
+                        if (CHECK_LOG_LEVEL(debug))
+                        {
+                            __LOG(debug, "heartbeat retry time left is : " << connInfo_sptr->hbTime);
+                        }
                     }
 
                     task_sptr->sendMsg(taskMsgType::TASK_REDIS_ADD_CONN, connInfo_sptr);
@@ -311,7 +341,10 @@ public:
         }
         else
         {
-            __LOG(debug, "did not get the context info in the context saver, context is : " << (void *)_aCtx);
+            if (CHECK_LOG_LEVEL(debug))
+            {
+                __LOG(debug, "did not get the context info in the context saver, context is : " << (void *)_aCtx);
+            }
         }
         // reconnect
     }
@@ -366,8 +399,11 @@ public:
             __LOG(error, "invalid task message!");
         }
         std::shared_ptr<TASK_REDIS_FORMAT_RAW_MSG_BODY> msg = DBW_ANY_CAST<std::shared_ptr<TASK_REDIS_FORMAT_RAW_MSG_BODY>>(task_msg->body);
-        __LOG(debug, "get command :\n"
-                         << msg->body);
+        if (CHECK_LOG_LEVEL(debug))
+        {
+            __LOG(debug, "get command :\n"
+                             << msg->body);
+        }
 
         redisAsyncContext *_context = (redisAsyncContext *)(_connManager->get_conn()).value_or(nullptr);
         if (!_context)
@@ -394,8 +430,11 @@ public:
             __LOG(error, "invalid task message!");
         }
         std::shared_ptr<TASK_REDIS_RAW_MSG_BODY> msg = DBW_ANY_CAST<std::shared_ptr<TASK_REDIS_RAW_MSG_BODY>>(task_msg->body);
-        __LOG(debug, "get command :\n"
-                         << msg->body);
+        if (CHECK_LOG_LEVEL(debug))
+        {
+            __LOG(debug, "get command :\n"
+                             << msg->body);
+        }
 
         redisAsyncContext *_context = (_connManager->get_conn()).value_or(nullptr);
         if (!_context)
@@ -422,7 +461,10 @@ public:
             __LOG(error, "invalid task message!");
         }
         std::shared_ptr<medis::CONN_INFO> connInfo_sptr = DBW_ANY_CAST<std::shared_ptr<medis::CONN_INFO>>(task_msg->body);
-        __LOG(debug, "connect to : " << connInfo_sptr->ip << ":" << connInfo_sptr->port);
+        if (CHECK_LOG_LEVEL(debug))
+        {
+            __LOG(debug, "connect to : " << connInfo_sptr->ip << ":" << connInfo_sptr->port);
+        }
 
         redisAsyncContext *_context = redisAsyncConnect(connInfo_sptr->ip.c_str(), connInfo_sptr->port);
         if (_context->err != REDIS_OK)
@@ -447,7 +489,10 @@ public:
             if (!rdsCtx_wptr.expired())
             {
                 auto rdsCtx = rdsCtx_wptr.lock();
-                __LOG(debug, "now send ping");
+                if (CHECK_LOG_LEVEL(debug))
+                {
+                    __LOG(debug, "now send ping");
+                }
                 std::string pingMsg("PING");
                 redisAsyncCommand(rdsCtx->_ctx, taskImp::pingCallback, (void *)(rdsCtx->_ctx), pingMsg.c_str(), pingMsg.size());
             }
@@ -480,7 +525,10 @@ public:
             if (!rdsCtx_wptr.expired())
             {
                 auto rdsCtx = rdsCtx_wptr.lock();
-                __LOG(debug, "heartbeat success on context : " << (void *)rdsCtx->_ctx << "(note: maybe this is the first timer hb. if this log happens more than once, it means success)");
+                if (CHECK_LOG_LEVEL(debug))
+                {
+                    __LOG(debug, "heartbeat success on context : " << (void *)rdsCtx->_ctx << "(note: maybe this is the first timer hb. if this log happens more than once, it means success)");
+                }
             }
         });
         rdsCtx->_hb->init();
@@ -511,7 +559,10 @@ public:
             __LOG(error, "invalid task message!");
         }
         std::shared_ptr<medis::CONN_INFO> connInfo_sptr = DBW_ANY_CAST<std::shared_ptr<medis::CONN_INFO>>(task_msg->body);
-        __LOG(debug, "disconnect to : " << connInfo_sptr->ip << ":" << connInfo_sptr->port);
+        if (CHECK_LOG_LEVEL(debug))
+        {
+            __LOG(debug, "disconnect to : " << connInfo_sptr->ip << ":" << connInfo_sptr->port);
+        }
 
         auto ctxSaver = medis::contextSaver<void *, std::shared_ptr<redisContext>>::instance();
         auto ctxList = ctxSaver->getIpPortThenDel(connInfo_sptr->ip, connInfo_sptr->port);
@@ -526,7 +577,10 @@ public:
             else
             {
                 // there is no connection in the lb
-                __LOG(debug, "there is not connection in the connection mananger");
+                if (CHECK_LOG_LEVEL(debug))
+                {
+                    __LOG(debug, "there is not connection in the connection mananger");
+                }
             }
         }
         return true;
@@ -555,7 +609,7 @@ public:
                 __LOG(warn, "process task message return fail!");
                 // the message process return fail
                 // start a timer to send message to task again
-              
+
                 auto self_wptr = getThisWptr();
                 _timerManager->getTimer()->startOnce(100, [self_wptr, tmpTaskMsg]() {
                     if (!self_wptr.expired())

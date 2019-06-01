@@ -38,11 +38,17 @@ void getCallback(redisAsyncContext *c, void *r, void *privdata)
     {
         if (c->errstr)
         {
-            __LOG(debug, "errstr: %s" << c->errstr);
+            if (CHECK_LOG_LEVEL(debug))
+            {
+                __LOG(debug, "errstr: %s" << c->errstr);
+            }
         }
         return;
     }
-    __LOG(debug, "private data is : " << (void *)privdata << ", string is : " << reply->str);
+    if (CHECK_LOG_LEVEL(debug))
+    {
+        __LOG(debug, "private data is : " << (void *)privdata << ", string is : " << reply->str);
+    }
 }
 class redisAsyncClientTest : public testing::Test
 {

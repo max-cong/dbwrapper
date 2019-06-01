@@ -75,7 +75,10 @@ public:
     // common function
     virtual medis::retStatus addObj(LB_OBJ obj, unsigned int weight = 0)
     {
-        __LOG(debug, "now add one object!");
+        if (CHECK_LOG_LEVEL(debug))
+        {
+            __LOG(debug, "now add one object!");
+        }
         return updateObj(obj, weight);
     }
 
@@ -137,7 +140,10 @@ public:
 
     medis::retStatus updateObj(LB_OBJ obj, unsigned int weight = 0)
     {
-        __LOG(debug, " update obj is called, weight is : " << weight);
+        if (CHECK_LOG_LEVEL(debug))
+        {
+            __LOG(debug, " update obj is called, weight is : " << weight);
+        }
         unsigned int _avaliable_obj_before = getAvaliableObj().size();
 
         if (!weight)
@@ -156,7 +162,10 @@ public:
         }
         if (_avaliable_obj_before == 0 && _avaliable_obj_after > 0)
         {
-            __LOG(debug, "first obj");
+            if (CHECK_LOG_LEVEL(debug))
+            {
+                __LOG(debug, "first obj");
+            }
             if (_first_avaliable_cb)
             {
                 _first_avaliable_cb();
@@ -197,7 +206,10 @@ public:
     }
     virtual bool clearInfo()
     {
-        __LOG(debug, "[clear info]--------------")
+        if (CHECK_LOG_LEVEL(debug))
+        {
+            __LOG(debug, "[clear info]--------------");
+        }
         _obj_vector.clear();
         _inactive_obj_vector.clear();
         update();
@@ -221,10 +233,16 @@ private:
         // if the obj is in active list, remove it
         for (auto it = _obj_vector.begin(); it != _obj_vector.end();)
         {
-            __LOG(debug, "loop _obj_vector");
+            if (CHECK_LOG_LEVEL(debug))
+            {
+                __LOG(debug, "loop _obj_vector");
+            }
             if (std::get<0>(*it) == obj)
             {
-                __LOG(debug, "found obj, erase it");
+                if (CHECK_LOG_LEVEL(debug))
+                {
+                    __LOG(debug, "found obj, erase it");
+                }
                 it = _obj_vector.erase(it);
             }
             else
@@ -234,7 +252,10 @@ private:
         }
 
         bool found = false;
-        __LOG(debug, "loop inactive vector, there are [" << _inactive_obj_vector.size() << "] obj in the inactive vector");
+        if (CHECK_LOG_LEVEL(debug))
+        {
+            __LOG(debug, "loop inactive vector, there are [" << _inactive_obj_vector.size() << "] obj in the inactive vector");
+        }
         for (auto it = _inactive_obj_vector.begin(); it != _inactive_obj_vector.end();)
         {
             if ((*it) == obj)
@@ -257,7 +278,10 @@ private:
     {
         for (auto it = _inactive_obj_vector.begin(); it != _inactive_obj_vector.end();)
         {
-            __LOG(debug, "loop inactive thread");
+            if (CHECK_LOG_LEVEL(debug))
+            {
+                __LOG(debug, "loop inactive thread");
+            }
             if ((*it) == obj)
             {
                 it = _inactive_obj_vector.erase(it);
@@ -270,10 +294,16 @@ private:
 
         for (auto it = _obj_vector.begin(); it != _obj_vector.end();)
         {
-            __LOG(debug, "loop _obj_vector");
+            if (CHECK_LOG_LEVEL(debug))
+            {
+                __LOG(debug, "loop _obj_vector");
+            }
             if (std::get<0>(*it) == obj)
             {
-                __LOG(debug, "found obj, erase it");
+                if (CHECK_LOG_LEVEL(debug))
+                {
+                    __LOG(debug, "found obj, erase it");
+                }
                 it = _obj_vector.erase(it);
             }
             else
