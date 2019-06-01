@@ -49,7 +49,7 @@ class redisAsyncClientTest : public testing::Test
 protected:
     virtual void SetUp() override
     {
-        set_logLevel(loggerIface::logLevel::debug);
+       
         _aclient_sptr = std::make_shared<redisAsyncClient>();
 
         configCenter::cfgPropMap _config;
