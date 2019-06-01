@@ -9,7 +9,7 @@ ADD_EXECUTABLE(${TESTS_TARGET} ${TESTS_SOURCES})
 
 LINK_DIRECTORIES(${PROJECT_SOURCE_DIR}/lib)
 
-TARGET_LINK_LIBRARIES(${TESTS_TARGET} ${PROJECT_NAME} pthread boost_log_setup boost_log  boost_system boost_thread event event_pthreads  hiredis gtest)
+TARGET_LINK_LIBRARIES(${TESTS_TARGET}  pthread boost_log_setup boost_log  boost_system boost_thread event event_pthreads  hiredis gtest)
 
 SET_TARGET_PROPERTIES(${TESTS_TARGET} PROPERTIES OUTPUT_NAME ${TESTS_BINARY})
 
