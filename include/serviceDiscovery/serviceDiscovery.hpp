@@ -40,16 +40,19 @@ class serviceDiscovery : public gene::gene<void *>, public std::enable_shared_fr
 {
 public:
     typedef std::list<std::shared_ptr<connInfo>> connList;
-    
+
     typedef std::function<connList()> getConnFun;
     using onConnInfoChangeCb = std::function<bool(std::shared_ptr<connInfo>)>;
-  
+
     serviceDiscovery<connInfo>() = delete;
 
     explicit serviceDiscovery<connInfo>(std::shared_ptr<loop::loop> loopIn)
     {
         _timerManager.reset(new timer::timerManager(loopIn));
-        __LOG(debug, "[serviceDiscovery] serviceDiscovery");
+        if (CHECK_LOG_LEVEL(debug))
+        {
+            __LOG(debug, "[serviceDiscovery] serviceDiscovery");
+        }
         _retrigerTimer = _timerManager->getTimer();
     }
 
@@ -57,11 +60,17 @@ public:
 
     virtual bool stop()
     {
-        __LOG(warn, "[serviceDiscovery] stop is called");
+        if (CHECK_LOG_LEVEL(warn))
+        {
+            __LOG(warn, "[serviceDiscovery] stop is called");
+        }
         _retrigerTimer->stop();
         for (auto it : _conn_list)
         {
-            __LOG(warn, "[service Discovery] : now delete ip : " << it->ip << ", port : " << it->port);
+            if (CHECK_LOG_LEVEL(warn))
+            {
+                __LOG(warn, "[service Discovery] : now delete ip : " << it->ip << ", port : " << it->port);
+            }
             onConnInfoDec(it);
         }
         _conn_list.clear();
@@ -71,45 +80,68 @@ public:
     // restart with init function, note : this will triger service discovery
     virtual bool restart()
     {
-        __LOG(warn, "[serviceDiscovery] restart is called");
+        if (CHECK_LOG_LEVEL(warn))
+        {
+            __LOG(warn, "[serviceDiscovery] restart is called");
+        }
         stop();
         return init();
     }
     virtual bool retriger()
     {
-        __LOG(debug, "[serviceDiscovery] [retriger]");
+        if (CHECK_LOG_LEVEL(debug))
+        {
+            __LOG(debug, "[serviceDiscovery] [retriger]");
+        }
         if (!(_retrigerTimer->getIsRunning()))
         {
             std::string reccItval = configCenter::configCenter<void *>::instance()->getPropertiesField(getGeneticGene(), PROP_SD_RETRIGER_INTERVAL, DEFAULT_SD_RETRIGER_INTERVAL);
             std::string::size_type sz; // alias of size_t
             int _reconnect_interval = std::stoi(reccItval, &sz) * 1000;
             auto self_wptr = getThisWptr();
-            __LOG(debug, "service discovery retriger timer is finished, start a new timer [" << _reconnect_interval << "ms]");
+            if (CHECK_LOG_LEVEL(debug))
+            {
+                __LOG(debug, "service discovery retriger timer is finished, start a new timer [" << _reconnect_interval << "ms]");
+            }
             _retrigerTimer->startOnce(_reconnect_interval, [self_wptr]() {
                 if (!self_wptr.expired())
                 {
-                    __LOG(warn, "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!restart service discovery!!!!!!!!!!!!!!!!!!!!!!!!!");
+                    if (CHECK_LOG_LEVEL(warn))
+                    {
+                        __LOG(warn, "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!restart service discovery!!!!!!!!!!!!!!!!!!!!!!!!!");
+                    }
                     self_wptr.lock()->restart();
                 }
                 else
                 {
-                    __LOG(warn, "service discovery : this wptr is expired!");
+                    if (CHECK_LOG_LEVEL(warn))
+                    {
+                        __LOG(warn, "service discovery : this wptr is expired!");
+                    }
                 }
             });
         }
         else
         {
-            __LOG(debug, "retriger timer is running");
+            if (CHECK_LOG_LEVEL(debug))
+            {
+                __LOG(debug, "retriger timer is running");
+            }
         }
         return true;
     }
-
     virtual void onConnInfoInc(std::shared_ptr<connInfo> info)
     {
-        __LOG(debug, "[serviceDiscovery] onConnInfoInc");
+        if (CHECK_LOG_LEVEL(debug))
+        {
+            __LOG(debug, "[serviceDiscovery] onConnInfoInc");
+        }
         if (_cfgInc)
         {
-            __LOG(debug, "[serviceDiscovery] call registered callback function");
+            if (CHECK_LOG_LEVEL(debug))
+            {
+                __LOG(debug, "[serviceDiscovery] call registered callback function");
+            }
             _cfgInc(info);
         }
     }
@@ -122,7 +154,10 @@ public:
     }
     virtual void setOnConnInc(onConnInfoChangeCb cfgIncCb)
     {
-        __LOG(debug, "[serviceDiscovery] set conn inc callback function");
+        if (CHECK_LOG_LEVEL(debug))
+        {
+            __LOG(debug, "[serviceDiscovery] set conn inc callback function");
+        }
         _cfgInc = cfgIncCb;
     }
     virtual void setOnConnDec(onConnInfoChangeCb cfgDecCb)
@@ -161,11 +196,17 @@ public:
     virtual bool updateConnInfo(connList update_list)
     {
 
-        __LOG(debug, "now try to get connection info ");
+        if (CHECK_LOG_LEVEL(debug))
+        {
+            __LOG(debug, "now try to get connection info ");
+        }
 
         if (update_list.empty())
         {
-            __LOG(debug, "update_list is empty, now just clear the _conn_list");
+            if (CHECK_LOG_LEVEL(debug))
+            {
+                __LOG(debug, "update_list is empty, now just clear the _conn_list");
+            }
             _conn_list.clear();
             return true;
         }
@@ -178,11 +219,17 @@ public:
             {
                 onConnInfoInc(tmp);
                 _conn_list.push_back(tmp);
-                __LOG(debug, "[service_discovery_base] now there is a new connection.");
+                if (CHECK_LOG_LEVEL(debug))
+                {
+                    __LOG(debug, "[service_discovery_base] now there is a new connection.");
+                }
             }
             else
             {
-                __LOG(debug, "[service_discovery_base] connection info already in the local list");
+                if (CHECK_LOG_LEVEL(debug))
+                {
+                    __LOG(debug, "[service_discovery_base] connection info already in the local list");
+                }
             }
         }
         // in the connection list but not in the update list , to remove
@@ -196,7 +243,10 @@ public:
             }
             else
             {
-                __LOG(debug, "[service_discovery_base] connection info already in the local list");
+                if (CHECK_LOG_LEVEL(debug))
+                {
+                    __LOG(debug, "[service_discovery_base] connection info already in the local list");
+                }
             }
         }
 

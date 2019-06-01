@@ -74,7 +74,10 @@ public:
     }
     void del(OBJ obj)
     {
-        __LOG(debug, "delete one object");
+        if (CHECK_LOG_LEVEL(debug))
+        {
+            __LOG(debug, "delete one object");
+        }
         _geneMap.erase(obj);
     }
     std::list<RDS_CTX> getIpPortThenDel(std::string ip, unsigned short port)
@@ -101,7 +104,7 @@ public:
         {
             return _geneMap[obj];
         }
-       
+
         return DBW_NONE_OPT;
     }
 

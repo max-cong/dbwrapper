@@ -32,10 +32,13 @@ class evfdClient
 public:
     evfdClient() = delete;
     // Note:!! please make sure your fd is non-blocking
-    
+
     explicit evfdClient(int efd) : _evfd(efd)
     {
-        __LOG(debug, "event fd is " << _evfd);
+        if (CHECK_LOG_LEVEL(debug))
+        {
+            __LOG(debug, "event fd is " << _evfd);
+        }
     }
     virtual ~evfdClient() {}
 
@@ -45,7 +48,10 @@ public:
         int ret = write(_evfd, &_one, sizeof(_one));
         if (ret != sizeof(_one))
         {
-            __LOG(error, "write event fd : " << _evfd << " fail");
+            if (CHECK_LOG_LEVEL(error))
+            {
+                __LOG(error, "write event fd : " << _evfd << " fail");
+            }
             return false;
         }
         return true;

@@ -45,27 +45,36 @@ void getCallback(redisAsyncContext *c, void *r, void *privdata)
     {
         if (c->errstr)
         {
-            __LOG(debug, "errstr: %s" << c->errstr);
+            if (CHECK_LOG_LEVEL(debug))
+            {
+                __LOG(debug, "errstr: %s" << c->errstr);
+            }
         }
         return;
     }
     i++;
-    __LOG(debug, "private data is : " << (void *)privdata << ", string is : " << reply->str << ", index is : " << i);
+    if (CHECK_LOG_LEVEL(debug))
+    {
+        __LOG(debug, "private data is : " << (void *)privdata << ", string is : " << reply->str << ", index is : " << i);
+    }
     std::cout << "receive response with index : " << i << std::endl;
 }
 int main()
 {
- 	std::unique_ptr<boost_logger> boostloggerUptr(new boost_logger());
-	INIT_LOGGER(boostloggerUptr);
-	SET_LOG_LEVEL(debug);
-    
+    std::unique_ptr<boost_logger> boostloggerUptr(new boost_logger());
+    INIT_LOGGER(boostloggerUptr);
+    SET_LOG_LEVEL(debug);
+
     redisAsyncClient aclient;
     int loop_time = 100;
     configCenter::cfgPropMap _config;
     _config[PROP_HOST] = "127.0.0.1";
     _config[PROP_PORT] = "6379";
     configCenter::configCenter<void *>::instance()->setProperties(aclient.getThis(), _config);
-    __LOG(debug, "start redis async client and set config with gene : " << (void *)aclient.getThis());
+    if (CHECK_LOG_LEVEL(debug))
+    {
+        __LOG(debug, "start redis async client and set config with gene : " << (void *)aclient.getThis());
+    }
 
     aclient.init();
 

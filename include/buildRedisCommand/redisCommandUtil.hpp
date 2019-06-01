@@ -44,12 +44,18 @@ enum class REDIS_COMMAND_TYPE : std::uint32_t
 class redis_formatCommand
 {
 public:
-    static std::string toString(std::list<std::string>const &argv)
+    static std::string toString(std::list<std::string> const &argv)
     {
-        __LOG(debug, "[redis_formatCommand]");
+        if (CHECK_LOG_LEVEL(debug))
+        {
+            __LOG(debug, "[redis_formatCommand]");
+        }
         if (argv.empty())
         {
-            __LOG(warn, "command list is empty");
+            if (CHECK_LOG_LEVEL(warn))
+            {
+                __LOG(warn, "command list is empty");
+            }
             return "";
         }
         std::ostringstream buffer;

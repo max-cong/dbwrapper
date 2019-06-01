@@ -52,9 +52,12 @@ public:
 	timer::ptr_p getTimer()
 	{
 		unsigned long tid = getUniqueID();
-		if(_loop.expired())
+		if (_loop.expired())
 		{
-			__LOG(error, "loop is invalid!");
+			if (CHECK_LOG_LEVEL(error))
+			{
+				__LOG(error, "loop is invalid!");
+			}
 			return nullptr;
 		}
 		timer::ptr_p tmp_ptr(new timer(_loop.lock()));
@@ -75,7 +78,6 @@ public:
 	{
 		return killTimer(timer_sptr->getTid());
 	}
-
 
 private:
 	unsigned long getUniqueID()

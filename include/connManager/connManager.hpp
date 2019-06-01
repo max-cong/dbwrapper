@@ -49,9 +49,12 @@ public:
 
     bool init()
     {
-        __LOG(debug, "[connManager] init is called");
+        if (CHECK_LOG_LEVEL(debug))
+        {
+            __LOG(debug, "[connManager] init is called");
+        }
         std::weak_ptr<connManager<DBConn>> self_wptr = getThisWptr();
-         
+
         // load balance related
         _lbs_sptr = lbStrategy::lbsFactory<redisAsyncContext *>::create("RR");
         _lbs_sptr->init();
@@ -63,18 +66,27 @@ public:
             }
             else
             {
-                __LOG(warn, " avaliable callback : connManager wptr is expired");
+                if (CHECK_LOG_LEVEL(warn))
+                {
+                    __LOG(warn, " avaliable callback : connManager wptr is expired");
+                }
             }
         });
         _lbs_sptr->setNoAvaliableCb([self_wptr]() {
-            __LOG(warn, "there is no avaliable connection");
+            if (CHECK_LOG_LEVEL(warn))
+            {
+                __LOG(warn, "there is no avaliable connection");
+            }
             if (!self_wptr.expired())
             {
                 self_wptr.lock()->onUnavaliable();
             }
             else
             {
-                __LOG(warn, " no avaliable callback : connManager wptr is expired");
+                if (CHECK_LOG_LEVEL(warn))
+                {
+                    __LOG(warn, " no avaliable callback : connManager wptr is expired");
+                }
             }
         });
         // service discovery related
@@ -85,24 +97,36 @@ public:
         _srvc_sptr->setOnConnInc([self_wptr](std::shared_ptr<DBConn> connInfo) {
             if (!self_wptr.expired())
             {
-                __LOG(debug, "now there is a new connection, add it to connection manager");
+                if (CHECK_LOG_LEVEL(debug))
+                {
+                    __LOG(debug, "now there is a new connection, add it to connection manager");
+                }
                 return self_wptr.lock()->addConn(connInfo);
             }
             else
             {
-                __LOG(warn, "on connect inc : service discovery is expired");
+                if (CHECK_LOG_LEVEL(warn))
+                {
+                    __LOG(warn, "on connect inc : service discovery is expired");
+                }
                 return false;
             }
         });
         _srvc_sptr->setOnConnDec([self_wptr](std::shared_ptr<DBConn> connInfo) {
             if (!self_wptr.expired())
             {
-                __LOG(debug, "delete a connection");
+                if (CHECK_LOG_LEVEL(debug))
+                {
+                    __LOG(debug, "delete a connection");
+                }
                 return self_wptr.lock()->delConn(connInfo);
             }
             else
             {
-                __LOG(warn, "on connect dev : service discovery is expired");
+                if (CHECK_LOG_LEVEL(warn))
+                {
+                    __LOG(warn, "on connect dev : service discovery is expired");
+                }
                 return false;
             }
         });
@@ -113,7 +137,10 @@ public:
 
     void onUnavaliable()
     {
-        __LOG(debug, "onUnavaliable");
+        if (CHECK_LOG_LEVEL(debug))
+        {
+            __LOG(debug, "onUnavaliable");
+        }
         if (_unavaliable_cb)
         {
             _unavaliable_cb();
@@ -124,7 +151,10 @@ public:
     }
     void onAvaliable()
     {
-        __LOG(debug, "onAvaliable");
+        if (CHECK_LOG_LEVEL(debug))
+        {
+            __LOG(debug, "onAvaliable");
+        }
         if (_avaliable_cb)
         {
             _avaliable_cb();

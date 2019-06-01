@@ -84,7 +84,10 @@ public:
 				}
 				catch (boost::bad_lexical_cast &e)
 				{
-					__LOG(warn, "error finding field : "<< field<<", type case fail. dest type is : "<<typeid(T).name());
+					if (CHECK_LOG_LEVEL(warn))
+					{
+						__LOG(warn, "error finding field : " << field << ", type case fail. dest type is : " << typeid(T).name());
+					}
 				}
 			}
 		}
@@ -107,13 +110,19 @@ public:
 			}
 			else
 			{
-				__LOG(debug, "did not find field with name : " << field);
+				if (CHECK_LOG_LEVEL(debug))
+				{
+					__LOG(debug, "did not find field with name : " << field);
+				}
 				return false;
 			}
 		}
 		else
 		{
-			__LOG(debug, "did not find key with type : " << typeid(key).name());
+			if (CHECK_LOG_LEVEL(debug))
+			{
+				__LOG(debug, "did not find key with type : " << typeid(key).name());
+			}
 			return false;
 		}
 		return false;
@@ -132,11 +141,14 @@ public:
 		}
 		else
 		{
-			__LOG(debug, "did not find key with type : " << typeid(key).name());
+			if (CHECK_LOG_LEVEL(debug))
+			{
+				__LOG(debug, "did not find key with type : " << typeid(key).name());
+			}
 			return false;
 		}
 	}
-	bool setProperties(cfgKeyType_t key, cfgPropMap const & prop)
+	bool setProperties(cfgKeyType_t key, cfgPropMap const &prop)
 	{
 		std::lock_guard<std::mutex> lck(_mutex);
 		_propertiesMap[key] = prop;

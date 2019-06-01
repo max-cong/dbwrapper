@@ -53,7 +53,10 @@ public:
 
     virtual bool retriger() override
     {
-        __LOG(debug, "[dns retriger]");
+        if (CHECK_LOG_LEVEL(debug))
+        {
+            __LOG(debug, "[dns retriger]");
+        }
         _dns_timer->stop();
         serviceDiscovery<connInfo>::retriger();
         return true;
@@ -64,12 +67,15 @@ public:
     {
 // to do : need to add task to anysaver
 #if 0
-        __LOG(debug, "[sdDns] dnsResolveCallback ");
+        if (CHECK_LOG_LEVEL(debug))
+		{__LOG(debug, "[sdDns] dnsResolveCallback ");}
         {
-            __LOG(debug, "IP list size is : " << ipList.size() << ", list is :");
+            if (CHECK_LOG_LEVEL(debug))
+		{__LOG(debug, "IP list size is : " << ipList.size() << ", list is :");}
             for (auto it : ipList)
             {
-                __LOG(debug, "-- " << it << " --");
+                if (CHECK_LOG_LEVEL(debug))
+		{__LOG(debug, "-- " << it << " --");}
             }
         }
         if (dns_ttl)
@@ -96,7 +102,8 @@ public:
             }
             else
             {
-                __LOG(warn, "invalid host!");
+                if (CHECK_LOG_LEVEL(warn))
+		{__LOG(warn,"invalid host!");}
             }
         }
         if (!_tmp_list.empty())
@@ -125,13 +132,15 @@ public:
             }
             catch (boost::bad_any_cast &)
             {
-                __LOG(error, "cast error");
+                if (CHECK_LOG_LEVEL(error))
+		{__LOG(error, "cast error");}
                 return false;
             }
         }
         else
         {
-            __LOG(error, "there is no DNS callback function in the any saver!");
+            if (CHECK_LOG_LEVEL(error))
+		{__LOG(error, "there is no DNS callback function in the any saver!");}
             return false;
         }
     }
@@ -150,12 +159,14 @@ public:
             }
             else
             {
-                __LOG(error, "timer is not valid!!");
+                if (CHECK_LOG_LEVEL(error))
+		{__LOG(error, "timer is not valid!!");}
             }
         }
         else
         {
-            __LOG(debug, "do not need to refresh!");
+            if (CHECK_LOG_LEVEL(debug))
+		{__LOG(debug, "do not need to refresh!");}
         }
     }
 #endif
@@ -163,7 +174,8 @@ public:
     virtual bool init() override
     {
 #if 0
-        __LOG(debug, "[sdDns] init is called");
+        if (CHECK_LOG_LEVEL(debug))
+		{__LOG(debug, "[sdDns] init is called");}
         boost::function<bool()> _cfg_change_fn = boost::bind(&sdDns::stop, this);
         // register callback to any saver
         auto cfg_change_ret = any_saver<void *>::instance()->save_data(getGeneticGene(), CFG_CHANGE_SERVICE_DISCOVERY_MESSAGE, _cfg_change_fn);
@@ -173,7 +185,8 @@ public:
             return false;
         }
 
-        __LOG(debug, "[sdDns] sdDns init");
+        if (CHECK_LOG_LEVEL(debug))
+		{__LOG(debug, "[sdDns] sdDns init");}
         unsigned int _default_ttl = config_center<void *>::instance()->getPropertiesField(getGeneticGene(), PROP_TTL_VALUE, DEFAULT_TTL_VALUE);
         _dns_ttl = _default_ttl;
         boost::function<void(List &, int)> _dns_resolve_fn = boost::bind(&sdDns::dnsResolveCallback, this, _1, _2);
@@ -187,7 +200,8 @@ public:
 
         // get FQND from configuration, if FQDN is not empty, then call DNS related function
         std::string _host = config_center<void *>::instance()->getPropertiesField(getGeneticGene(), PROP_HOST, DEFAULT_HOST);
-        __LOG(debug, "get host : " << _host);
+        if (CHECK_LOG_LEVEL(debug))
+		{__LOG(debug, "get host : " << _host);}
 
         std::string _port = config_center<void *>::instance()->getPropertiesField(getGeneticGene(), PROP_PORT, DEFAULT_PORT_STR);
 
@@ -197,10 +211,12 @@ public:
         boost::algorithm::split(hosts, _host, boost::is_any_of(","));
 
         {
-            __LOG(debug, "host list size is : " << hosts.size());
+            if (CHECK_LOG_LEVEL(debug))
+		{__LOG(debug, "host list size is : " << hosts.size());}
             for (auto it : hosts)
             {
-                __LOG(debug, "-- " << it << " --");
+                if (CHECK_LOG_LEVEL(debug))
+		{__LOG(debug, "-- " << it << " --");}
             }
         }
 
@@ -214,7 +230,8 @@ public:
                 connInfo _tmp_info;
                 if (addr.is_v4())
                 {
-                    __LOG(debug, "the host in configuration is IPv4");
+                    if (CHECK_LOG_LEVEL(debug))
+		{__LOG(debug, "the host in configuration is IPv4");}
                     _tmp_info.type = conn_type::IPv4;
                     _tmp_info.ip = _host_iter;
                     _tmp_info.port = _port;
@@ -222,7 +239,8 @@ public:
                 }
                 else if (addr.is_v6())
                 {
-                    __LOG(debug, "the host in configuration is IPv6");
+                    if (CHECK_LOG_LEVEL(debug))
+		{__LOG(debug, "the host in configuration is IPv6");}
                     _tmp_info.type = conn_type::IPv6;
                     _tmp_info.ip = _host_iter;
                     _tmp_info.port = _port;
@@ -230,7 +248,8 @@ public:
                 }
                 else
                 {
-                    __LOG(error, "the host in configuration is not known");
+                    if (CHECK_LOG_LEVEL(error))
+		{__LOG(error, "the host in configuration is not known");}
 #if 0
                     do_dns_with_timer();
                     return true;
@@ -240,7 +259,8 @@ public:
             }
             catch (boost::system::system_error &e)
             {
-                __LOG(debug, "convert FQDN got an exception! this must be FQDN");
+                if (CHECK_LOG_LEVEL(debug))
+		{__LOG(debug, "convert FQDN got an exception! this must be FQDN");}
                 do_dns_with_timer();
                 return true;
                 // return false;
@@ -253,7 +273,8 @@ public:
         }
         else
         {
-            __LOG(error, "the config is not FQDN, but there is no IP!");
+            if (CHECK_LOG_LEVEL(error))
+		{__LOG(error, "the config is not FQDN, but there is no IP!");}
         }
 
         return true;

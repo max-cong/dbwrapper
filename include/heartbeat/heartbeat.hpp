@@ -45,15 +45,21 @@ public:
     heartBeat() = delete;
     explicit heartBeat(std::shared_ptr<loop::loop> loopIn) : _interval(3000), _loop(loopIn), _success(false), _retryNum(5)
     {
-        __LOG(debug, "start heartBeat, this is :" << (void *)this);
+        if (CHECK_LOG_LEVEL(debug))
+        {
+            __LOG(debug, "start heartBeat, this is :" << (void *)this);
+        }
     }
 
     bool init()
     {
         std::string intervalStr = configCenter::configCenter<void *>::instance()->getPropertiesField(getGeneticGene(), PROP_HB_INTERVAL, DEFAULT_HB_INTERVAL);
         std::string::size_type sz; // alias of size_t
-        _interval = std::stoi(intervalStr, &sz)*1000;
-        __LOG(debug, "start heartbeat with interval ["<<_interval<<"ms]");
+        _interval = std::stoi(intervalStr, &sz) * 1000;
+        if (CHECK_LOG_LEVEL(debug))
+        {
+            __LOG(debug, "start heartbeat with interval [" << _interval << "ms]");
+        }
         _tManager.reset(new timer::timerManager(_loop.lock()));
         start();
         return true;
@@ -64,12 +70,18 @@ public:
     }
     unsigned int getRetryNum()
     {
-        __LOG(debug, "[getRetryNum] this is : " << (void *)this);
+        if (CHECK_LOG_LEVEL(debug))
+        {
+            __LOG(debug, "[getRetryNum] this is : " << (void *)this);
+        }
         return _retryNum;
     }
     void onHeartbeatLost()
     {
-        __LOG(debug, "onHeartbeatLost");
+        if (CHECK_LOG_LEVEL(debug))
+        {
+            __LOG(debug, "onHeartbeatLost");
+        }
         _hbTimer->stop();
         if (_hbLostCb)
         {
@@ -78,7 +90,10 @@ public:
     }
     void onHeartbeatSuccess()
     {
-        __LOG(debug, "onHeartbeatSuccess");
+        if (CHECK_LOG_LEVEL(debug))
+        {
+            __LOG(debug, "onHeartbeatSuccess");
+        }
         if (_hbSuccCb)
         {
             _hbSuccCb();
@@ -94,7 +109,10 @@ public:
         // as the connection may not set up yet
         // the worest case is to detect APP not avaliable net heart beat
         setHbSuccess(false);
-        __LOG(debug, "start heartBeat and send heartbeat!");
+        if (CHECK_LOG_LEVEL(debug))
+        {
+            __LOG(debug, "start heartBeat and send heartbeat!");
+        }
         if (getPingCb())
         {
             getPingCb()();
@@ -103,7 +121,10 @@ public:
         _hbTimer = _tManager->getTimer();
         if (!_hbTimer)
         {
-            __LOG(error, "[heartbeat] get _hbTimer fail");
+            if (CHECK_LOG_LEVEL(error))
+            {
+                __LOG(error, "[heartbeat] get _hbTimer fail");
+            }
             return;
         }
         auto self_wptr = getThisWptr();
@@ -111,7 +132,10 @@ public:
         _processHb = [self_wptr]() {
             if (self_wptr.expired())
             {
-                __LOG(warn, "heart beat timer: heat beat weak ptr is expired");
+                if (CHECK_LOG_LEVEL(warn))
+                {
+                    __LOG(warn, "heart beat timer: heat beat weak ptr is expired");
+                }
                 return;
             }
             auto this_sptr = self_wptr.lock();
@@ -129,7 +153,10 @@ public:
             {
 
                 this_sptr->_retryNum--;
-                __LOG(warn, "heartbeat fail, retry time left : " << this_sptr->_retryNum << ", this is : " << (void *)this_sptr.get());
+                if (CHECK_LOG_LEVEL(warn))
+                {
+                    __LOG(warn, "heartbeat fail, retry time left : " << this_sptr->_retryNum << ", this is : " << (void *)this_sptr.get());
+                }
                 if (this_sptr->_retryNum < 1)
                 {
                     this_sptr->_retryNum = 0;
