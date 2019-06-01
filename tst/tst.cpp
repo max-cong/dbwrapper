@@ -49,7 +49,7 @@ class redisAsyncClientTest : public testing::Test
 protected:
     virtual void SetUp() override
     {
-       
+
         _aclient_sptr = std::make_shared<redisAsyncClient>();
 
         configCenter::cfgPropMap _config;
@@ -83,10 +83,12 @@ TEST_F(redisAsyncClientTest, del)
 }
 int main(int argc, char *argv[])
 {
-	std::unique_ptr<boost_logger> boostloggerUptr(new boost_logger());
-	INIT_LOGGER(boostloggerUptr);
-	SET_LOG_LEVEL(debug);
+    std::unique_ptr<boost_logger> boostloggerUptr(new boost_logger());
+    INIT_LOGGER(boostloggerUptr);
+    SET_LOG_LEVEL(debug);
 
     ::testing::InitGoogleTest(&argc, argv);
-    return RUN_ALL_TESTS();
+    int ret = RUN_ALL_TESTS();
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    return ret;
 }
