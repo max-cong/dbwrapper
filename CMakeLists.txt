@@ -17,10 +17,10 @@ SET(EXAMPLE_BINARY ${PROJECT_NAME}_example)
 
 
 IF(CODE_COVERAGE)
-	SET(CCXX_FLAGS "-O0 -g -Wall -std=c++11 -fPIC -lpthread -fprofile-arcs -ftest-coverage")
+	SET(CCXX_FLAGS "-O0 -g -Wall -std=c++11 -fPIC -lpthread -fprofile-arcs -ftest-coverage -DBOOST_LOG_DYN_LINK")
 	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CCXX_FLAGS}")
 ELSE()
-    SET(CCXX_FLAGS "-O2 -g -Wall -std=c++11 -fPIC -lpthread")
+    SET(CCXX_FLAGS "-O2 -g -Wall -std=c++11 -fPIC -DBOOST_LOG_DYN_LINK")
 	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CCXX_FLAGS}")
 ENDIF()
 
