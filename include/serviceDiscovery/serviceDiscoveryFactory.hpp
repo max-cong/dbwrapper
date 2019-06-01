@@ -59,7 +59,10 @@ public:
             }
             else
             {
-                __LOG(error, "create service discovery obj fail!");
+                if (CHECK_LOG_LEVEL(error))
+                {
+                    __LOG(error, "create service discovery obj fail!");
+                }
             }
         }
         else if (!name.compare("unix_socket"))
@@ -71,7 +74,10 @@ public:
             }
             else
             {
-                __LOG(error, "create service discovery obj fail!");
+                if (CHECK_LOG_LEVEL(error))
+                {
+                    __LOG(error, "create service discovery obj fail!");
+                }
             }
         }
         else if (!name.compare("sdConfig"))
@@ -83,13 +89,19 @@ public:
             }
             else
             {
-                __LOG(error, "create service discovery obj fail!");
+                if (CHECK_LOG_LEVEL(error))
+                {
+                    __LOG(error, "create service discovery obj fail!");
+                }
             }
         }
 
         else
         {
-            __LOG(warn, "not support type!");
+            if (CHECK_LOG_LEVEL(warn))
+            {
+                __LOG(warn, "not support type!");
+            }
         }
         return ret;
     }

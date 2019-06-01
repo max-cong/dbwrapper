@@ -60,7 +60,10 @@ public:
         }
         catch (const std::out_of_range &oor)
         {
-            __LOG(error, "Out of Range error: " << oor.what());
+            if (CHECK_LOG_LEVEL(error))
+            {
+                __LOG(error, "Out of Range error: " << oor.what());
+            }
             return DBW_NONE_OPT;
         }
         return obj;

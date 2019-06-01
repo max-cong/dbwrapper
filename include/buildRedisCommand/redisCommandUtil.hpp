@@ -52,7 +52,10 @@ public:
         }
         if (argv.empty())
         {
-            __LOG(warn, "command list is empty");
+            if (CHECK_LOG_LEVEL(warn))
+            {
+                __LOG(warn, "command list is empty");
+            }
             return "";
         }
         std::ostringstream buffer;

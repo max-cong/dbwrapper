@@ -121,7 +121,10 @@ public:
         _hbTimer = _tManager->getTimer();
         if (!_hbTimer)
         {
-            __LOG(error, "[heartbeat] get _hbTimer fail");
+            if (CHECK_LOG_LEVEL(error))
+            {
+                __LOG(error, "[heartbeat] get _hbTimer fail");
+            }
             return;
         }
         auto self_wptr = getThisWptr();
@@ -129,7 +132,10 @@ public:
         _processHb = [self_wptr]() {
             if (self_wptr.expired())
             {
-                __LOG(warn, "heart beat timer: heat beat weak ptr is expired");
+                if (CHECK_LOG_LEVEL(warn))
+                {
+                    __LOG(warn, "heart beat timer: heat beat weak ptr is expired");
+                }
                 return;
             }
             auto this_sptr = self_wptr.lock();
@@ -147,7 +153,10 @@ public:
             {
 
                 this_sptr->_retryNum--;
-                __LOG(warn, "heartbeat fail, retry time left : " << this_sptr->_retryNum << ", this is : " << (void *)this_sptr.get());
+                if (CHECK_LOG_LEVEL(warn))
+                {
+                    __LOG(warn, "heartbeat fail, retry time left : " << this_sptr->_retryNum << ", this is : " << (void *)this_sptr.get());
+                }
                 if (this_sptr->_retryNum < 1)
                 {
                     this_sptr->_retryNum = 0;

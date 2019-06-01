@@ -71,14 +71,20 @@ public:
 		}
 		if (_loop.expired())
 		{
-			__LOG(error, "loop is invalid!");
+			if (CHECK_LOG_LEVEL(error))
+			{
+				__LOG(error, "loop is invalid!");
+			}
 			return false;
 		}
 
 		auto _event_base = (_loop.lock())->ev();
 		if (!_event_base)
 		{
-			__LOG(warn, "event base is not valid!");
+			if (CHECK_LOG_LEVEL(warn))
+			{
+				__LOG(warn, "event base is not valid!");
+			}
 			return false;
 		}
 
@@ -91,7 +97,10 @@ public:
 		});
 		if (!_event_sptr)
 		{
-			__LOG(error, "event is invalid");
+			if (CHECK_LOG_LEVEL(error))
+			{
+				__LOG(error, "event is invalid");
+			}
 			return false;
 		}
 
@@ -102,7 +111,10 @@ public:
 
 		if (0 != event_add(_event_sptr.get(), &tv))
 		{
-			__LOG(error, "event add return fail");
+			if (CHECK_LOG_LEVEL(error))
+			{
+				__LOG(error, "event add return fail");
+			}
 			return false;
 		}
 
@@ -136,7 +148,10 @@ public:
 			}
 			else
 			{
-				__LOG(warn, "timer: timer weak_ptr is exipred");
+				if (CHECK_LOG_LEVEL(warn))
+				{
+					__LOG(warn, "timer: timer weak_ptr is exipred");
+				}
 			}
 		});
 	}

@@ -50,7 +50,10 @@ public:
         });
         if (!_loop_sptr)
         {
-            __LOG(error, "init loop fail");
+            if (CHECK_LOG_LEVEL(error))
+            {
+                __LOG(error, "init loop fail");
+            }
             return false;
         }
 
@@ -59,7 +62,10 @@ public:
 
         if (!_task_sptr)
         {
-            __LOG(error, "create task fail");
+            if (CHECK_LOG_LEVEL(error))
+            {
+                __LOG(error, "create task fail");
+            }
             return false;
         }
         _task_sptr->setGeneticGene(getThis());
@@ -69,7 +75,7 @@ public:
         return _loop_sptr->start(true);
     }
     template <typename COMMAND_KEY, typename COMMAND_VALUE>
-    bool put(COMMAND_KEY&& key, COMMAND_VALUE&& value, void *usr_data, redisCallbackFn *fn)
+    bool put(COMMAND_KEY &&key, COMMAND_VALUE &&value, void *usr_data, redisCallbackFn *fn)
     {
         if (!getConnStatus())
         {
@@ -77,11 +83,16 @@ public:
         }
         std::string command2send = std::move(buildRedisCommand::buildRedisCommand<COMMAND_KEY, COMMAND_VALUE>::get_format_command(REDIS_COMMAND_TYPE::TASK_REDIS_PUT, std::forward<COMMAND_KEY>(key), std::forward<COMMAND_VALUE>(value)));
         if (CHECK_LOG_LEVEL(debug))
-		{__LOG(debug, "get command :\n"
-                         << command2send);}
+        {
+            __LOG(debug, "get command :\n"
+                             << command2send);
+        }
         if (command2send.empty())
         {
-            __LOG(warn, "did not get redis command, please check the key type and value type");
+            if (CHECK_LOG_LEVEL(warn))
+            {
+                __LOG(warn, "did not get redis command, please check the key type and value type");
+            }
             return false;
         }
         return sendFormatRawCommand(std::move(command2send), usr_data, fn);
@@ -95,18 +106,23 @@ public:
         }
         std::string command2send = std::move(buildRedisCommand::buildRedisCommand<COMMAND_KEY, COMMAND_VALUE>::get_format_command(REDIS_COMMAND_TYPE::TASK_REDIS_GET, std::forward<COMMAND_KEY>(key), std::forward<COMMAND_VALUE>(value)));
         if (CHECK_LOG_LEVEL(debug))
-		{__LOG(debug, "get command :\n"
-                         << command2send);}
+        {
+            __LOG(debug, "get command :\n"
+                             << command2send);
+        }
         if (command2send.empty())
         {
-            __LOG(warn, "did not get redis command, please check the key type and value type");
+            if (CHECK_LOG_LEVEL(warn))
+            {
+                __LOG(warn, "did not get redis command, please check the key type and value type");
+            }
             return false;
         }
         return sendFormatRawCommand(std::move(command2send), usr_data, fn);
     }
 
     template <typename COMMAND_KEY, typename COMMAND_VALUE>
-    bool del(COMMAND_KEY&& key, COMMAND_VALUE&& value, void *usr_data, redisCallbackFn *fn)
+    bool del(COMMAND_KEY &&key, COMMAND_VALUE &&value, void *usr_data, redisCallbackFn *fn)
     {
         if (!getConnStatus())
         {
@@ -114,11 +130,16 @@ public:
         }
         std::string command2send = std::move(buildRedisCommand::buildRedisCommand<COMMAND_KEY, COMMAND_VALUE>::get_format_command(REDIS_COMMAND_TYPE::TASK_REDIS_DEL, std::forward<COMMAND_KEY>(key), std::forward<COMMAND_VALUE>(value)));
         if (CHECK_LOG_LEVEL(debug))
-		{__LOG(debug, "del command :\n"
-                         << command2send);}
+        {
+            __LOG(debug, "del command :\n"
+                             << command2send);
+        }
         if (command2send.empty())
         {
-            __LOG(warn, "did not get redis command, please check the key type and value type");
+            if (CHECK_LOG_LEVEL(warn))
+            {
+                __LOG(warn, "did not get redis command, please check the key type and value type");
+            }
             return false;
         }
         return sendFormatRawCommand(std::move(command2send), usr_data, fn);

@@ -102,7 +102,8 @@ public:
             }
             else
             {
-                __LOG(warn, "invalid host!");
+                if (CHECK_LOG_LEVEL(warn))
+		{__LOG(warn,"invalid host!");}
             }
         }
         if (!_tmp_list.empty())
@@ -131,13 +132,15 @@ public:
             }
             catch (boost::bad_any_cast &)
             {
-                __LOG(error, "cast error");
+                if (CHECK_LOG_LEVEL(error))
+		{__LOG(error, "cast error");}
                 return false;
             }
         }
         else
         {
-            __LOG(error, "there is no DNS callback function in the any saver!");
+            if (CHECK_LOG_LEVEL(error))
+		{__LOG(error, "there is no DNS callback function in the any saver!");}
             return false;
         }
     }
@@ -156,7 +159,8 @@ public:
             }
             else
             {
-                __LOG(error, "timer is not valid!!");
+                if (CHECK_LOG_LEVEL(error))
+		{__LOG(error, "timer is not valid!!");}
             }
         }
         else
@@ -244,7 +248,8 @@ public:
                 }
                 else
                 {
-                    __LOG(error, "the host in configuration is not known");
+                    if (CHECK_LOG_LEVEL(error))
+		{__LOG(error, "the host in configuration is not known");}
 #if 0
                     do_dns_with_timer();
                     return true;
@@ -268,7 +273,8 @@ public:
         }
         else
         {
-            __LOG(error, "the config is not FQDN, but there is no IP!");
+            if (CHECK_LOG_LEVEL(error))
+		{__LOG(error, "the config is not FQDN, but there is no IP!");}
         }
 
         return true;

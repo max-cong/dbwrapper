@@ -41,7 +41,7 @@ public:
     {
         if (this->_obj_vector.empty() || !_max_index)
         {
-            
+
             return DBW_NONE_OPT;
         }
 

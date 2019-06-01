@@ -273,7 +273,10 @@ public:
             }
             break;
         default:
-            __LOG(warn, "not support type");
+            if (CHECK_LOG_LEVEL(warn))
+            {
+                __LOG(warn, "not support type");
+            }
             return "";
         }
         return "";

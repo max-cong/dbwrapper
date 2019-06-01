@@ -60,11 +60,17 @@ public:
 
     virtual bool stop()
     {
-        __LOG(warn, "[serviceDiscovery] stop is called");
+        if (CHECK_LOG_LEVEL(warn))
+        {
+            __LOG(warn, "[serviceDiscovery] stop is called");
+        }
         _retrigerTimer->stop();
         for (auto it : _conn_list)
         {
-            __LOG(warn, "[service Discovery] : now delete ip : " << it->ip << ", port : " << it->port);
+            if (CHECK_LOG_LEVEL(warn))
+            {
+                __LOG(warn, "[service Discovery] : now delete ip : " << it->ip << ", port : " << it->port);
+            }
             onConnInfoDec(it);
         }
         _conn_list.clear();
@@ -74,7 +80,10 @@ public:
     // restart with init function, note : this will triger service discovery
     virtual bool restart()
     {
-        __LOG(warn, "[serviceDiscovery] restart is called");
+        if (CHECK_LOG_LEVEL(warn))
+        {
+            __LOG(warn, "[serviceDiscovery] restart is called");
+        }
         stop();
         return init();
     }
@@ -97,12 +106,18 @@ public:
             _retrigerTimer->startOnce(_reconnect_interval, [self_wptr]() {
                 if (!self_wptr.expired())
                 {
-                    __LOG(warn, "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!restart service discovery!!!!!!!!!!!!!!!!!!!!!!!!!");
+                    if (CHECK_LOG_LEVEL(warn))
+                    {
+                        __LOG(warn, "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!restart service discovery!!!!!!!!!!!!!!!!!!!!!!!!!");
+                    }
                     self_wptr.lock()->restart();
                 }
                 else
                 {
-                    __LOG(warn, "service discovery : this wptr is expired!");
+                    if (CHECK_LOG_LEVEL(warn))
+                    {
+                        __LOG(warn, "service discovery : this wptr is expired!");
+                    }
                 }
             });
         }

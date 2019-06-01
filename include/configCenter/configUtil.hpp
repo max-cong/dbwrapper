@@ -39,7 +39,6 @@ const std::string PROP_HB_LOST_NUM = "PROP_HB_LOST_NUM";
 const std::string DEFAULT_LOAD_BALANCE_STRATEGY = "DEFAULT_LOAD_BALANCE_STRATEGY";
 const std::string PROP_LOAD_BALANCE_STRATEGY = "RR";
 
-
 const std::string DEFAULT_SERVICE_DISCOVERY_MODE = "sdConfig";
 const std::string PROP_SERVICE_DISCOVERY_MODE = "PROP_SERVICE_DISCOVERY_MODE";
 
@@ -47,15 +46,14 @@ const std::string PROP_SERVICE_DISCOVERY_MODE = "PROP_SERVICE_DISCOVERY_MODE";
 const std::string PROP_UNIX_PATH = "PROP_UNIX_PATH";
 const std::string DEFAULT_REDIS_UNIX_PATH = "DEFAULT_REDIS_UNIX_PATH";
 
-const std::string  PROP_RECONN_INTERVAL = "PROP_RECONN_INTERVAL";
-const std::string  DEFAULT_RECONN_INTERVAL = "5"; // seconds
+const std::string PROP_RECONN_INTERVAL = "PROP_RECONN_INTERVAL";
+const std::string DEFAULT_RECONN_INTERVAL = "5"; // seconds
 
-const std::string  PROP_HB_INTERVAL = "PROP_HB_INTERVAL";
-const std::string  DEFAULT_HB_INTERVAL = "3"; // seconds
+const std::string PROP_HB_INTERVAL = "PROP_HB_INTERVAL";
+const std::string DEFAULT_HB_INTERVAL = "3"; // seconds
 // service discovery retriger timer
-const std::string  PROP_SD_RETRIGER_INTERVAL = "PROP_SD_RETRIGER_INTERVAL";
-const std::string  DEFAULT_SD_RETRIGER_INTERVAL = "1"; // seconds
+const std::string PROP_SD_RETRIGER_INTERVAL = "PROP_SD_RETRIGER_INTERVAL";
+const std::string DEFAULT_SD_RETRIGER_INTERVAL = "1"; // seconds
 
-
-const std::string  PROP_ENABLE_PUB_SUB = "PROP_ENABLE_PUB_SUB";
-const std::string  DEFAULT_ENABLE_PUB_SUB = "ENABLE_PUB_SUB"; // ENABLE_PUB_SUB or DISABLE_PUB_SUB
+const std::string PROP_ENABLE_PUB_SUB = "PROP_ENABLE_PUB_SUB";
+const std::string DEFAULT_ENABLE_PUB_SUB = "ENABLE_PUB_SUB"; // ENABLE_PUB_SUB or DISABLE_PUB_SUB

@@ -66,18 +66,27 @@ public:
             }
             else
             {
-                __LOG(warn, " avaliable callback : connManager wptr is expired");
+                if (CHECK_LOG_LEVEL(warn))
+                {
+                    __LOG(warn, " avaliable callback : connManager wptr is expired");
+                }
             }
         });
         _lbs_sptr->setNoAvaliableCb([self_wptr]() {
-            __LOG(warn, "there is no avaliable connection");
+            if (CHECK_LOG_LEVEL(warn))
+            {
+                __LOG(warn, "there is no avaliable connection");
+            }
             if (!self_wptr.expired())
             {
                 self_wptr.lock()->onUnavaliable();
             }
             else
             {
-                __LOG(warn, " no avaliable callback : connManager wptr is expired");
+                if (CHECK_LOG_LEVEL(warn))
+                {
+                    __LOG(warn, " no avaliable callback : connManager wptr is expired");
+                }
             }
         });
         // service discovery related
@@ -96,7 +105,10 @@ public:
             }
             else
             {
-                __LOG(warn, "on connect inc : service discovery is expired");
+                if (CHECK_LOG_LEVEL(warn))
+                {
+                    __LOG(warn, "on connect inc : service discovery is expired");
+                }
                 return false;
             }
         });
@@ -111,7 +123,10 @@ public:
             }
             else
             {
-                __LOG(warn, "on connect dev : service discovery is expired");
+                if (CHECK_LOG_LEVEL(warn))
+                {
+                    __LOG(warn, "on connect dev : service discovery is expired");
+                }
                 return false;
             }
         });

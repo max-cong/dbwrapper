@@ -48,7 +48,10 @@ public:
         int ret = write(_evfd, &_one, sizeof(_one));
         if (ret != sizeof(_one))
         {
-            __LOG(error, "write event fd : " << _evfd << " fail");
+            if (CHECK_LOG_LEVEL(error))
+            {
+                __LOG(error, "write event fd : " << _evfd << " fail");
+            }
             return false;
         }
         return true;

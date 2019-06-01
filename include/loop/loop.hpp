@@ -99,13 +99,19 @@ public:
 
 		if (_status != loopStatus::statusInit)
 		{
-			__LOG(error, " conneciton status is not Init state, status is :" << _status);
+			if (CHECK_LOG_LEVEL(error))
+			{
+				__LOG(error, " conneciton status is not Init state, status is :" << _status);
+			}
 			return false;
 		}
 
 		if (!onBeforeStart())
 		{
-			__LOG(error, "onBeforeStart return fail");
+			if (CHECK_LOG_LEVEL(error))
+			{
+				__LOG(error, "onBeforeStart return fail");
+			}
 			return false;
 		}
 		if (newThread)
@@ -131,7 +137,10 @@ public:
 			return;
 		}
 
-		__LOG(warn, "now try to stop loop, event base is : " << (void *)_base_sptr.get());
+		if (CHECK_LOG_LEVEL(warn))
+		{
+			__LOG(warn, "now try to stop loop, event base is : " << (void *)_base_sptr.get());
+		}
 		waiting ? event_base_loopexit(_base_sptr.get(), NULL) : event_base_loopbreak(this->ev());
 		onAfterStop();
 
@@ -180,7 +189,10 @@ private:
 			__LOG(debug, " start loop!! base event is : " << (void *)ev());
 		}
 		event_base_loop(this->ev(), 0);
-		__LOG(warn, " exit loop!!");
+		if (CHECK_LOG_LEVEL(warn))
+		{
+			__LOG(warn, " exit loop!!");
+		}
 		onAfterLoop();
 
 		_status = loopStatus::statusFinished;

@@ -28,7 +28,7 @@ namespace gene
 template <typename GENETIC_TYPE = void *>
 class gene
 {
-  public:
+public:
 	gene() {}
 	virtual ~gene() {}
 	void setGeneticGene(GENETIC_TYPE gen)

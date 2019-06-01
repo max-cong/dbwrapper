@@ -56,7 +56,10 @@ public:
 
         if (_obj_vector.empty())
         {
-            __LOG(warn, "there is no entry here!");
+            if (CHECK_LOG_LEVEL(warn))
+            {
+                __LOG(warn, "there is no entry here!");
+            }
             return DBW_NONE_OPT;
         }
         LB_OBJ obj;
@@ -66,7 +69,10 @@ public:
         }
         catch (const std::out_of_range &oor)
         {
-            __LOG(error, "Out of Range error: " << oor.what());
+            if (CHECK_LOG_LEVEL(error))
+            {
+                __LOG(error, "Out of Range error: " << oor.what());
+            }
             return DBW_NONE_OPT;
         }
         return obj;
@@ -91,7 +97,10 @@ public:
         {
             if (std::get<0>(*it) == obj)
             {
-                __LOG(warn, "now delete one object from _obj_vector");
+                if (CHECK_LOG_LEVEL(warn))
+                {
+                    __LOG(warn, "now delete one object from _obj_vector");
+                }
                 it = _obj_vector.erase(it);
             }
             else
@@ -104,7 +113,10 @@ public:
         {
             if ((*it) == obj)
             {
-                __LOG(warn, "now delete one object from _inactive_obj_vector");
+                if (CHECK_LOG_LEVEL(warn))
+                {
+                    __LOG(warn, "now delete one object from _inactive_obj_vector");
+                }
                 it = _inactive_obj_vector.erase(it);
             }
             else
@@ -113,7 +125,10 @@ public:
             }
         }
 
-        __LOG(warn, " size of _obj_vector is : " << _obj_vector.size() << ", size of _inactive_obj_vector is : " << _inactive_obj_vector.size());
+        if (CHECK_LOG_LEVEL(warn))
+        {
+            __LOG(warn, " size of _obj_vector is : " << _obj_vector.size() << ", size of _inactive_obj_vector is : " << _inactive_obj_vector.size());
+        }
         unsigned int _avaliable_obj_after = getAvaliableObj().size();
         // note: you need to make sure there is connection before and then there is no connection, we call no avaliable callback
         // that is : if you do not have connection form the first time. no avaliable callback will not triger
@@ -260,7 +275,10 @@ private:
         {
             if ((*it) == obj)
             {
-                __LOG(warn, "obj is in the inactive obj");
+                if (CHECK_LOG_LEVEL(warn))
+                {
+                    __LOG(warn, "obj is in the inactive obj");
+                }
                 found = true;
                 it++;
             }

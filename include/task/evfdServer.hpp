@@ -46,7 +46,10 @@ public:
     {
         if (_loop.expired())
         {
-            __LOG(error, "loop is invalid!");
+            if (CHECK_LOG_LEVEL(error))
+            {
+                __LOG(error, "loop is invalid!");
+            }
             return false;
         }
         _event_sptr.reset(event_new((_loop.lock())->ev(), eventFd, EV_READ | EV_PERSIST, eventCallback, _arg), [](event *innerEvent) {

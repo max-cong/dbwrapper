@@ -84,7 +84,10 @@ public:
 				}
 				catch (boost::bad_lexical_cast &e)
 				{
-					__LOG(warn, "error finding field : " << field << ", type case fail. dest type is : " << typeid(T).name());
+					if (CHECK_LOG_LEVEL(warn))
+					{
+						__LOG(warn, "error finding field : " << field << ", type case fail. dest type is : " << typeid(T).name());
+					}
 				}
 			}
 		}
