@@ -30,6 +30,7 @@
 #include <thread>
 #include <string>
 #include <atomic>
+#include <functional>
 #include <event2/event.h>
 #include <event2/thread.h>
 #include "logger/logger.hpp"

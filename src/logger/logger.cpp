@@ -24,37 +24,3 @@
  */
 #include "logger/logger.hpp"
 
-
-std::unique_ptr<loggerIface> _activeLogger(new logger(loggerIface::logLevel::error));
-
-
-
-void debug(const std::string &msg)
-{
-    if (_activeLogger)
-        _activeLogger->debug(msg);
-}
-
-void info(const std::string &msg)
-{
-    if (_activeLogger)
-        _activeLogger->info(msg);
-}
-
-void warn(const std::string &msg)
-{
-    if (_activeLogger)
-        _activeLogger->warn(msg);
-}
-
-void error(const std::string &msg)
-{
-    if (_activeLogger)
-        _activeLogger->error(msg);
-}
-
-void set_logLevel(loggerIface::logLevel level)
-{
-    if (_activeLogger)
-        _activeLogger->set_logLevel(level);
-}

@@ -83,6 +83,10 @@ TEST_F(redisAsyncClientTest, del)
 }
 int main(int argc, char *argv[])
 {
+	std::unique_ptr<boost_logger> boostloggerUptr(new boost_logger());
+	INIT_LOGGER(boostloggerUptr);
+	SET_LOG_LEVEL(debug);
+
     ::testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
 }

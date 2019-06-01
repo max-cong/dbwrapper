@@ -55,7 +55,10 @@ void getCallback(redisAsyncContext *c, void *r, void *privdata)
 }
 int main()
 {
-    set_logLevel(loggerIface::logLevel::debug);
+ 	std::unique_ptr<boost_logger> boostloggerUptr(new boost_logger());
+	INIT_LOGGER(boostloggerUptr);
+	SET_LOG_LEVEL(debug);
+    
     redisAsyncClient aclient;
     int loop_time = 100;
     configCenter::cfgPropMap _config;
