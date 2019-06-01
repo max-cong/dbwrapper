@@ -14,13 +14,13 @@ SET(TESTS_BINARY ${PROJECT_NAME}_tests)
 SET(EXAMPLE_BINARY ${PROJECT_NAME}_example)
 
 
-
+add_definitions(-DBOOST_ERROR_CODE_HEADER_ONLY)
 
 IF(CODE_COVERAGE)
-	SET(CCXX_FLAGS "-O0 -g -Wall -std=c++11 -fPIC -lpthread -fprofile-arcs -ftest-coverage")
+	SET(CCXX_FLAGS "-O0 -g -Wall -std=c++11 -fPIC -lpthread -fprofile-arcs -ftest-coverage -DBOOST_LOG_DYN_LINK")
 	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CCXX_FLAGS}")
 ELSE()
-    SET(CCXX_FLAGS "-O2 -g -Wall -std=c++11 -fPIC -lpthread")
+    SET(CCXX_FLAGS "-O2 -g -Wall -std=c++11 -fPIC -DBOOST_LOG_DYN_LINK")
 	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CCXX_FLAGS}")
 ENDIF()
 
@@ -33,7 +33,7 @@ MESSAGE(STATUS "CMAKE_CXX_FLAGS: " ${CMAKE_CXX_FLAGS})
 
 
 
-ADD_SUBDIRECTORY(src)
+
 ADD_SUBDIRECTORY(example)
 
 

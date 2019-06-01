@@ -27,7 +27,7 @@
 #include "loop/loop.hpp"
 #include "hiredis/async.h"
 #include "buildRedisCommand/buildRedisCommand.hpp"
-#include "logger/logger.hpp"
+#include "logger/boost_logger.hpp"
 #include "task/task.hpp"
 #include "util/nonCopyable.hpp"
 #include "util/defs.hpp"

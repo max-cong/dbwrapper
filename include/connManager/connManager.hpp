@@ -38,7 +38,7 @@ template <typename DBConn>
 class connManager : public gene::gene<void *>, public std::enable_shared_from_this<connManager<DBConn>>
 {
 public:
-    using connChange = std::function<bool(DBConn connInfo)>;
+    using connChange = std::function<bool(std::shared_ptr<DBConn> connInfo)>;
     connManager() = delete;
     explicit connManager(std::shared_ptr<loop::loop> loopIn) : _loop(loopIn)
     {
@@ -82,7 +82,7 @@ public:
 
         _srvc_sptr = serviceDiscovery::serviceDiscoveryFactory<DBConn>::create(getLoop(), sdsName, getGeneticGene());
 
-        _srvc_sptr->setOnConnInc([self_wptr](DBConn connInfo) {
+        _srvc_sptr->setOnConnInc([self_wptr](std::shared_ptr<DBConn> connInfo) {
             if (!self_wptr.expired())
             {
                 __LOG(debug, "now there is a new connection, add it to connection manager");
@@ -94,7 +94,7 @@ public:
                 return false;
             }
         });
-        _srvc_sptr->setOnConnDec([self_wptr](DBConn connInfo) {
+        _srvc_sptr->setOnConnDec([self_wptr](std::shared_ptr<DBConn> connInfo) {
             if (!self_wptr.expired())
             {
                 __LOG(debug, "delete a connection");
@@ -160,11 +160,11 @@ public:
     {
         connDec = dec;
     }
-    bool addConn(DBConn connInfo)
+    bool addConn(std::shared_ptr<DBConn> connInfo)
     {
         return connInc(connInfo);
     }
-    bool delConn(DBConn connInfo)
+    bool delConn(std::shared_ptr<DBConn> connInfo)
     {
         return connDec(connInfo);
     }

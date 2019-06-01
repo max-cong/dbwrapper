@@ -9,7 +9,7 @@ ADD_EXECUTABLE(${EXAMPLE_TARGET} ${EXAMPLE_SOURCES})
 
 LINK_DIRECTORIES(${PROJECT_SOURCE_DIR}/lib)
 
-TARGET_LINK_LIBRARIES(${EXAMPLE_TARGET} ${PROJECT_NAME} pthread event event_pthreads boost_system hiredis)
+TARGET_LINK_LIBRARIES(${EXAMPLE_TARGET} pthread boost_log_setup boost_log  boost_system boost_thread hiredis event event_pthreads )
 
 SET_TARGET_PROPERTIES(${EXAMPLE_TARGET} PROPERTIES OUTPUT_NAME ${EXAMPLE_BINARY})
 

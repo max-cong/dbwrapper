@@ -55,3 +55,7 @@ const std::string  DEFAULT_HB_INTERVAL = "3"; // seconds
 // service discovery retriger timer
 const std::string  PROP_SD_RETRIGER_INTERVAL = "PROP_SD_RETRIGER_INTERVAL";
 const std::string  DEFAULT_SD_RETRIGER_INTERVAL = "1"; // seconds
+
+
+const std::string  PROP_ENABLE_PUB_SUB = "PROP_ENABLE_PUB_SUB";
+const std::string  DEFAULT_ENABLE_PUB_SUB = "ENABLE_PUB_SUB"; // ENABLE_PUB_SUB or DISABLE_PUB_SUB
