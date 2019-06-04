@@ -42,21 +42,33 @@ public:
         std::shared_ptr<lbStrategy<LB_OBJ>> ret = nullptr;
         if (!name.compare("DPD"))
         {
+            if (CHECK_LOG_LEVEL(debug))
+            {
+                __LOG(debug, "DPD load balance strategy!");
+            }
             ret = std::dynamic_pointer_cast<lbStrategy<LB_OBJ>>(std::make_shared<discreteProbability<LB_OBJ>>());
         }
         else if (!name.compare("RDPD"))
         {
+            if (CHECK_LOG_LEVEL(debug))
+            {
+                __LOG(debug, "RDPD load balance strategy!");
+            }
             ret = std::dynamic_pointer_cast<lbStrategy<LB_OBJ>>(std::make_shared<revertDiscreteProbability<LB_OBJ>>());
         }
         else if (!name.compare("RR"))
         {
+            if (CHECK_LOG_LEVEL(debug))
+            {
+                __LOG(debug, "round roubin load balance strategy!");
+            }
             ret = std::dynamic_pointer_cast<lbStrategy<LB_OBJ>>(std::make_shared<roundRobbin<LB_OBJ>>());
         }
         else
         {
             if (CHECK_LOG_LEVEL(warn))
             {
-                __LOG(warn, "not support type!");
+                __LOG(warn, "not support type! type is : " << name);
             }
         }
         return ret;
