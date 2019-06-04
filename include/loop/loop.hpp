@@ -44,7 +44,7 @@ enum class loopStatus : std::uint32_t
 	statusFinished,
 	statisMax
 };
-std::ostream &operator<<(std::ostream &os, loopStatus status)
+static std::ostream &operator<<(std::ostream &os, loopStatus status)
 {
 	std::string statusString = ((status >= loopStatus::statusInit || status < loopStatus::statisMax) ? "UNDEFINED_STATUS" : (const std::string[]){"statusInit", "statusRunning", "statusFinished"}[(int)status]);
 	os << statusString;

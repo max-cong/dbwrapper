@@ -35,7 +35,7 @@
 #include <random>
 std::random_device seeder;
 std::mt19937 rng(seeder());
-std::uniform_int_distribution<int> gen(0, 1000); // uniform, unbiased
+std::uniform_int_distribution<int> gen(0, 1); // uniform, unbiased
 
 int i = 0;
 void getCallback(redisAsyncContext *c, void *r, void *privdata)
@@ -66,7 +66,7 @@ int main()
     SET_LOG_LEVEL(debug);
 
     redisAsyncClient aclient;
-    int loop_time = 100;
+    int loop_time = 1000;
     configCenter::cfgPropMap _config;
     _config[PROP_HOST] = "127.0.0.1";
     _config[PROP_PORT] = "6379";
@@ -93,6 +93,6 @@ int main()
     std::cout << "stop time : " << std::asctime(std::localtime(&stopTime))
               << stopTime << "\n";
 
-    std::this_thread::sleep_for(std::chrono::milliseconds(10000));
+    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
     std::cout << "total receive response is : " << i << std::endl;
 }
