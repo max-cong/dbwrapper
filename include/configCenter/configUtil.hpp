@@ -36,8 +36,8 @@ const std::string DEFAULT_PORT = "6379";
 const std::string DEFAULT_HB_LOST_NUM = "5";
 const std::string PROP_HB_LOST_NUM = "PROP_HB_LOST_NUM";
 
-const std::string DEFAULT_LOAD_BALANCE_STRATEGY = "DEFAULT_LOAD_BALANCE_STRATEGY";
-const std::string PROP_LOAD_BALANCE_STRATEGY = "RR";
+const std::string DEFAULT_LOAD_BALANCE_STRATEGY = "RR";
+const std::string PROP_LOAD_BALANCE_STRATEGY = "PROP_LOAD_BALANCE_STRATEGY";
 
 const std::string DEFAULT_SERVICE_DISCOVERY_MODE = "sdConfig";
 const std::string PROP_SERVICE_DISCOVERY_MODE = "PROP_SERVICE_DISCOVERY_MODE";

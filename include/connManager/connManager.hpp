@@ -55,8 +55,17 @@ public:
         }
         std::weak_ptr<connManager<DBConn>> self_wptr = getThisWptr();
 
+        std::string lbName = configCenter::configCenter<void *>::instance()->getPropertiesField(getGeneticGene(), PROP_LOAD_BALANCE_STRATEGY, DEFAULT_LOAD_BALANCE_STRATEGY);
         // load balance related
-        _lbs_sptr = lbStrategy::lbsFactory<redisAsyncContext *>::create("RR");
+        _lbs_sptr = lbStrategy::lbsFactory<redisAsyncContext *>::create(lbName);
+        if (!_lbs_sptr)
+        {
+            if (CHECK_LOG_LEVEL(error))
+            {
+                __LOG(error, " create load balancer fail!");
+            }
+            return false;
+        }
         _lbs_sptr->init();
 
         _lbs_sptr->setFirstAvaliableCb([self_wptr]() {
