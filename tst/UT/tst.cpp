@@ -30,9 +30,9 @@
 
 #include "hiredis/hiredis.h"
 
-#include "basicDevelopTestRR.hpp"
-#include "basicDevelopTestDPD.hpp"
-#include "basicDevelopTestRDPD.hpp"
+#include "DT/basicDevelopTestRR.hpp"
+#include "DT/basicDevelopTestDPD.hpp"
+#include "DT/basicDevelopTestRDPD.hpp"
 
 int main(int argc, char *argv[])
 {

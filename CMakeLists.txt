@@ -24,30 +24,11 @@ ELSE()
 	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CCXX_FLAGS}")
 ENDIF()
 
-
-
-
-
 MESSAGE(STATUS "start build")
 MESSAGE(STATUS "CMAKE_CXX_FLAGS: " ${CMAKE_CXX_FLAGS})
 
-
-
-
 ADD_SUBDIRECTORY(example)
-
-
-
-option (BUILD_TESTING "Build the testing tree." ON)
-# Only build tests if we are the top-level project
-# Allows this to be used by super projects with `add_subdirectory`
-if (BUILD_TESTING AND (PROJECT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR))
-  enable_testing()
-  add_subdirectory(tst)
-endif()
-
-
-
+add_subdirectory(tst)
 
 ADD_CUSTOM_TARGET(example
 	COMMAND ./${EXAMPLE_BINARY} ${CMD_ARGS}
@@ -60,7 +41,6 @@ ADD_CUSTOM_TARGET(tests
         WORKING_DIRECTORY ${EXECUTABLE_OUTPUT_PATH}
         COMMENT "Run tests"
 )
-
 
 
 ADD_CUSTOM_TARGET(memcheck
