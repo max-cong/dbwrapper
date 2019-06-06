@@ -29,27 +29,11 @@
 #include <memory>
 #include <gtest/gtest.h>
 #include "hiredis/hiredis.h"
+#include <hiredis/async.h>
+#include "basicDevelopTestDPD.hpp"
+#include "basicDevelopTestRDPD.hpp"
+#include "basicDevelopTestRR.hpp"
 
-
-void getCallback(redisAsyncContext *c, void *r, void *privdata)
-{
-    redisReply *reply = (redisReply *)r;
-    if (reply == NULL)
-    {
-        if (c->errstr)
-        {
-            if (CHECK_LOG_LEVEL(debug))
-            {
-                __LOG(debug, "errstr: %s" << c->errstr);
-            }
-        }
-        return;
-    }
-    if (CHECK_LOG_LEVEL(debug))
-    {
-        __LOG(debug, "private data is : " << (void *)privdata << ", string is : " << reply->str);
-    }
-}
 int main(int argc, char *argv[])
 {
     std::unique_ptr<boost_logger> boostloggerUptr(new boost_logger());
