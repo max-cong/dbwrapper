@@ -29,7 +29,7 @@
 #include <memory>
 
 #include "hiredis/hiredis.h"
-#include "util.hpp"
+
 #include "basicDevelopTestRR.hpp"
 #include "basicDevelopTestDPD.hpp"
 #include "basicDevelopTestRDPD.hpp"
