@@ -55,18 +55,32 @@ public:
         _event_sptr.reset(event_new((_loop.lock())->ev(), eventFd, EV_READ | EV_PERSIST, eventCallback, _arg), [](event *innerEvent) {
             if (NULL != innerEvent)
             {
+                if (CHECK_LOG_LEVEL(warn))
+                {
+                    __LOG(warn, "[evfdServer] event free is called!");
+                }
+                event_del(innerEvent);
                 event_free(innerEvent);
                 innerEvent = NULL;
             }
         });
         if (!_event_sptr)
         {
+            if (CHECK_LOG_LEVEL(error))
+            {
+                __LOG(error, "create event fail!");
+            }
             return false;
         }
         if (0 != event_add(_event_sptr.get(), NULL))
         {
+            if (CHECK_LOG_LEVEL(error))
+            {
+                __LOG(error, "event add return fail!");
+            }
             return false;
         }
+        
         return true;
     }
 

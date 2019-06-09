@@ -59,14 +59,16 @@ void getCallback(redisAsyncContext *c, void *r, void *privdata)
     }
     std::cout << "receive response with index : " << i << std::endl;
 }
+
 int main()
 {
     {
         std::unique_ptr<boost_logger> boostloggerUptr(new boost_logger());
         INIT_LOGGER(boostloggerUptr);
-        SET_LOG_LEVEL(error);
+        SET_LOG_LEVEL(debug);
 
         redisAsyncClient aclient;
+        aclient.dump();
         int loop_time = 1;
         configCenter::cfgPropMap _config;
         _config[PROP_HOST] = "127.0.0.1";
@@ -78,7 +80,7 @@ int main()
         }
 
         aclient.init();
-
+        aclient.dump();
         std::this_thread::sleep_for(std::chrono::milliseconds(500));
         std::time_t startTime = std::time(nullptr);
         std::cout << "start time : " << std::asctime(std::localtime(&startTime))
@@ -96,6 +98,9 @@ int main()
 
         std::this_thread::sleep_for(std::chrono::milliseconds(1000));
         std::cout << "total receive response is : " << i << std::endl;
+        aclient.cleanUp();
+        DESTROY_LOGGER();
     }
-    std::this_thread::sleep_for(std::chrono::milliseconds(5000));
+    std::cout << "wait 10 mil seconds and exit example" << std::endl;
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
 }

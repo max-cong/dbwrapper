@@ -73,21 +73,22 @@ public:
             close(_evfd);
             _evfd = -1;
         }
+        auto ctxSaver = medis::contextSaver<void *, std::shared_ptr<redisContext>>::instance();
+        ctxSaver->distroy(ctxSaver);
+        _taskQueue.reset();
     }
+
+    void stop()
+    {
+    }
+
     bool init()
     {
         if (CHECK_LOG_LEVEL(debug))
         {
             __LOG(debug, "init task with gene : " << (void *)getGeneticGene());
         }
-        if (_loop.expired())
-        {
-            if (CHECK_LOG_LEVEL(error))
-            {
-                __LOG(error, "loop is invalid!");
-            }
-            return false;
-        }
+
         _evfd = eventfd(0, EFD_NONBLOCK | EFD_CLOEXEC);
         if (_evfd < 0)
         {
@@ -102,13 +103,23 @@ public:
             __LOG(debug, "init taskImp with ID :" << _evfd);
         }
         // start eventfd server
-
+        if (_loop.expired())
+        {
+            if (CHECK_LOG_LEVEL(error))
+            {
+                __LOG(error, "loop is invalid!");
+            }
+            return false;
+        }
         _evfdServer = std::make_shared<evfdServer>(getLoop(), _evfd, evfdCallback, (void *)this);
         if (!_evfdServer->init())
         {
             return false;
         }
-
+        if (CHECK_LOG_LEVEL(error))
+        {
+            __LOG(error, "now loop sptr use count is : " << _loop.use_count());
+        }
         // start evfd client
 
         _evfdClient = std::make_shared<evfdClient>(_evfd);
@@ -191,6 +202,7 @@ public:
         });
 
         _connManager->init();
+    
         _timerManager.reset(new timer::timerManager(getLoop()));
         // start a 100ms timer to guard A-B-A issue.
 
@@ -211,6 +223,7 @@ public:
                 }
             }
         });
+
         return true;
     }
     static void evfdCallback(int fd, short event, void *args)

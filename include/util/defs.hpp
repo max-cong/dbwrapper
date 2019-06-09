@@ -25,7 +25,7 @@
 #pragma once
 #include "lbStrategy/lbStrategy.hpp"
 #include "timer/timerManager.hpp"
-
+#include "logger/logger.hpp"
 namespace medis
 {
 enum class retStatus : std::uint32_t
@@ -63,13 +63,46 @@ template <typename OBJ, typename RDS_CTX>
 class contextSaver
 {
 public:
+    contextSaver()
+    {
+        if (CHECK_LOG_LEVEL(warn))
+        {
+            __LOG(warn, "[contextSaver] constructure is called, this is : " << (void *)this);
+        }
+    }
     static contextSaver<OBJ, RDS_CTX> *instance()
     {
+
         static contextSaver<OBJ, RDS_CTX> *ins = new contextSaver<OBJ, RDS_CTX>();
+        if (CHECK_LOG_LEVEL(debug))
+        {
+            __LOG(debug, "context saver get instance, ins is : " << (void *)ins);
+        }
         return ins;
+    }
+    static void distroy(contextSaver<OBJ, RDS_CTX> *ins)
+    {
+        if (CHECK_LOG_LEVEL(warn))
+        {
+            __LOG(warn, "[contextSaver] distroy! ins is : " << (void *)ins);
+        }
+        if (ins)
+        {
+            if (CHECK_LOG_LEVEL(warn))
+            {
+                __LOG(warn, "[contextSaver] item in the map : " << (ins->_geneMap).size());
+            }
+            ins->_geneMap.clear();
+            delete ins;
+            ins = NULL;
+        }
     }
     void save(OBJ obj, RDS_CTX gene)
     {
+        if (CHECK_LOG_LEVEL(debug))
+        {
+            __LOG(debug, "save one object in the context saver");
+        }
         _geneMap[obj] = gene;
     }
     void del(OBJ obj)
@@ -119,6 +152,21 @@ public:
     {
         static taskSaver<OBJ, RDS_TASK_SPTR> *ins = new taskSaver<OBJ, RDS_TASK_SPTR>();
         return ins;
+    }
+    static void distroy(taskSaver<OBJ, RDS_TASK_SPTR> *ins)
+    {
+        if (CHECK_LOG_LEVEL(warn))
+        {
+            __LOG(warn, "[taskSaver] distroy!");
+        }
+        if (ins)
+        {
+            if (CHECK_LOG_LEVEL(warn))
+            {
+                __LOG(warn, "[taskSaver] item in the map : " << (ins->_geneMap).size());
+            }
+            ins->_geneMap.clear();
+        }
     }
     void save(OBJ obj, RDS_TASK_SPTR gene)
     {

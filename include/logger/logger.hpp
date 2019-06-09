@@ -45,6 +45,14 @@ static const char normal[] = {0x1b, '[', '0', ';', '3', '9', 'm', 0};
 		active_logger = (std::move(loggerImpUptr)); \
 		active_logger->init();                      \
 	}
+#define DESTROY_LOGGER()           \
+	{                              \
+		if (active_logger)         \
+		{                          \
+			active_logger->stop(); \
+			active_logger.reset(); \
+		}                          \
+	}
 #define CHECK_LOG_LEVEL(logLevel) (active_logger ? ((active_logger->get_log_level() <= log_level::logLevel##_level) ? true : false) : false)
 #define SET_LOG_LEVEL(logLevel)                                          \
 	{                                                                    \
@@ -71,6 +79,7 @@ public:
 
 public:
 	virtual void init() = 0;
+	virtual void stop() = 0;
 	virtual void set_log_level(log_level level) = 0;
 	virtual log_level get_log_level() = 0;
 	virtual void debug_log(const std::string &msg) = 0;

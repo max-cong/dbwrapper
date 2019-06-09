@@ -30,7 +30,7 @@ MESSAGE(STATUS "start build")
 MESSAGE(STATUS "CMAKE_CXX_FLAGS: " ${CMAKE_CXX_FLAGS})
 
 ADD_SUBDIRECTORY(example)
-add_subdirectory(tst)
+#add_subdirectory(tst)
 
 ADD_CUSTOM_TARGET(example
 	COMMAND ./${EXAMPLE_BINARY} ${CMD_ARGS}

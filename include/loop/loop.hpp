@@ -59,10 +59,22 @@ public:
 		_base_sptr.reset(event_base_new(), [](event_base *innerBase) {
 			if (NULL != innerBase)
 			{
+				if (CHECK_LOG_LEVEL(warn))
+				{
+					__LOG(warn, "[loop] event base is exiting!");
+				}
 				event_base_free(innerBase);
 				innerBase = NULL;
 			}
 		});
+	}
+	~loop()
+	{
+		if (CHECK_LOG_LEVEL(warn))
+		{
+			__LOG(warn, "[loop] loop is exiting!");
+		}
+		_base_sptr.reset();
 	}
 
 	/** convert to event_base * pointer*/
@@ -117,7 +129,8 @@ public:
 		if (newThread)
 		{
 			// take care here
-			_loopThread = std::make_shared<std::thread>(std::bind(&loop::_run, shared_from_this()));
+			//_loopThread = std::make_shared<std::thread>(std::bind(&loop::_run, shared_from_this()));
+			_loopThread = std::make_shared<std::thread>(std::bind(&loop::_run, this));
 		}
 		else
 		{

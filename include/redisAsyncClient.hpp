@@ -40,8 +40,11 @@ class redisAsyncClient : public nonCopyable
 public:
     bool init()
     {
-
         _loop_sptr.reset(new loop::loop(), [](loop::loop *innerLoop) {
+            if (CHECK_LOG_LEVEL(warn))
+            {
+                __LOG(warn, "[redisAsyncClient] loop is exiting");
+            }
             if (innerLoop)
             {
                 innerLoop->stop(true);
@@ -71,13 +74,45 @@ public:
         }
         _task_sptr->setGeneticGene(getThis());
         _task_sptr->init();
-
+     
         medis::taskSaver<void *, std::shared_ptr<task::taskImp>>::instance()->save(getThis(), _task_sptr);
-        return _loop_sptr->start(true);
+     
+         _loop_sptr->start(true);
+   
+        return true;
     }
+    void dump()
+    {
+        if (CHECK_LOG_LEVEL(warn))
+        {
+            __LOG(warn, "_loop_sptr use count is : " << _loop_sptr.use_count() << "_task_sptr use count is : " << _task_sptr.use_count());
+        }
+    }
+    void cleanUp()
+    {
+        if (CHECK_LOG_LEVEL(warn))
+        {
+            __LOG(warn, "[redisAsyncClient] clean up is called");
+        }
+      
+        auto task_ins_ptr = medis::taskSaver<void *, std::shared_ptr<task::taskImp>>::instance();
+        task_ins_ptr->distroy(task_ins_ptr);
+
+        auto cfg_ins_sptr = configCenter::configCenter<void *>::instance();
+        cfg_ins_sptr->distroy(std::move(cfg_ins_sptr));
+
+        if (CHECK_LOG_LEVEL(warn))
+        {
+            __LOG(warn, "[redisAsyncClient] clean up is called");
+        }
+
+
+    }
+
     template <typename COMMAND_KEY, typename COMMAND_VALUE>
     bool put(COMMAND_KEY &&key, COMMAND_VALUE &&value, void *usr_data, redisCallbackFn *fn)
     {
+      
         if (!getConnStatus())
         {
             return false;
