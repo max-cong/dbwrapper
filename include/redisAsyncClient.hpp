@@ -48,9 +48,6 @@
         auto task_ins_ptr = medis::taskSaver<void *, std::shared_ptr<task::taskImp>>::instance();  \
         task_ins_ptr->distroy(task_ins_ptr);                                                       \
                                                                                                    \
-        auto ctxSaverIns = medis::contextSaver<void *, std::shared_ptr<redisContext>>::instance(); \
-        ctxSaverIns->distroy(ctxSaverIns);                                                         \
-                                                                                                   \
         auto cfg_ins_sptr = configCenter::configCenter<void *>::instance();                        \
         cfg_ins_sptr->distroy(std::move(cfg_ins_sptr));                                            \
                                                                                                    \

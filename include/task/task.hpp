@@ -68,17 +68,16 @@ public:
     taskImp() = delete;
     virtual ~taskImp()
     {
-                  if (CHECK_LOG_LEVEL(warn))
-            {
-                __LOG(warn, "[taskImp] taskImp is exiting!");
-            }
+        if (CHECK_LOG_LEVEL(warn))
+        {
+            __LOG(warn, "[taskImp] taskImp is exiting!");
+        }
         if (_evfd > 0)
         {
             close(_evfd);
             _evfd = -1;
         }
-        auto ctxSaver = medis::contextSaver<void *, std::shared_ptr<redisContext>>::instance();
-        ctxSaver->cleanUp(ctxSaver);
+
         _taskQueue.reset();
     }
 
@@ -224,6 +223,7 @@ public:
                 }
             }
         });
+        _ctxSaver = std::make_shared<medis::contextSaver<void *, std::shared_ptr<redisContext>>>();
 
         return true;
     }
@@ -261,8 +261,7 @@ public:
             __LOG(debug, "argv: " << (char *)privdata << ", string is " << reply->str);
         }
 
-        auto ctxSaver = medis::contextSaver<void *, std::shared_ptr<redisContext>>::instance();
-        auto rdxCtx = ctxSaver->getCtx(c).value_or(nullptr);
+        auto rdxCtx = _ctxSaver->getCtx(c).value_or(nullptr);
         if (rdxCtx)
         {
             if (c->err != REDIS_OK)
@@ -314,9 +313,8 @@ public:
         }
 
         redisAsyncContext *_aCtx = const_cast<redisAsyncContext *>(c);
-        auto ctxSaver = medis::contextSaver<void *, std::shared_ptr<redisContext>>::instance();
 
-        std::shared_ptr<redisContext> rdsCtx = ctxSaver->getCtx((void *)_aCtx).value_or(nullptr);
+        std::shared_ptr<redisContext> rdsCtx = _ctxSaver->getCtx((void *)_aCtx).value_or(nullptr);
         if (rdsCtx)
         {
             if (connected)
@@ -356,9 +354,8 @@ public:
         }
 
         redisAsyncContext *_aCtx = const_cast<redisAsyncContext *>(c);
-        auto ctxSaver = medis::contextSaver<void *, std::shared_ptr<redisContext>>::instance();
 
-        auto rdsCtx = ctxSaver->getCtx(_aCtx).value_or(nullptr);
+        auto rdsCtx = _ctxSaver->getCtx(_aCtx).value_or(nullptr);
         if (rdsCtx)
         {
             rdsCtx->_lbs->delObj(_aCtx);
@@ -401,8 +398,8 @@ public:
                     task_sptr->sendMsg(taskMsgType::TASK_REDIS_ADD_CONN, connInfo_sptr);
                 }
                 // remove the related info in the context saver
-                auto ctxSaver = medis::contextSaver<void *, std::shared_ptr<redisContext>>::instance();
-                ctxSaver->del(_aCtx);
+
+                _ctxSaver->del(_aCtx);
             });
         }
         else
@@ -641,8 +638,7 @@ public:
         rdsCtx->_retryTimerManager = std::make_shared<timer::timerManager>(getLoop());
         rdsCtx->_lbs = _connManager->getLbs();
 
-        auto ctxSaver = medis::contextSaver<void *, std::shared_ptr<redisContext>>::instance();
-        ctxSaver->save(_context, rdsCtx);
+        _ctxSaver->save(_context, rdsCtx);
 
         int ret = REDIS_ERR;
 
@@ -676,8 +672,7 @@ public:
             __LOG(debug, "disconnect to : " << connInfo_sptr->ip << ":" << connInfo_sptr->port);
         }
 
-        auto ctxSaver = medis::contextSaver<void *, std::shared_ptr<redisContext>>::instance();
-        auto ctxList = ctxSaver->getIpPortThenDel(connInfo_sptr->ip, connInfo_sptr->port);
+        auto ctxList = _ctxSaver->getIpPortThenDel(connInfo_sptr->ip, connInfo_sptr->port);
         for (auto it : ctxList)
         {
             // need to delete related info from load balancer
@@ -804,6 +799,7 @@ public:
     TASK_QUEUE _taskQueue;
     std::shared_ptr<connManager::connManager<medis::CONN_INFO>> _connManager;
     std::shared_ptr<timer::timerManager> _timerManager;
+    std::shared_ptr<medis::contextSaver<void *, std::shared_ptr<redisContext>>> _ctxSaver;
 };
 
 } // namespace task

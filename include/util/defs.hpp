@@ -70,56 +70,20 @@ public:
             __LOG(warn, "[contextSaver] constructure is called, this is : " << (void *)this);
         }
     }
-    static contextSaver<OBJ, RDS_CTX> *instance()
+    ~contextSaver()
     {
+            if (CHECK_LOG_LEVEL(warn))
+            {
+                __LOG(warn, "[contextSaver] item in the map : " << _geneMap.size());
+            }
+            for (auto it : _geneMap)
+            {
+                redisAsyncDisconnect((redisAsyncContext *)it.first);
+            }
+            _geneMap.clear();
+    }
 
-        static contextSaver<OBJ, RDS_CTX> *ins = new contextSaver<OBJ, RDS_CTX>();
-        if (CHECK_LOG_LEVEL(debug))
-        {
-            __LOG(debug, "context saver get instance, ins is : " << (void *)ins);
-        }
-        return ins;
-    }
-    static void cleanUp(contextSaver<OBJ, RDS_CTX> *ins)
-    {
-        if (CHECK_LOG_LEVEL(warn))
-        {
-            __LOG(warn, "[contextSaver] clean up! ins is : " << (void *)ins);
-        }
-        if (ins)
-        {
-            if (CHECK_LOG_LEVEL(warn))
-            {
-                __LOG(warn, "[contextSaver] item in the map : " << (ins->_geneMap).size());
-            }
-            for (auto it : ins->_geneMap)
-            {
-                redisAsyncDisconnect((redisAsyncContext *)it.first);
-            }
-            ins->_geneMap.clear();
-        }
-    }
-    static void distroy(contextSaver<OBJ, RDS_CTX> *ins)
-    {
-        if (CHECK_LOG_LEVEL(warn))
-        {
-            __LOG(warn, "[contextSaver] distroy! ins is : " << (void *)ins);
-        }
-        if (ins)
-        {
-            if (CHECK_LOG_LEVEL(warn))
-            {
-                __LOG(warn, "[contextSaver] item in the map : " << (ins->_geneMap).size());
-            }
-            for (auto it : ins->_geneMap)
-            {
-                redisAsyncDisconnect((redisAsyncContext *)it.first);
-            }
-            ins->_geneMap.clear();
-            delete ins;
-            ins = NULL;
-        }
-    }
+   
     void save(OBJ obj, RDS_CTX gene)
     {
         if (CHECK_LOG_LEVEL(debug))
