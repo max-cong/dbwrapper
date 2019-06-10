@@ -63,9 +63,7 @@ void getCallback(redisAsyncContext *c, void *r, void *privdata)
 int main()
 {
     {
-        std::unique_ptr<simpleLogger> boostloggerUptr(new simpleLogger());
-        INIT_LOGGER(boostloggerUptr);
-        SET_LOG_LEVEL(debug);
+        MEDIS_GLOB_INIT();
 
         redisAsyncClient aclient;
         aclient.dump();
@@ -98,9 +96,16 @@ int main()
 
         std::this_thread::sleep_for(std::chrono::milliseconds(1000));
         std::cout << "total receive response is : " << i << std::endl;
+
+        if (CHECK_LOG_LEVEL(debug))
+        {
+            __LOG(debug, "[example] TLS gene is : " << (void *)GET_GENE_TLS(););
+        }
+
         aclient.cleanUp();
-        DESTROY_LOGGER();
+        MEDIS_GLOB_CLEAN_UP();
     }
+    
     std::cout << "wait 10 mil seconds and exit example" << std::endl;
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
 }

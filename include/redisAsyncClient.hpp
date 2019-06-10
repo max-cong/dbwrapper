@@ -35,10 +35,33 @@
 
 #include <string>
 #include <memory>
+#include <thread>
 
+#define MEDIS_GLOB_INIT()                                             \
+    {                                                                 \
+        std::unique_ptr<simpleLogger> loggerUptr(new simpleLogger()); \
+        INIT_LOGGER(loggerUptr);                                      \
+        SET_LOG_LEVEL(debug);                                         \
+    }
+#define MEDIS_GLOB_CLEAN_UP()                                                                      \
+    {                                                                                              \
+        auto task_ins_ptr = medis::taskSaver<void *, std::shared_ptr<task::taskImp>>::instance();  \
+        task_ins_ptr->distroy(task_ins_ptr);                                                       \
+                                                                                                   \
+        auto ctxSaverIns = medis::contextSaver<void *, std::shared_ptr<redisContext>>::instance(); \
+        ctxSaverIns->distroy(ctxSaverIns);                                                         \
+                                                                                                   \
+        auto cfg_ins_sptr = configCenter::configCenter<void *>::instance();                        \
+        cfg_ins_sptr->distroy(std::move(cfg_ins_sptr));                                            \
+                                                                                                   \
+        DESTROY_LOGGER();                                                                          \
+    }
 class redisAsyncClient : public nonCopyable
 {
 public:
+    ~redisAsyncClient()
+    {
+    }
     bool init()
     {
         _loop_sptr.reset(new loop::loop(), [](loop::loop *innerLoop) {
@@ -75,11 +98,11 @@ public:
         }
         _task_sptr->setGeneticGene(getThis());
         _task_sptr->init();
-     
+
         medis::taskSaver<void *, std::shared_ptr<task::taskImp>>::instance()->save(getThis(), _task_sptr);
-     
-         _loop_sptr->start(true);
-   
+        _loop_sptr->setGeneticGene(getThis());
+        _loop_sptr->start(true);
+
         return true;
     }
     void dump()
@@ -95,25 +118,21 @@ public:
         {
             __LOG(warn, "[redisAsyncClient] clean up is called");
         }
-      
+        // stop loop first in case it will hit disconnect
+        _loop_sptr->stop(true);
+        // stop task
+        _task_sptr.reset();
+
         auto task_ins_ptr = medis::taskSaver<void *, std::shared_ptr<task::taskImp>>::instance();
-        task_ins_ptr->distroy(task_ins_ptr);
-
+        task_ins_ptr->del((void *)this);
         auto cfg_ins_sptr = configCenter::configCenter<void *>::instance();
-        cfg_ins_sptr->distroy(std::move(cfg_ins_sptr));
-
-        if (CHECK_LOG_LEVEL(warn))
-        {
-            __LOG(warn, "[redisAsyncClient] clean up is called");
-        }
-
-
+        cfg_ins_sptr->cleanUp((void *)this);
     }
 
     template <typename COMMAND_KEY, typename COMMAND_VALUE>
     bool put(COMMAND_KEY &&key, COMMAND_VALUE &&value, void *usr_data, redisCallbackFn *fn)
     {
-      
+
         if (!getConnStatus())
         {
             return false;

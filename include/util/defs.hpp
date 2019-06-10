@@ -80,6 +80,25 @@ public:
         }
         return ins;
     }
+    static void cleanUp(contextSaver<OBJ, RDS_CTX> *ins)
+    {
+        if (CHECK_LOG_LEVEL(warn))
+        {
+            __LOG(warn, "[contextSaver] clean up! ins is : " << (void *)ins);
+        }
+        if (ins)
+        {
+            if (CHECK_LOG_LEVEL(warn))
+            {
+                __LOG(warn, "[contextSaver] item in the map : " << (ins->_geneMap).size());
+            }
+            for (auto it : ins->_geneMap)
+            {
+                redisAsyncDisconnect((redisAsyncContext *)it.first);
+            }
+            ins->_geneMap.clear();
+        }
+    }
     static void distroy(contextSaver<OBJ, RDS_CTX> *ins)
     {
         if (CHECK_LOG_LEVEL(warn))

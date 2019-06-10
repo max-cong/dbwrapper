@@ -57,6 +57,10 @@ public:
 			ins.reset();
 		}
 	}
+	void cleanUp(cfgKeyType_t key)
+	{
+		_propertiesMap.erase(key);
+	}
 
 	cfgPropMap getProperties(cfgKeyType_t key)
 	{

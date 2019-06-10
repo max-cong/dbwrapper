@@ -31,10 +31,13 @@
 #include <string>
 #include <atomic>
 #include <functional>
+#include <thread>
 #include <event2/event.h>
 #include <event2/thread.h>
 #include "logger/logger.hpp"
-
+#include "gene/gene.hpp"
+static thread_local void *medis_gene;
+#define GET_GENE_TLS() medis_gene
 namespace loop
 {
 enum class loopStatus : std::uint32_t
@@ -50,7 +53,7 @@ static std::ostream &operator<<(std::ostream &os, loopStatus status)
 	os << statusString;
 	return os;
 }
-class loop : public std::enable_shared_from_this<loop>
+class loop : public gene::gene<void *>, public std::enable_shared_from_this<loop>
 {
 public:
 	loop() : _status(loopStatus::statusInit)
@@ -70,11 +73,11 @@ public:
 	}
 	~loop()
 	{
+		stop();
 		if (CHECK_LOG_LEVEL(warn))
 		{
 			__LOG(warn, "[loop] loop is exiting!");
 		}
-		_base_sptr.reset();
 	}
 
 	/** convert to event_base * pointer*/
@@ -157,7 +160,7 @@ public:
 		waiting ? event_base_loopexit(_base_sptr.get(), NULL) : event_base_loopbreak(this->ev());
 		onAfterStop();
 
-		if (_loopThread && loopStatus::statusFinished != _status)
+		if (_loopThread )//&& loopStatus::statusFinished != _status)
 		{
 			_loopThread->join();
 		}
@@ -173,6 +176,13 @@ protected:
 		if (CHECK_LOG_LEVEL(debug))
 		{
 			__LOG(debug, "onBeforeLoop");
+		}
+
+		// set TLS data
+		medis_gene = getGeneticGene();
+		if (CHECK_LOG_LEVEL(debug))
+		{
+			__LOG(debug, "[loop] TLS gene is : " << (void *)GET_GENE_TLS(););
 		}
 	}
 	void onAfterLoop()

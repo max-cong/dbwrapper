@@ -51,6 +51,8 @@ protected:
     virtual void TearDown() override
     {
         // ...
+        _aclient_sptr->cleanUp();
+        _aclient_sptr.reset();
     }
     std::shared_ptr<redisAsyncClient> _aclient_sptr;
 };
@@ -58,26 +60,27 @@ protected:
 TEST_F(basicDevelopTestRR, put)
 {
     bool ret = _aclient_sptr->put(std::string("hello"), std::string("world"), NULL, getCallback);
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
     EXPECT_TRUE(ret);
 }
 TEST_F(basicDevelopTestRR, get)
 {
     bool ret = _aclient_sptr->get(std::string("hello"), nullptr, NULL, getCallback);
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
     EXPECT_TRUE(ret);
 }
 TEST_F(basicDevelopTestRR, del)
 {
     bool ret = _aclient_sptr->del(std::string("hello"), nullptr, NULL, getCallback);
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
     EXPECT_TRUE(ret);
 }
 int main(int argc, char *argv[])
 {
-    std::unique_ptr<boost_logger> boostloggerUptr(new boost_logger());
-    INIT_LOGGER(boostloggerUptr);
-    SET_LOG_LEVEL(debug);
-
+    MEDIS_GLOB_INIT();
     ::testing::InitGoogleTest(&argc, argv);
     int ret = RUN_ALL_TESTS();
-    std::this_thread::sleep_for(std::chrono::milliseconds(5000));
+    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+    MEDIS_GLOB_CLEAN_UP();
     return ret;
 }

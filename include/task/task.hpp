@@ -68,13 +68,17 @@ public:
     taskImp() = delete;
     virtual ~taskImp()
     {
+                  if (CHECK_LOG_LEVEL(warn))
+            {
+                __LOG(warn, "[taskImp] taskImp is exiting!");
+            }
         if (_evfd > 0)
         {
             close(_evfd);
             _evfd = -1;
         }
         auto ctxSaver = medis::contextSaver<void *, std::shared_ptr<redisContext>>::instance();
-        ctxSaver->distroy(ctxSaver);
+        ctxSaver->cleanUp(ctxSaver);
         _taskQueue.reset();
     }
 
@@ -174,7 +178,7 @@ public:
         _connManager->setAvaliableCb([sef_wptr]() {
             if (!sef_wptr.expired())
             {
-                sef_wptr.lock()->_connected = true;
+                sef_wptr.lock()->setConnStatus(true);
             }
             else
             {
@@ -780,6 +784,10 @@ public:
     bool getConnStatus()
     {
         return _connected;
+    }
+    void setConnStatus(bool medisState)
+    {
+        _connected = medisState;
     }
 
     std::weak_ptr<taskImp> getThisWptr()
