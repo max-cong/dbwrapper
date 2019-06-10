@@ -91,6 +91,10 @@ public:
 		_event_sptr.reset(event_new(_event_base, -1, (round > 1) ? EV_PERSIST : 0, eventHandler, this), [](event *innerEvent) {
 			if (NULL != innerEvent)
 			{
+				if (CHECK_LOG_LEVEL(warn))
+				{
+					__LOG(warn, "[timer] timer event is freed!");
+				}
 				event_free(innerEvent);
 				innerEvent = NULL;
 			}

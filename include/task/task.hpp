@@ -59,6 +59,8 @@ struct redisContext
     std::shared_ptr<lbStrategy::lbStrategy<redisAsyncContext *>> _lbs;
     std::shared_ptr<timer::timerManager> _retryTimerManager;
 };
+static thread_local std::shared_ptr<medis::contextSaver<void *, std::shared_ptr<redisContext>>> tls_ctxSaver;
+
 class taskImp : public gene::gene<void *>, public std::enable_shared_from_this<taskImp>, public nonCopyable
 {
 public:
@@ -123,6 +125,12 @@ public:
         // start evfd client
 
         _evfdClient = std::make_shared<evfdClient>(_evfd);
+
+        // send one message to worker thread.
+        std::function<void()> tlsCtxFn = []() {
+            tls_ctxSaver = std::make_shared<medis::contextSaver<void *, std::shared_ptr<redisContext>>>();
+        };
+        sendMsg(taskMsgType::TASK_TLS_CTX_SAVER_INIT, tlsCtxFn);
 
         _connManager = std::make_shared<connManager::connManager<medis::CONN_INFO>>(getLoop());
         if (!_connManager)
@@ -223,8 +231,6 @@ public:
                 }
             }
         });
-        _ctxSaver = std::make_shared<medis::contextSaver<void *, std::shared_ptr<redisContext>>>();
-
         return true;
     }
     static void evfdCallback(int fd, short event, void *args)
@@ -261,7 +267,7 @@ public:
             __LOG(debug, "argv: " << (char *)privdata << ", string is " << reply->str);
         }
 
-        auto rdxCtx = _ctxSaver->getCtx(c).value_or(nullptr);
+        auto rdxCtx = tls_ctxSaver->getCtx(c).value_or(nullptr);
         if (rdxCtx)
         {
             if (c->err != REDIS_OK)
@@ -314,7 +320,7 @@ public:
 
         redisAsyncContext *_aCtx = const_cast<redisAsyncContext *>(c);
 
-        std::shared_ptr<redisContext> rdsCtx = _ctxSaver->getCtx((void *)_aCtx).value_or(nullptr);
+        std::shared_ptr<redisContext> rdsCtx = tls_ctxSaver->getCtx((void *)_aCtx).value_or(nullptr);
         if (rdsCtx)
         {
             if (connected)
@@ -355,7 +361,7 @@ public:
 
         redisAsyncContext *_aCtx = const_cast<redisAsyncContext *>(c);
 
-        auto rdsCtx = _ctxSaver->getCtx(_aCtx).value_or(nullptr);
+        auto rdsCtx = tls_ctxSaver->getCtx(_aCtx).value_or(nullptr);
         if (rdsCtx)
         {
             rdsCtx->_lbs->delObj(_aCtx);
@@ -399,7 +405,7 @@ public:
                 }
                 // remove the related info in the context saver
 
-                _ctxSaver->del(_aCtx);
+                tls_ctxSaver->del(_aCtx);
             });
         }
         else
@@ -446,6 +452,10 @@ public:
             ret = processRedisConnAvaliable();
             break;
 
+        case taskMsgType::TASK_TLS_CTX_SAVER_INIT:
+            ret = processTlsCtxSaver(task_msg);
+            break;
+
         default:
             if (CHECK_LOG_LEVEL(warn))
             {
@@ -454,6 +464,23 @@ public:
             break;
         }
         return ret;
+    }
+    bool processTlsCtxSaver(std::shared_ptr<taskMsg> task_msg)
+    {
+        if (!task_msg)
+        {
+            if (CHECK_LOG_LEVEL(error))
+            {
+                __LOG(error, "invalid task message!");
+            }
+        }
+        if (CHECK_LOG_LEVEL(warn))
+        {
+            __LOG(warn, "set tls context saver!");
+        }
+        std::function<void()> fn = DBW_ANY_CAST<std::function<void()>>(task_msg->body);
+        fn();
+        return true;
     }
 
     bool processRedisConnAvaliable()
@@ -638,7 +665,7 @@ public:
         rdsCtx->_retryTimerManager = std::make_shared<timer::timerManager>(getLoop());
         rdsCtx->_lbs = _connManager->getLbs();
 
-        _ctxSaver->save(_context, rdsCtx);
+        tls_ctxSaver->save(_context, rdsCtx);
 
         int ret = REDIS_ERR;
 
@@ -672,7 +699,7 @@ public:
             __LOG(debug, "disconnect to : " << connInfo_sptr->ip << ":" << connInfo_sptr->port);
         }
 
-        auto ctxList = _ctxSaver->getIpPortThenDel(connInfo_sptr->ip, connInfo_sptr->port);
+        auto ctxList = tls_ctxSaver->getIpPortThenDel(connInfo_sptr->ip, connInfo_sptr->port);
         for (auto it : ctxList)
         {
             // need to delete related info from load balancer
@@ -799,7 +826,6 @@ public:
     TASK_QUEUE _taskQueue;
     std::shared_ptr<connManager::connManager<medis::CONN_INFO>> _connManager;
     std::shared_ptr<timer::timerManager> _timerManager;
-    std::shared_ptr<medis::contextSaver<void *, std::shared_ptr<redisContext>>> _ctxSaver;
 };
 
 } // namespace task

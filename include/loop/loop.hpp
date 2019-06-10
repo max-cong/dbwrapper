@@ -36,8 +36,7 @@
 #include <event2/thread.h>
 #include "logger/logger.hpp"
 #include "gene/gene.hpp"
-static thread_local void *medis_gene;
-#define GET_GENE_TLS() medis_gene
+
 namespace loop
 {
 enum class loopStatus : std::uint32_t
@@ -176,13 +175,6 @@ protected:
 		if (CHECK_LOG_LEVEL(debug))
 		{
 			__LOG(debug, "onBeforeLoop");
-		}
-
-		// set TLS data
-		medis_gene = getGeneticGene();
-		if (CHECK_LOG_LEVEL(debug))
-		{
-			__LOG(debug, "[loop] TLS gene is : " << (void *)GET_GENE_TLS(););
 		}
 	}
 	void onAfterLoop()

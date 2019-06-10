@@ -65,9 +65,9 @@ class contextSaver
 public:
     contextSaver()
     {
-        if (CHECK_LOG_LEVEL(warn))
+        if (CHECK_LOG_LEVEL(debug))
         {
-            __LOG(warn, "[contextSaver] constructure is called, this is : " << (void *)this);
+            __LOG(debug, "[contextSaver] constructure is called, this is : " << (void *)this);
         }
     }
     ~contextSaver()
