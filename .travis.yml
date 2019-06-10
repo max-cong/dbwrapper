@@ -71,8 +71,8 @@ before_install:
   - which valgrind
   # install libevent on a new version. so that we can avoid event_global_setup_locks_ memory leak
   - sudo wget https://github.com/libevent/libevent/releases/download/release-2.1.10-stable/libevent-2.1.10-stable.tar.gz
-  - sudo tar xf libevent-2.1.10-stable.tar.gz&& cd libevent-2.1.10-stable
-  - mkdir build && cd build&&sudo cmake ..&&sudo make&&sudo make install
+  - sudo tar xf libevent-2.1.10-stable.tar.gz&& sudo cd libevent-2.1.10-stable
+  - sudo mkdir build &&sudo cd build&&sudo cmake ..&&sudo make&&sudo make install
   - cd "${TRAVIS_BUILD_DIR}"
   #- echo -n | openssl s_client -connect https://scan.coverity.com:443 | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' | sudo tee -a /etc/ssl/certs/ca-
 
