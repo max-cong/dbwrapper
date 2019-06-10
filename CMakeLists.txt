@@ -30,7 +30,7 @@ MESSAGE(STATUS "start build")
 MESSAGE(STATUS "CMAKE_CXX_FLAGS: " ${CMAKE_CXX_FLAGS})
 
 ADD_SUBDIRECTORY(example)
-#add_subdirectory(tst)
+add_subdirectory(tst)
 
 ADD_CUSTOM_TARGET(example
 	COMMAND ./${EXAMPLE_BINARY} ${CMD_ARGS}
@@ -46,7 +46,7 @@ ADD_CUSTOM_TARGET(tests
 
 
 ADD_CUSTOM_TARGET(memcheck
-	COMMAND command -v valgrind >/dev/null 2>&1 && valgrind -v --leak-check=full --show-reachable=yes
+	COMMAND command -v valgrind >/dev/null 2>&1 && valgrind -v --leak-check=full --show-reachable=yes --track-fds=yes
 	--undef-value-errors=yes --track-origins=yes --num-callers=50 ./${EXAMPLE_BINARY} ${CMD_ARGS}
 	WORKING_DIRECTORY ${EXECUTABLE_OUTPUT_PATH}
 	COMMENT "Check memory usage with valgrind"

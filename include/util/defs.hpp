@@ -92,6 +92,10 @@ public:
             {
                 __LOG(warn, "[contextSaver] item in the map : " << (ins->_geneMap).size());
             }
+            for (auto it : ins->_geneMap)
+            {
+                redisAsyncDisconnect((redisAsyncContext *)it.first);
+            }
             ins->_geneMap.clear();
             delete ins;
             ins = NULL;
@@ -166,6 +170,8 @@ public:
                 __LOG(warn, "[taskSaver] item in the map : " << (ins->_geneMap).size());
             }
             ins->_geneMap.clear();
+            delete ins;
+            ins = NULL;
         }
     }
     void save(OBJ obj, RDS_TASK_SPTR gene)

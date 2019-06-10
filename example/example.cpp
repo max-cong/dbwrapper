@@ -63,7 +63,7 @@ void getCallback(redisAsyncContext *c, void *r, void *privdata)
 int main()
 {
     {
-        std::unique_ptr<boost_logger> boostloggerUptr(new boost_logger());
+        std::unique_ptr<simpleLogger> boostloggerUptr(new simpleLogger());
         INIT_LOGGER(boostloggerUptr);
         SET_LOG_LEVEL(debug);
 

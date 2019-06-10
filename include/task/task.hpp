@@ -116,10 +116,7 @@ public:
         {
             return false;
         }
-        if (CHECK_LOG_LEVEL(error))
-        {
-            __LOG(error, "now loop sptr use count is : " << _loop.use_count());
-        }
+
         // start evfd client
 
         _evfdClient = std::make_shared<evfdClient>(_evfd);
@@ -202,7 +199,7 @@ public:
         });
 
         _connManager->init();
-    
+
         _timerManager.reset(new timer::timerManager(getLoop()));
         // start a 100ms timer to guard A-B-A issue.
 
@@ -353,6 +350,7 @@ public:
         {
             __LOG(warn, "Disconnected... status is :" << status);
         }
+
         redisAsyncContext *_aCtx = const_cast<redisAsyncContext *>(c);
         auto ctxSaver = medis::contextSaver<void *, std::shared_ptr<redisContext>>::instance();
 
@@ -398,10 +396,10 @@ public:
 
                     task_sptr->sendMsg(taskMsgType::TASK_REDIS_ADD_CONN, connInfo_sptr);
                 }
+                // remove the related info in the context saver
                 auto ctxSaver = medis::contextSaver<void *, std::shared_ptr<redisContext>>::instance();
                 ctxSaver->del(_aCtx);
             });
-            // remove the related info in the context saver
         }
         else
         {
