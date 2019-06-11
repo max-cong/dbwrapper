@@ -90,7 +90,7 @@ script:
   - mkdir -p build &&mkdir -p gcov&& cd build
   - cd $BASE_DIR/build&&rm -rf *&&cmake -DCODE_COVERAGE=ON  ..  &&build-wrapper-linux-x86-64 --out-dir ../bw-output make clean all&&bin/medis_ut_tests
   - cd $GCOV_DIR&& gcov -a utMain.cpp.gcno
-  - cd $BASE_DIR&& sonar-scanner -Dsonar.projectKey=max-cong_medis -Dsonar.projectName=medis -Dsonar.projectVersion=1.0 -Dsonar.cfamily.build-wrapper-output=bw-output -Dsonar.sources=. -Dsonar.cfamily.gcov.reportsPath=build/tst/UT/CMakeFiles/_medis_tests.dir -Dsonar.coverage.exclusions=example/**/*,tst/**/* -Dsonar.exclusions=example/**/*,tst/**/*
+  - cd $BASE_DIR&& sonar-scanner -Dsonar.projectKey=max-cong_medis -Dsonar.projectName=medis -Dsonar.projectVersion=1.0 -Dsonar.cfamily.build-wrapper-output=bw-output -Dsonar.sources=. -Dsonar.cfamily.gcov.reportsPath=$GCOV_DIR -Dsonar.coverage.exclusions=example/**/*,tst/**/* -Dsonar.exclusions=example/**/*,tst/**/*
   - cd $BASE_DIR/build/bin&& ./medis_ut_tests&&./medis_example
   - cd $BASE_DIR/build&& make memcheck
 
