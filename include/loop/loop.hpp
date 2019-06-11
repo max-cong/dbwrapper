@@ -31,9 +31,11 @@
 #include <string>
 #include <atomic>
 #include <functional>
+#include <thread>
 #include <event2/event.h>
 #include <event2/thread.h>
 #include "logger/logger.hpp"
+#include "gene/gene.hpp"
 
 namespace loop
 {
@@ -50,7 +52,7 @@ static std::ostream &operator<<(std::ostream &os, loopStatus status)
 	os << statusString;
 	return os;
 }
-class loop : public std::enable_shared_from_this<loop>
+class loop : public gene::gene<void *>, public std::enable_shared_from_this<loop>
 {
 public:
 	loop() : _status(loopStatus::statusInit)
@@ -59,10 +61,22 @@ public:
 		_base_sptr.reset(event_base_new(), [](event_base *innerBase) {
 			if (NULL != innerBase)
 			{
+				if (CHECK_LOG_LEVEL(warn))
+				{
+					__LOG(warn, "[loop] event base is exiting!");
+				}
 				event_base_free(innerBase);
 				innerBase = NULL;
 			}
 		});
+	}
+	~loop()
+	{
+		stop();
+		if (CHECK_LOG_LEVEL(warn))
+		{
+			__LOG(warn, "[loop] loop is exiting!");
+		}
 	}
 
 	/** convert to event_base * pointer*/
@@ -117,7 +131,8 @@ public:
 		if (newThread)
 		{
 			// take care here
-			_loopThread = std::make_shared<std::thread>(std::bind(&loop::_run, shared_from_this()));
+			//_loopThread = std::make_shared<std::thread>(std::bind(&loop::_run, shared_from_this()));
+			_loopThread = std::make_shared<std::thread>(std::bind(&loop::_run, this));
 		}
 		else
 		{
@@ -144,7 +159,7 @@ public:
 		waiting ? event_base_loopexit(_base_sptr.get(), NULL) : event_base_loopbreak(this->ev());
 		onAfterStop();
 
-		if (_loopThread && loopStatus::statusFinished != _status)
+		if (_loopThread )//&& loopStatus::statusFinished != _status)
 		{
 			_loopThread->join();
 		}

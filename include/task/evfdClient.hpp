@@ -40,7 +40,12 @@ public:
             __LOG(debug, "event fd is " << _evfd);
         }
     }
-    virtual ~evfdClient() {}
+    virtual ~evfdClient() {
+            if (CHECK_LOG_LEVEL(debug))
+        {
+            __LOG(debug, "event fd client is exiting " << _evfd);
+        }
+    }
 
     bool send(uint64_t size = 1)
     {

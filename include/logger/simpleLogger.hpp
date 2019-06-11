@@ -1,5 +1,6 @@
 /*
- * Copyright (c) 2016-20019 Max Cong <savagecm@qq.com>
+ * Copyright (c) 2016-20017 Max Cong <savagecm@qq.com>
+ * this code can be found at https://github.com/maxcong001/logger
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -22,52 +23,55 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 #pragma once
-#include "hiredis/hiredis.h"
-#include "hiredis/async.h"
-#include "util/medisType.hpp"
-#include <hiredis/adapters/libevent.h>
-#include <queue>
-#include <boost/thread/thread.hpp>
-#include <boost/lockfree/spsc_queue.hpp>
-namespace task
+
+class simpleLogger : public logger_iface
 {
-enum class taskMsgType : std::uint32_t
-{
-    TASK_REDIS_FORMAT_RAW,
-    TASK_REDIS_RAW,
+public:
+	simpleLogger() : m_level(log_level::error_level)
+	{
+	}
+	~simpleLogger()
+	{
+	}
+	void init() override
+	{
+	}
+	void stop() override
+	{
+	}
+	void set_log_level(log_level level) override
+	{
+		m_level = level;
+	}
 
-    TASK_REDIS_ADD_CONN,
+	log_level get_log_level() override
+	{
+		return m_level;
+	}
 
-    TASK_REDIS_DEL_CONN,
-    // when the first connection avaliable, need to clean the message queueu.
-    TASK_REDIS_CONN_AVALIABLE,
+	void debug_log(const std::string &msg) override
+	{
+		std::cout << msg << std::endl;
+	}
+	void info_log(const std::string &msg) override
+	{
+		std::cout << blue << msg << normal << std::endl;
+	}
+	void warn_log(const std::string &msg) override
+	{
+		std::cout << yellow << msg << normal << std::endl;
+	}
+	void error_log(const std::string &msg) override
+	{
+		std::cout << red << msg << normal << std::endl;
+	}
+	void critical_log(const std::string &msg) override
+	{
+		std::cout << red << msg << normal << std::endl;
+	}
 
-    TASK_TLS_CTX_SAVER_INIT,
-    TASK_MSG_MAX
+private:
+	log_level m_level;
 };
-
-struct taskMsg
-{
-    taskMsgType type;
-    //   std::uint32_t seq_id;
-    //   std::string from;
-    //    std::string to;
-    DBW_ANY body;
-};
-
-struct TASK_REDIS_FORMAT_RAW_MSG_BODY
-{
-    redisCallbackFn *fn;
-    std::string body;
-    void *usr_data;
-};
-struct TASK_REDIS_RAW_MSG_BODY
-{
-    redisCallbackFn *fn;
-    std::string body;
-    void *usr_data;
-};
-
-using TASK_QUEUE = boost::lockfree::spsc_queue<std::shared_ptr<taskMsg>, boost::lockfree::capacity<1024>>; // std::queue<std::shared_ptr<taskMsg>>;
-} // namespace task

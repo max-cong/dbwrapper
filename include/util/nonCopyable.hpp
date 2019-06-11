@@ -32,4 +32,3 @@ public:
 	nonCopyable(nonCopyable &&fp) = delete;
 	nonCopyable const &operator=(nonCopyable &&fp) = delete;
 };
-

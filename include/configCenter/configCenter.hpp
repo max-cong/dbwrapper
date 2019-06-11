@@ -28,6 +28,7 @@
 #include <mutex>
 #include <memory>
 #include <boost/lexical_cast.hpp>
+#include "logger/logger.hpp"
 namespace configCenter
 {
 // note: the shared_instance of this class will live until system gone
@@ -46,10 +47,19 @@ public:
 	// this is a glob, do not call this until all the client gone
 	static void distroy(std::shared_ptr<configCenter<cfgKeyType_t>> &&ins)
 	{
+		if (CHECK_LOG_LEVEL(warn))
+		{
+			__LOG(warn, "[configCenter] distroy!");
+		}
+
 		if (!ins)
 		{
 			ins.reset();
 		}
+	}
+	void cleanUp(cfgKeyType_t key)
+	{
+		_propertiesMap.erase(key);
 	}
 
 	cfgPropMap getProperties(cfgKeyType_t key)

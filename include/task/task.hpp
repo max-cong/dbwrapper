@@ -59,6 +59,8 @@ struct redisContext
     std::shared_ptr<lbStrategy::lbStrategy<redisAsyncContext *>> _lbs;
     std::shared_ptr<timer::timerManager> _retryTimerManager;
 };
+static thread_local std::shared_ptr<medis::contextSaver<void *, std::shared_ptr<redisContext>>> tls_ctxSaver;
+
 class taskImp : public gene::gene<void *>, public std::enable_shared_from_this<taskImp>, public nonCopyable
 {
 public:
@@ -68,26 +70,30 @@ public:
     taskImp() = delete;
     virtual ~taskImp()
     {
+        if (CHECK_LOG_LEVEL(warn))
+        {
+            __LOG(warn, "[taskImp] taskImp is exiting!");
+        }
         if (_evfd > 0)
         {
             close(_evfd);
             _evfd = -1;
         }
+
+        _taskQueue.reset();
     }
+
+    void stop()
+    {
+    }
+
     bool init()
     {
         if (CHECK_LOG_LEVEL(debug))
         {
             __LOG(debug, "init task with gene : " << (void *)getGeneticGene());
         }
-        if (_loop.expired())
-        {
-            if (CHECK_LOG_LEVEL(error))
-            {
-                __LOG(error, "loop is invalid!");
-            }
-            return false;
-        }
+
         _evfd = eventfd(0, EFD_NONBLOCK | EFD_CLOEXEC);
         if (_evfd < 0)
         {
@@ -102,7 +108,14 @@ public:
             __LOG(debug, "init taskImp with ID :" << _evfd);
         }
         // start eventfd server
-
+        if (_loop.expired())
+        {
+            if (CHECK_LOG_LEVEL(error))
+            {
+                __LOG(error, "loop is invalid!");
+            }
+            return false;
+        }
         _evfdServer = std::make_shared<evfdServer>(getLoop(), _evfd, evfdCallback, (void *)this);
         if (!_evfdServer->init())
         {
@@ -112,6 +125,12 @@ public:
         // start evfd client
 
         _evfdClient = std::make_shared<evfdClient>(_evfd);
+
+        // send one message to worker thread.
+        std::function<void()> tlsCtxFn = []() {
+            tls_ctxSaver = std::make_shared<medis::contextSaver<void *, std::shared_ptr<redisContext>>>();
+        };
+        sendMsg(taskMsgType::TASK_TLS_CTX_SAVER_INIT, tlsCtxFn);
 
         _connManager = std::make_shared<connManager::connManager<medis::CONN_INFO>>(getLoop());
         if (!_connManager)
@@ -166,7 +185,7 @@ public:
         _connManager->setAvaliableCb([sef_wptr]() {
             if (!sef_wptr.expired())
             {
-                sef_wptr.lock()->_connected = true;
+                sef_wptr.lock()->setConnStatus(true);
             }
             else
             {
@@ -191,6 +210,7 @@ public:
         });
 
         _connManager->init();
+
         _timerManager.reset(new timer::timerManager(getLoop()));
         // start a 100ms timer to guard A-B-A issue.
 
@@ -247,8 +267,7 @@ public:
             __LOG(debug, "argv: " << (char *)privdata << ", string is " << reply->str);
         }
 
-        auto ctxSaver = medis::contextSaver<void *, std::shared_ptr<redisContext>>::instance();
-        auto rdxCtx = ctxSaver->getCtx(c).value_or(nullptr);
+        auto rdxCtx = tls_ctxSaver->getCtx(c).value_or(nullptr);
         if (rdxCtx)
         {
             if (c->err != REDIS_OK)
@@ -300,9 +319,8 @@ public:
         }
 
         redisAsyncContext *_aCtx = const_cast<redisAsyncContext *>(c);
-        auto ctxSaver = medis::contextSaver<void *, std::shared_ptr<redisContext>>::instance();
 
-        std::shared_ptr<redisContext> rdsCtx = ctxSaver->getCtx((void *)_aCtx).value_or(nullptr);
+        std::shared_ptr<redisContext> rdsCtx = tls_ctxSaver->getCtx((void *)_aCtx).value_or(nullptr);
         if (rdsCtx)
         {
             if (connected)
@@ -340,10 +358,10 @@ public:
         {
             __LOG(warn, "Disconnected... status is :" << status);
         }
-        redisAsyncContext *_aCtx = const_cast<redisAsyncContext *>(c);
-        auto ctxSaver = medis::contextSaver<void *, std::shared_ptr<redisContext>>::instance();
 
-        auto rdsCtx = ctxSaver->getCtx(_aCtx).value_or(nullptr);
+        redisAsyncContext *_aCtx = const_cast<redisAsyncContext *>(c);
+
+        auto rdsCtx = tls_ctxSaver->getCtx(_aCtx).value_or(nullptr);
         if (rdsCtx)
         {
             rdsCtx->_lbs->delObj(_aCtx);
@@ -385,10 +403,10 @@ public:
 
                     task_sptr->sendMsg(taskMsgType::TASK_REDIS_ADD_CONN, connInfo_sptr);
                 }
-                auto ctxSaver = medis::contextSaver<void *, std::shared_ptr<redisContext>>::instance();
-                ctxSaver->del(_aCtx);
+                // remove the related info in the context saver
+
+                tls_ctxSaver->del(_aCtx);
             });
-            // remove the related info in the context saver
         }
         else
         {
@@ -434,6 +452,10 @@ public:
             ret = processRedisConnAvaliable();
             break;
 
+        case taskMsgType::TASK_TLS_CTX_SAVER_INIT:
+            ret = processTlsCtxSaver(task_msg);
+            break;
+
         default:
             if (CHECK_LOG_LEVEL(warn))
             {
@@ -442,6 +464,23 @@ public:
             break;
         }
         return ret;
+    }
+    bool processTlsCtxSaver(std::shared_ptr<taskMsg> task_msg)
+    {
+        if (!task_msg)
+        {
+            if (CHECK_LOG_LEVEL(error))
+            {
+                __LOG(error, "invalid task message!");
+            }
+        }
+        if (CHECK_LOG_LEVEL(warn))
+        {
+            __LOG(warn, "set tls context saver!");
+        }
+        std::function<void()> fn = DBW_ANY_CAST<std::function<void()>>(task_msg->body);
+        fn();
+        return true;
     }
 
     bool processRedisConnAvaliable()
@@ -626,8 +665,7 @@ public:
         rdsCtx->_retryTimerManager = std::make_shared<timer::timerManager>(getLoop());
         rdsCtx->_lbs = _connManager->getLbs();
 
-        auto ctxSaver = medis::contextSaver<void *, std::shared_ptr<redisContext>>::instance();
-        ctxSaver->save(_context, rdsCtx);
+        tls_ctxSaver->save(_context, rdsCtx);
 
         int ret = REDIS_ERR;
 
@@ -661,8 +699,7 @@ public:
             __LOG(debug, "disconnect to : " << connInfo_sptr->ip << ":" << connInfo_sptr->port);
         }
 
-        auto ctxSaver = medis::contextSaver<void *, std::shared_ptr<redisContext>>::instance();
-        auto ctxList = ctxSaver->getIpPortThenDel(connInfo_sptr->ip, connInfo_sptr->port);
+        auto ctxList = tls_ctxSaver->getIpPortThenDel(connInfo_sptr->ip, connInfo_sptr->port);
         for (auto it : ctxList)
         {
             // need to delete related info from load balancer
@@ -769,6 +806,10 @@ public:
     bool getConnStatus()
     {
         return _connected;
+    }
+    void setConnStatus(bool medisState)
+    {
+        _connected = medisState;
     }
 
     std::weak_ptr<taskImp> getThisWptr()

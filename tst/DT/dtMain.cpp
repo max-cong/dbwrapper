@@ -27,20 +27,21 @@
 #include <thread>
 #include <chrono>
 #include <memory>
-
+#include <gtest/gtest.h>
 #include "hiredis/hiredis.h"
-#include "basicDevelopTestRR.hpp"
+#include <hiredis/async.h>
 #include "basicDevelopTestDPD.hpp"
 #include "basicDevelopTestRDPD.hpp"
+#include "basicDevelopTestRR.hpp"
 
 int main(int argc, char *argv[])
 {
-    std::unique_ptr<boost_logger> boostloggerUptr(new boost_logger());
-    INIT_LOGGER(boostloggerUptr);
-    SET_LOG_LEVEL(debug);
+    MEDIS_GLOB_INIT();
 
     ::testing::InitGoogleTest(&argc, argv);
     int ret = RUN_ALL_TESTS();
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(5000));
+    MEDIS_GLOB_CLEAN_UP();
     return ret;
 }

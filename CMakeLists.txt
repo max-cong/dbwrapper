@@ -10,7 +10,9 @@ SET(M_VERSION ${M_VERSION_MAJOR}.${M_VERSION_MINOR}.${M_VERSION_PATCH})
 
 SET(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)
-SET(TESTS_BINARY ${PROJECT_NAME}_tests)
+SET(TESTS_DT_BINARY ${PROJECT_NAME}_dt_tests)
+SET(TESTS_UT_BINARY ${PROJECT_NAME}_ut_tests)
+
 SET(EXAMPLE_BINARY ${PROJECT_NAME}_example)
 
 
@@ -24,30 +26,11 @@ ELSE()
 	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CCXX_FLAGS}")
 ENDIF()
 
-
-
-
-
 MESSAGE(STATUS "start build")
 MESSAGE(STATUS "CMAKE_CXX_FLAGS: " ${CMAKE_CXX_FLAGS})
 
-
-
-
 ADD_SUBDIRECTORY(example)
-
-
-
-option (BUILD_TESTING "Build the testing tree." ON)
-# Only build tests if we are the top-level project
-# Allows this to be used by super projects with `add_subdirectory`
-if (BUILD_TESTING AND (PROJECT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR))
-  enable_testing()
-  add_subdirectory(tst)
-endif()
-
-
-
+add_subdirectory(tst)
 
 ADD_CUSTOM_TARGET(example
 	COMMAND ./${EXAMPLE_BINARY} ${CMD_ARGS}
@@ -62,9 +45,8 @@ ADD_CUSTOM_TARGET(tests
 )
 
 
-
 ADD_CUSTOM_TARGET(memcheck
-	COMMAND command -v valgrind >/dev/null 2>&1 && valgrind -v --leak-check=full --show-reachable=yes
+	COMMAND command -v valgrind >/dev/null 2>&1 && valgrind -v --leak-check=full --show-reachable=yes --track-fds=yes
 	--undef-value-errors=yes --track-origins=yes --num-callers=50 ./${EXAMPLE_BINARY} ${CMD_ARGS}
 	WORKING_DIRECTORY ${EXECUTABLE_OUTPUT_PATH}
 	COMMENT "Check memory usage with valgrind"
