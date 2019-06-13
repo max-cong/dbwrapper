@@ -63,10 +63,12 @@ void getCallback(redisAsyncContext *c, void *r, void *privdata)
 int main()
 {
     {
-        MEDIS_GLOB_INIT();
+        std::unique_ptr<simpleLogger> loggerUptr(new simpleLogger());
+        INIT_LOGGER(loggerUptr);
+        SET_LOG_LEVEL(debug);
 
         redisAsyncClient aclient;
-        aclient.dump();
+        
         int loop_time = 1;
         configCenter::cfgPropMap _config;
         _config[PROP_HOST] = "127.0.0.1";
@@ -96,8 +98,6 @@ int main()
 
         std::this_thread::sleep_for(std::chrono::milliseconds(1000));
         std::cout << "total receive response is : " << i << std::endl;
-
- 
 
         aclient.cleanUp();
         MEDIS_GLOB_CLEAN_UP();

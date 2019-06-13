@@ -35,15 +35,21 @@ namespace task
 enum class taskMsgType : std::uint32_t
 {
     TASK_REDIS_FORMAT_RAW,
+    TASK_REDIS_FORMAT_RAW_PUB_SUB,
     TASK_REDIS_RAW,
+    TASK_REDIS_RAW_PUB_SUB,
 
     TASK_REDIS_ADD_CONN,
+    TASK_REDIS_ADD_CONN_PUB_SUB,
 
     TASK_REDIS_DEL_CONN,
+        TASK_REDIS_DEL_CONN_PUB_SUB,
     // when the first connection avaliable, need to clean the message queueu.
     TASK_REDIS_CONN_AVALIABLE,
 
     TASK_TLS_CTX_SAVER_INIT,
+    // re-subscribe
+    TASK_REDIS_RE_SUB,
     TASK_MSG_MAX
 };
 
@@ -58,6 +64,7 @@ struct taskMsg
 
 struct TASK_REDIS_FORMAT_RAW_MSG_BODY
 {
+    bool isPubSub;
     redisCallbackFn *fn;
     std::string body;
     void *usr_data;

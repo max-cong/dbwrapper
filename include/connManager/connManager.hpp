@@ -30,10 +30,7 @@
 
 namespace connManager
 {
-const std::string CONN_INC = "CONN_INC";
-const std::string CONN_DEC = "CONN_DEC";
 
-// connmanager
 template <typename DBConn>
 class connManager : public gene::gene<void *>, public std::enable_shared_from_this<connManager<DBConn>>
 {
