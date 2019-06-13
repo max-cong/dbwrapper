@@ -37,21 +37,21 @@
 #include <memory>
 #include <thread>
 
-#define MEDIS_GLOB_INIT()                                             \
+#define MEDIS_GLOB_SIPMLE_INIT()                                      \
     {                                                                 \
         std::unique_ptr<simpleLogger> loggerUptr(new simpleLogger()); \
         INIT_LOGGER(loggerUptr);                                      \
         SET_LOG_LEVEL(debug);                                         \
     }
-#define MEDIS_GLOB_CLEAN_UP()                                                                      \
-    {                                                                                              \
-        auto task_ins_ptr = medis::taskSaver<void *, std::shared_ptr<task::taskImp>>::instance();  \
-        task_ins_ptr->distroy(task_ins_ptr);                                                       \
-                                                                                                   \
-        auto cfg_ins_sptr = configCenter::configCenter<void *>::instance();                        \
-        cfg_ins_sptr->distroy(std::move(cfg_ins_sptr));                                            \
-                                                                                                   \
-        DESTROY_LOGGER();                                                                          \
+#define MEDIS_GLOB_CLEAN_UP()                                                                     \
+    {                                                                                             \
+        auto task_ins_ptr = medis::taskSaver<void *, std::shared_ptr<task::taskImp>>::instance(); \
+        task_ins_ptr->distroy(task_ins_ptr);                                                      \
+                                                                                                  \
+        auto cfg_ins_sptr = configCenter::configCenter<void *>::instance();                       \
+        cfg_ins_sptr->distroy(std::move(cfg_ins_sptr));                                           \
+                                                                                                  \
+        DESTROY_LOGGER();                                                                         \
     }
 class redisAsyncClient : public nonCopyable
 {
@@ -198,14 +198,87 @@ public:
         return sendFormatRawCommand(std::move(command2send), usr_data, fn);
     }
 
-    bool sendFormatRawCommand(std::string &&command, void *usr_data, redisCallbackFn *fn)
+    template <typename COMMAND_KEY, typename COMMAND_VALUE>
+    bool pub(COMMAND_KEY &&key, COMMAND_VALUE &&value, void *usr_data, redisCallbackFn *fn)
+    {
+        if (!getConnStatusPubSub())
+        {
+            return false;
+        }
+        std::string command2send = std::move(buildRedisCommand::buildRedisCommand<COMMAND_KEY, COMMAND_VALUE>::get_format_command(REDIS_COMMAND_TYPE::TASK_REDIS_PUB, std::forward<COMMAND_KEY>(key), std::forward<COMMAND_VALUE>(value)));
+        if (CHECK_LOG_LEVEL(debug))
+        {
+            __LOG(debug, "pub command :\n"
+                             << command2send);
+        }
+        if (command2send.empty())
+        {
+            if (CHECK_LOG_LEVEL(warn))
+            {
+                __LOG(warn, "did not get redis command, please check the key type and value type");
+            }
+            return false;
+        }
+        return sendFormatRawCommand(std::move(command2send), usr_data, fn);
+    }
+    template <typename COMMAND_KEY>
+    bool sub(COMMAND_KEY &&key, void *usr_data, redisCallbackFn *fn)
+    {
+        if (!getConnStatusPubSub())
+        {
+            return false;
+        }
+        std::string command2send = std::move(buildRedisCommand::buildRedisCommand<COMMAND_KEY, std::nullptr_t>::get_format_command(REDIS_COMMAND_TYPE::TASK_REDIS_SUB, std::forward<COMMAND_KEY>(key), nullptr));
+        if (CHECK_LOG_LEVEL(debug))
+        {
+            __LOG(debug, "sub command :\n"
+                             << command2send);
+        }
+        if (command2send.empty())
+        {
+            if (CHECK_LOG_LEVEL(warn))
+            {
+                __LOG(warn, "did not get redis command, please check the key type and value type");
+            }
+            return false;
+        }
+        return sendFormatRawCommand(std::move(command2send), usr_data, fn, true);
+    }
+
+    template <typename COMMAND_KEY>
+    bool unSub(COMMAND_KEY &&key, void *usr_data, redisCallbackFn *fn)
+    {
+        if (!getConnStatusPubSub())
+        {
+            return false;
+        }
+        std::string command2send = std::move(buildRedisCommand::buildRedisCommand<COMMAND_KEY, std::nullptr_t>::get_format_command(REDIS_COMMAND_TYPE::TASK_REDIS_UNSUB, std::forward<COMMAND_KEY>(key), nullptr));
+        if (CHECK_LOG_LEVEL(debug))
+        {
+            __LOG(debug, "unsub command :\n"
+                             << command2send);
+        }
+        if (command2send.empty())
+        {
+            if (CHECK_LOG_LEVEL(warn))
+            {
+                __LOG(warn, "did not get redis command, please check the key type and value type");
+            }
+            return false;
+        }
+        return sendFormatRawCommand(std::move(command2send), usr_data, fn, true);
+    }
+
+    bool sendFormatRawCommand(std::string &&command, void *usr_data, redisCallbackFn *fn, bool pubSub = false)
     {
         std::shared_ptr<task::TASK_REDIS_FORMAT_RAW_MSG_BODY> msg = std::make_shared<task::TASK_REDIS_FORMAT_RAW_MSG_BODY>();
+        msg->isPubSub = pubSub;
         msg->fn = fn;
         msg->body = command;
         msg->usr_data = usr_data;
         return _task_sptr->sendMsg(task::taskMsgType::TASK_REDIS_FORMAT_RAW, msg);
     }
+
     bool sendRawCommand(std::string &&command, void *usr_data, redisCallbackFn *fn)
     {
         std::shared_ptr<task::TASK_REDIS_RAW_MSG_BODY> msg = std::make_shared<task::TASK_REDIS_RAW_MSG_BODY>();
@@ -221,6 +294,10 @@ public:
     bool getConnStatus()
     {
         return _task_sptr->getConnStatus();
+    }
+    bool getConnStatusPubSub()
+    {
+        return _task_sptr->getConnStatusPubSub();
     }
     std::shared_ptr<loop::loop> _loop_sptr;
     std::shared_ptr<task::taskImp> _task_sptr;

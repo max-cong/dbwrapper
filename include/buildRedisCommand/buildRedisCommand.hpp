@@ -174,6 +174,107 @@ public:
     std::list<std::string> _list;
 };
 
+template <typename KEY_TYPE, typename VALUE_TYPE>
+class redisPub : public nonCopyable
+{
+public:
+    redisPub() = delete;
+    redisPub(KEY_TYPE &&key, VALUE_TYPE &&value)
+    {
+    }
+    std::string toString() { return ""; }
+};
+
+template <>
+class redisPub<std::string, std::string> : public nonCopyable
+{
+public:
+    redisPub() = delete;
+    redisPub(std::string &&key, std::string &&value)
+    {
+        // may use ostream for performance
+        // to do
+        if (CHECK_LOG_LEVEL(debug))
+        {
+            __LOG(debug, "[redisPub] key is : " << key);
+        }
+        _list.emplace_back("publish");
+        _list.emplace_back(key);
+        _list.emplace_back(value);
+    }
+    std::string toString()
+    {
+        return redis_formatCommand::toString(_list);
+    }
+    std::list<std::string> _list;
+};
+
+template <typename KEY_TYPE, typename VALUE_TYPE>
+class redisSub : public nonCopyable
+{
+public:
+    redisSub() = delete;
+    redisSub(KEY_TYPE &&key, VALUE_TYPE &&value)
+    {
+    }
+    std::string toString() { return ""; }
+};
+template <>
+class redisSub<std::string, std::nullptr_t> : public nonCopyable
+{
+public:
+    redisSub() = delete;
+    redisSub(std::string &&key, std::nullptr_t null_ptr)
+    {
+        // may use ostream for performance
+        // to do
+        if (CHECK_LOG_LEVEL(debug))
+        {
+            __LOG(debug, "[redisSub] key is : " << key);
+        }
+        _list.emplace_back("subscribe");
+        _list.emplace_back(key);
+    }
+    std::string toString()
+    {
+        return redis_formatCommand::toString(_list);
+    }
+    std::list<std::string> _list;
+};
+
+template <typename KEY_TYPE, typename VALUE_TYPE>
+class redisUnSub : public nonCopyable
+{
+public:
+    redisUnSub() = delete;
+    redisUnSub(KEY_TYPE &&key, VALUE_TYPE &&value)
+    {
+    }
+    std::string toString() { return ""; }
+};
+template <>
+class redisUnSub<std::string, std::nullptr_t> : public nonCopyable
+{
+public:
+    redisUnSub() = delete;
+    redisUnSub(std::string &&key, std::nullptr_t null_ptr)
+    {
+        // may use ostream for performance
+        // to do
+        if (CHECK_LOG_LEVEL(debug))
+        {
+            __LOG(debug, "[redisUnSub] key is : " << key);
+        }
+        _list.emplace_back("unsubscribe");
+        _list.emplace_back(key);
+    }
+    std::string toString()
+    {
+        return redis_formatCommand::toString(_list);
+    }
+    std::list<std::string> _list;
+};
+
 // interface form APP API to redis RSP message
 template <typename COMMAND_KEY, typename COMMAND_VALUE>
 class buildRedisCommand
@@ -272,6 +373,62 @@ public:
                 }
             }
             break;
+
+        case REDIS_COMMAND_TYPE::TASK_REDIS_PUB:
+            if
+                medisConstExpr(keyCheck<std::string>() && valueCheck<std::string>())
+                {
+                    if (CHECK_LOG_LEVEL(debug))
+                    {
+                        __LOG(debug, "Del command, key is string. key is : " << key);
+                    }
+                    return redisPub<COMMAND_KEY, COMMAND_VALUE>(std::forward<COMMAND_KEY>(key), std::forward<COMMAND_VALUE>(value)).toString();
+                }
+            else
+            {
+                if (CHECK_LOG_LEVEL(debug))
+                {
+                    __LOG(debug, "Del command, key and value type is not string, key type is : " << typeid(key).name() << ". value type is : " << typeid(value).name());
+                }
+            }
+            break;
+        case REDIS_COMMAND_TYPE::TASK_REDIS_SUB:
+            if
+                medisConstExpr(keyCheck<std::string>() && valueCheck<std::nullptr_t>())
+                {
+                    if (CHECK_LOG_LEVEL(debug))
+                    {
+                        __LOG(debug, "Del command, key is string. key is : " << key);
+                    }
+                    return redisSub<COMMAND_KEY, COMMAND_VALUE>(std::forward<COMMAND_KEY>(key), std::forward<COMMAND_VALUE>(value)).toString();
+                }
+            else
+            {
+                if (CHECK_LOG_LEVEL(debug))
+                {
+                    __LOG(debug, "sub command, key and value type is wrong, key type is : " << typeid(key).name() << ". value type is : " << typeid(value).name());
+                }
+            }
+            break;
+        case REDIS_COMMAND_TYPE::TASK_REDIS_UNSUB:
+            if
+                medisConstExpr(keyCheck<std::string>() && valueCheck<std::nullptr_t>())
+                {
+                    if (CHECK_LOG_LEVEL(debug))
+                    {
+                        __LOG(debug, "Del command, key is string. key is : " << key);
+                    }
+                    return redisUnSub<COMMAND_KEY, COMMAND_VALUE>(std::forward<COMMAND_KEY>(key), std::forward<COMMAND_VALUE>(value)).toString();
+                }
+            else
+            {
+                if (CHECK_LOG_LEVEL(debug))
+                {
+                    __LOG(debug, "unsub command, key and value type is not string, key type is : " << typeid(key).name() << ". value type is : " << typeid(value).name());
+                }
+            }
+            break;
+
         default:
             if (CHECK_LOG_LEVEL(warn))
             {

@@ -77,7 +77,7 @@ TEST_F(basicDevelopTestRR, del)
 }
 int main(int argc, char *argv[])
 {
-    MEDIS_GLOB_INIT();
+    MEDIS_GLOB_SIPMLE_INIT();
     ::testing::InitGoogleTest(&argc, argv);
     int ret = RUN_ALL_TESTS();
     std::this_thread::sleep_for(std::chrono::milliseconds(1000));

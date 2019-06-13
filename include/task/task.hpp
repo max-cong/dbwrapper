@@ -58,6 +58,7 @@ struct redisContext
     std::shared_ptr<heartBeat::heartBeat> _hb;
     std::shared_ptr<lbStrategy::lbStrategy<redisAsyncContext *>> _lbs;
     std::shared_ptr<timer::timerManager> _retryTimerManager;
+    std::shared_ptr<std::list<std::shared_ptr<taskMsg>>> _subList;
 };
 static thread_local std::shared_ptr<medis::contextSaver<void *, std::shared_ptr<redisContext>>> tls_ctxSaver;
 
@@ -93,7 +94,7 @@ public:
         {
             __LOG(debug, "init task with gene : " << (void *)getGeneticGene());
         }
-
+        _subList = std::make_shared<std::list<std::shared_ptr<taskMsg>>>();
         _evfd = eventfd(0, EFD_NONBLOCK | EFD_CLOEXEC);
         if (_evfd < 0)
         {
@@ -132,6 +133,88 @@ public:
         };
         sendMsg(taskMsgType::TASK_TLS_CTX_SAVER_INIT, tlsCtxFn);
 
+        _connManagerPubSub = std::make_shared<connManager::connManager<medis::CONN_INFO>>(getLoop());
+        if (!_connManagerPubSub)
+        {
+            if (CHECK_LOG_LEVEL(error))
+            {
+                __LOG(error, "create connection manager for pub subfail");
+            }
+            return false;
+        }
+        _connManagerPubSub->setGeneticGene(getGeneticGene());
+        if (CHECK_LOG_LEVEL(debug))
+        {
+            __LOG(debug, "create connection manager with gene : " << _connManagerPubSub->getGeneticGene());
+        }
+
+        auto sef_wptr = getThisWptr();
+
+        _connManagerPubSub->setAddConnCb([sef_wptr](std::shared_ptr<medis::CONN_INFO> connInfo) {
+            if (!sef_wptr.expired())
+            {
+                if (CHECK_LOG_LEVEL(debug))
+                {
+                    __LOG(debug, "there is a new connection, send message to task with type TASK_REDIS_ADD_CONN");
+                }
+                return sef_wptr.lock()->sendMsg(task::taskMsgType::TASK_REDIS_ADD_CONN_PUB_SUB, connInfo);
+            }
+            else
+            {
+                if (CHECK_LOG_LEVEL(warn))
+                {
+                    __LOG(warn, "conn add, task weak ptr is expired");
+                }
+                return false;
+            }
+        });
+        _connManagerPubSub->setDecConnCb([sef_wptr](std::shared_ptr<medis::CONN_INFO> connInfo) {
+            if (!sef_wptr.expired())
+            {
+                return sef_wptr.lock()->sendMsg(task::taskMsgType::TASK_REDIS_DEL_CONN_PUB_SUB, connInfo);
+            }
+            else
+            {
+                if (CHECK_LOG_LEVEL(warn))
+                {
+                    __LOG(warn, "conn del, task weak ptr is expired");
+                }
+                return false;
+            }
+        });
+
+        _connManagerPubSub->setAvaliableCb([sef_wptr]() {
+            if (!sef_wptr.expired())
+            {
+                sef_wptr.lock()->setConnStatusPubSub(true);
+                // need to re-send pub list
+                sef_wptr.lock()->sendMsg(task::taskMsgType::TASK_REDIS_RE_SUB, nullptr);
+            }
+            else
+            {
+                if (CHECK_LOG_LEVEL(warn))
+                {
+                    __LOG(warn, "connection avaliable : task weak ptr is expired");
+                }
+            }
+        });
+        _connManagerPubSub->setUnavaliableCb([sef_wptr]() {
+            if (!sef_wptr.expired())
+            {
+                sef_wptr.lock()->setConnStatusPubSub(true);
+            }
+
+            else
+            {
+                if (CHECK_LOG_LEVEL(warn))
+                {
+                    __LOG(warn, "connection unavaliable : task weak ptr is expired");
+                }
+            }
+        });
+
+        _connManagerPubSub->init();
+
         _connManager = std::make_shared<connManager::connManager<medis::CONN_INFO>>(getLoop());
         if (!_connManager)
         {
@@ -146,8 +229,6 @@ public:
         {
             __LOG(debug, "create connection manager with gene : " << _connManager->getGeneticGene());
         }
-
-        auto sef_wptr = getThisWptr();
 
         _connManager->setAddConnCb([sef_wptr](std::shared_ptr<medis::CONN_INFO> connInfo) {
             if (!sef_wptr.expired())
@@ -198,7 +279,7 @@ public:
         _connManager->setUnavaliableCb([sef_wptr]() {
             if (!sef_wptr.expired())
             {
-                sef_wptr.lock()->_connected = false;
+                sef_wptr.lock()->setConnStatus(true);
             }
             else
             {
@@ -297,8 +378,16 @@ public:
             }
         }
     }
+    static void connectCallbackSimple(const redisAsyncContext *c, int status)
+    {
+        connectCallback(c, status);
+    }
+    static void connectCallbackPubSub(const redisAsyncContext *c, int status)
+    {
+        connectCallback(c, status, true);
+    }
 
-    static void connectCallback(const redisAsyncContext *c, int status)
+    static void connectCallback(const redisAsyncContext *c, int status, bool isPubSub = false)
     {
         bool connected = false;
         if (status != REDIS_OK || c->err != REDIS_OK)
@@ -333,7 +422,14 @@ public:
                 {
                     __LOG(warn, "connect return fail, call disconnect callback and disconnect callback will connect again");
                 }
-                taskImp::disconnectCallback(_aCtx, REDIS_OK);
+                if (isPubSub)
+                {
+                    taskImp::disconnectCallbackPubSub(_aCtx, REDIS_OK);
+                }
+                else
+                {
+                    taskImp::disconnectCallbackSimple(_aCtx, REDIS_OK);
+                }
             }
         }
         else
@@ -344,8 +440,15 @@ public:
             }
         }
     }
-
-    static void disconnectCallback(const redisAsyncContext *c, int status)
+    static void disconnectCallbackSimple(const redisAsyncContext *c, int status)
+    {
+        disconnectCallback(c, status);
+    }
+    static void disconnectCallbackPubSub(const redisAsyncContext *c, int status)
+    {
+        disconnectCallback(c, status, true);
+    }
+    static void disconnectCallback(const redisAsyncContext *c, int status, bool isPubSub = false)
     {
         if (status != REDIS_OK)
         {
@@ -364,12 +467,29 @@ public:
         auto rdsCtx = tls_ctxSaver->getCtx(_aCtx).value_or(nullptr);
         if (rdsCtx)
         {
+            // here delete the obj in the load balancer
+            // actually we need to update it, when the new obj comes, then delete it
+            // but we do not want to save the old obj info.
             rdsCtx->_lbs->delObj(_aCtx);
             std::string innerIp = rdsCtx->ip;
             unsigned short innerPort = rdsCtx->port;
             int priority = rdsCtx->_priority;
             auto gene = rdsCtx->_hb->getGeneticGene();
             std::weak_ptr<redisContext> ctxWptr(rdsCtx);
+
+            // give sub list back to glob sub list
+            if (isPubSub)
+            {
+                auto task_sptr = medis::taskSaver<void *, std::shared_ptr<task::taskImp>>::instance()->getTask(gene).value_or(nullptr);
+                if (task_sptr)
+                {
+                    task_sptr->_subList->insert((task_sptr->_subList)->end(), (rdsCtx->_subList)->begin(), (rdsCtx->_subList)->end());
+                    rdsCtx->_subList->clear();
+                    // send a TASK_REDIS_RE_SUB,  other connection will take the sub info
+                    // if there is no connection, this  will covered by on_avaliable
+                    task_sptr->sendMsg(task::taskMsgType::TASK_REDIS_RE_SUB, nullptr);
+                }
+            }
 
             // get reconnect timer config
             std::string reconnectItvalStr = configCenter::configCenter<void *>::instance()->getPropertiesField(gene, PROP_RECONN_INTERVAL, DEFAULT_HB_INTERVAL);
@@ -440,20 +560,27 @@ public:
             break;
 
         case taskMsgType::TASK_REDIS_ADD_CONN:
-
             ret = processRedisAddConnection(task_msg);
             break;
-
+        case taskMsgType::TASK_REDIS_ADD_CONN_PUB_SUB:
+            ret = processRedisAddConnection(task_msg, true);
+            break;
         case taskMsgType::TASK_REDIS_DEL_CONN:
             ret = processRedisDelConnection(task_msg);
             break;
-
+        case taskMsgType::TASK_REDIS_DEL_CONN_PUB_SUB:
+            ret = processRedisDelConnection(task_msg, true);
+            break;
         case taskMsgType::TASK_REDIS_CONN_AVALIABLE:
             ret = processRedisConnAvaliable();
             break;
 
         case taskMsgType::TASK_TLS_CTX_SAVER_INIT:
             ret = processTlsCtxSaver(task_msg);
+            break;
+
+        case taskMsgType::TASK_REDIS_RE_SUB:
+            ret = processReSend();
             break;
 
         default:
@@ -464,6 +591,18 @@ public:
             break;
         }
         return ret;
+    }
+    bool processReSend()
+    {
+        if (!_subList)
+        {
+            return false;
+        }
+        for (auto it : *_subList)
+        {
+            on_message(it);
+        }
+        return true;
     }
     bool processTlsCtxSaver(std::shared_ptr<taskMsg> task_msg)
     {
@@ -503,8 +642,21 @@ public:
             __LOG(debug, "get command :\n"
                              << msg->body);
         }
-
-        redisAsyncContext *_context = (redisAsyncContext *)(_connManager->get_conn()).value_or(nullptr);
+        redisAsyncContext *_context;
+        if (msg->isPubSub)
+        {
+            _context = (redisAsyncContext *)(_connManagerPubSub->get_conn()).value_or(nullptr);
+            auto rdxCtx = tls_ctxSaver->getCtx(_context).value_or(nullptr);
+            if (rdxCtx)
+            {
+                if(rdxCtx->_subList){
+                rdxCtx->_subList->push_back(task_msg);}
+            }
+        }
+        else
+        {
+            _context = (redisAsyncContext *)(_connManager->get_conn()).value_or(nullptr);
+        }
         if (!_context)
         {
             if (CHECK_LOG_LEVEL(warn))
@@ -568,7 +720,7 @@ public:
             return true;
         }
     }
-    bool processRedisAddConnection(std::shared_ptr<taskMsg> task_msg)
+    bool processRedisAddConnection(std::shared_ptr<taskMsg> task_msg, bool isPubSub = false)
     {
         if (!task_msg)
         {
@@ -624,8 +776,8 @@ public:
                 }
             }
         });
-        std::weak_ptr<connManager::connManager<medis::CONN_INFO>> _connManager_wptr(_connManager);
-        rdsCtx->_hb->setHbLostCb([rdsCtx_wptr, _connManager_wptr]() {
+
+        rdsCtx->_hb->setHbLostCb([rdsCtx_wptr, isPubSub]() {
             if (!rdsCtx_wptr.expired())
             {
                 if (CHECK_LOG_LEVEL(warn))
@@ -633,7 +785,14 @@ public:
                     __LOG(warn, "heart beat lost, call disconnect callback");
                 }
                 auto rdsCtx = rdsCtx_wptr.lock();
-                taskImp::disconnectCallback(rdsCtx->_ctx, REDIS_OK);
+                if (isPubSub)
+                {
+                    taskImp::disconnectCallbackPubSub(rdsCtx->_ctx, REDIS_OK);
+                }
+                else
+                {
+                    taskImp::disconnectCallbackSimple(rdsCtx->_ctx, REDIS_OK);
+                }
             }
             else
             {
@@ -642,14 +801,6 @@ public:
                     __LOG(warn, "the redis context is expired!");
                 }
             }
-            // call connection manager onUnavaliable
-            /*
-            if (!_connManager_wptr.expired())
-            {
-                if (CHECK_LOG_LEVEL(warn))
-		{__LOG(warn,"there is no avaliable connection");}
-                _connManager_wptr.lock()->onUnavaliable();
-            }*/
         });
         rdsCtx->_hb->setHbSuccCb([rdsCtx_wptr]() {
             if (!rdsCtx_wptr.expired())
@@ -663,7 +814,15 @@ public:
         });
         rdsCtx->_hb->init();
         rdsCtx->_retryTimerManager = std::make_shared<timer::timerManager>(getLoop());
-        rdsCtx->_lbs = _connManager->getLbs();
+        if (!isPubSub)
+        {
+            rdsCtx->_lbs = _connManager->getLbs();
+        }
+        else
+        {
+            rdsCtx->_lbs = _connManagerPubSub->getLbs();
+            rdsCtx->_subList = std::make_shared<std::list<std::shared_ptr<taskMsg>>>();
+        }
 
         tls_ctxSaver->save(_context, rdsCtx);
 
@@ -678,13 +837,21 @@ public:
             }
             return false;
         }
+        if (isPubSub)
+        {
+            redisAsyncSetConnectCallback(_context, connectCallbackPubSub);
+            redisAsyncSetDisconnectCallback(_context, disconnectCallbackPubSub);
+        }
+        else
+        {
+            redisAsyncSetConnectCallback(_context, connectCallbackSimple);
+            redisAsyncSetDisconnectCallback(_context, disconnectCallbackSimple);
+        }
 
-        redisAsyncSetConnectCallback(_context, connectCallback);
-        redisAsyncSetDisconnectCallback(_context, disconnectCallback);
         return true;
     }
 
-    bool processRedisDelConnection(std::shared_ptr<taskMsg> task_msg)
+    bool processRedisDelConnection(std::shared_ptr<taskMsg> task_msg, bool isPubSub = false)
     {
         if (!task_msg)
         {
@@ -707,6 +874,12 @@ public:
             {
                 // need to stop the hiredis connection here
                 redisAsyncDisconnect(it->_ctx);
+                if (isPubSub)
+                {
+                    // if this is a pub/sub connection, should add the related pub msg into the golb to be publish list
+                    _subList->insert(_subList->end(), (it->_subList)->begin(), (it->_subList)->end());
+                    it->_subList->clear();
+                }
             }
             else
             {
@@ -811,13 +984,21 @@ public:
     {
         _connected = medisState;
     }
-
+    bool getConnStatusPubSub()
+    {
+        return _connectedPubSub;
+    }
+    void setConnStatusPubSub(bool medisState)
+    {
+        _connectedPubSub = medisState;
+    }
     std::weak_ptr<taskImp> getThisWptr()
     {
         std::weak_ptr<taskImp> self_wptr(shared_from_this());
         return self_wptr;
     }
     std::atomic<bool> _connected;
+    std::atomic<bool> _connectedPubSub;
     std::atomic<bool> _task_q_empty;
     int _evfd;
     std::weak_ptr<loop::loop> _loop;
@@ -825,7 +1006,9 @@ public:
     std::shared_ptr<evfdServer> _evfdServer;
     TASK_QUEUE _taskQueue;
     std::shared_ptr<connManager::connManager<medis::CONN_INFO>> _connManager;
+    std::shared_ptr<connManager::connManager<medis::CONN_INFO>> _connManagerPubSub;
     std::shared_ptr<timer::timerManager> _timerManager;
+    std::shared_ptr<std::list<std::shared_ptr<taskMsg>>> _subList;
 };
 
 } // namespace task
