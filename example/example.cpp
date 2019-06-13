@@ -45,9 +45,9 @@ void getCallback(redisAsyncContext *c, void *r, void *privdata)
     {
         if (c->errstr)
         {
-            if (CHECK_LOG_LEVEL(debug))
+            if (CHECK_LOG_LEVEL(error))
             {
-                __LOG(debug, "errstr: %s" << c->errstr);
+                __LOG(error, "errstr: " << c->errstr);
             }
         }
         return;
@@ -59,6 +59,34 @@ void getCallback(redisAsyncContext *c, void *r, void *privdata)
     }
     std::cout << "receive response with index : " << i << std::endl;
 }
+void getCallbackPubSub(redisAsyncContext *c, void *r, void *privdata)
+{
+    i++;
+    std::cout << "receive response with index : " << i << std::endl;
+    redisReply *reply = (redisReply *)r;
+    if (reply == NULL)
+    {
+        if (c->errstr)
+        {
+            if (CHECK_LOG_LEVEL(error))
+            {
+                __LOG(error, "errstr: " << c->errstr);
+            }
+        }
+        return;
+    }
+
+    if (reply->type == REDIS_REPLY_ARRAY && reply->elements == 3)
+    {
+        if (strcmp(reply->element[0]->str, "subscribe") != 0)
+        {
+            if (CHECK_LOG_LEVEL(error))
+            {
+                __LOG(error, "Message received : " << reply->element[2]->str << "( on channel : " << reply->element[1]->str << ")");
+            }
+        }
+    }
+}
 
 int main()
 {
@@ -68,7 +96,7 @@ int main()
         SET_LOG_LEVEL(debug);
 
         redisAsyncClient aclient;
-        
+
         int loop_time = 1;
         configCenter::cfgPropMap _config;
         _config[PROP_HOST] = "127.0.0.1";
@@ -91,6 +119,15 @@ int main()
             aclient.put(std::string("hello"), std::string("world"), NULL, getCallback);
             aclient.get(std::string("hello"), nullptr, NULL, getCallback);
             aclient.del(std::string("hello"), nullptr, NULL, getCallback);
+
+            aclient.sub(std::string("pub sub"), NULL, getCallbackPubSub);
+
+            aclient.sub(std::string("pub sub 001"), NULL, getCallbackPubSub);
+            std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+            aclient.pub(std::string("pub sub"), std::string("pub sub test"), NULL, getCallbackPubSub);
+            aclient.pub(std::string("pub sub 001"), std::string("pub sub test 001"), NULL, getCallbackPubSub);
+            aclient.unSub(std::string("pub sub"), NULL, getCallbackPubSub);
+            aclient.unSub(std::string("pub sub 001"), NULL, getCallbackPubSub);
         }
         std::time_t stopTime = std::time(nullptr);
         std::cout << "stop time : " << std::asctime(std::localtime(&stopTime))

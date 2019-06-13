@@ -94,7 +94,7 @@ public:
         {
             __LOG(debug, "init task with gene : " << (void *)getGeneticGene());
         }
-
+        _subList = std::make_shared<std::list<std::shared_ptr<taskMsg>>>();
         _evfd = eventfd(0, EFD_NONBLOCK | EFD_CLOEXEC);
         if (_evfd < 0)
         {
@@ -594,6 +594,10 @@ public:
     }
     bool processReSend()
     {
+        if (!_subList)
+        {
+            return false;
+        }
         for (auto it : *_subList)
         {
             on_message(it);
@@ -645,7 +649,8 @@ public:
             auto rdxCtx = tls_ctxSaver->getCtx(_context).value_or(nullptr);
             if (rdxCtx)
             {
-                rdxCtx->_subList->push_back(task_msg);
+                if(rdxCtx->_subList){
+                rdxCtx->_subList->push_back(task_msg);}
             }
         }
         else
@@ -816,6 +821,7 @@ public:
         else
         {
             rdsCtx->_lbs = _connManagerPubSub->getLbs();
+            rdsCtx->_subList = std::make_shared<std::list<std::shared_ptr<taskMsg>>>();
         }
 
         tls_ctxSaver->save(_context, rdsCtx);

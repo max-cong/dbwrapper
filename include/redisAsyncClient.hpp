@@ -219,16 +219,16 @@ public:
             }
             return false;
         }
-        return sendFormatRawCommand(std::move(command2send), usr_data, fn, true);
+        return sendFormatRawCommand(std::move(command2send), usr_data, fn);
     }
-    template <typename COMMAND_KEY, typename COMMAND_VALUE>
-    bool sub(COMMAND_KEY &&key, COMMAND_VALUE &&value, void *usr_data, redisCallbackFn *fn)
+    template <typename COMMAND_KEY>
+    bool sub(COMMAND_KEY &&key, void *usr_data, redisCallbackFn *fn)
     {
         if (!getConnStatusPubSub())
         {
             return false;
         }
-        std::string command2send = std::move(buildRedisCommand::buildRedisCommand<COMMAND_KEY, COMMAND_VALUE>::get_format_command(REDIS_COMMAND_TYPE::TASK_REDIS_SUB, std::forward<COMMAND_KEY>(key), std::forward<COMMAND_VALUE>(value)));
+        std::string command2send = std::move(buildRedisCommand::buildRedisCommand<COMMAND_KEY, std::nullptr_t>::get_format_command(REDIS_COMMAND_TYPE::TASK_REDIS_SUB, std::forward<COMMAND_KEY>(key), nullptr));
         if (CHECK_LOG_LEVEL(debug))
         {
             __LOG(debug, "sub command :\n"
@@ -245,14 +245,14 @@ public:
         return sendFormatRawCommand(std::move(command2send), usr_data, fn, true);
     }
 
-    template <typename COMMAND_KEY, typename COMMAND_VALUE>
-    bool unsub(COMMAND_KEY &&key, void *usr_data, redisCallbackFn *fn)
+    template <typename COMMAND_KEY>
+    bool unSub(COMMAND_KEY &&key, void *usr_data, redisCallbackFn *fn)
     {
         if (!getConnStatusPubSub())
         {
             return false;
         }
-        std::string command2send = std::move(buildRedisCommand::buildRedisCommand<COMMAND_KEY, COMMAND_VALUE>::get_format_command(REDIS_COMMAND_TYPE::TASK_REDIS_UNSUB, std::forward<COMMAND_KEY>(key), nullptr));
+        std::string command2send = std::move(buildRedisCommand::buildRedisCommand<COMMAND_KEY, std::nullptr_t>::get_format_command(REDIS_COMMAND_TYPE::TASK_REDIS_UNSUB, std::forward<COMMAND_KEY>(key), nullptr));
         if (CHECK_LOG_LEVEL(debug))
         {
             __LOG(debug, "unsub command :\n"
