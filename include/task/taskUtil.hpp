@@ -64,7 +64,7 @@ struct taskMsg
 
 struct TASK_REDIS_FORMAT_RAW_MSG_BODY
 {
-    bool isPubSub;
+    REDIS_COMMAND_TYPE cmdType;
     redisCallbackFn *fn;
     std::string body;
     void *usr_data;

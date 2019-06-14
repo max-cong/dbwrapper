@@ -148,7 +148,7 @@ public:
             }
             return false;
         }
-        return sendFormatRawCommand(std::move(command2send), usr_data, fn);
+        return sendFormatRawCommand(std::move(command2send), usr_data, fn, REDIS_COMMAND_TYPE::TASK_REDIS_PUT);
     }
     template <typename COMMAND_KEY, typename COMMAND_VALUE>
     bool get(COMMAND_KEY &&key, COMMAND_VALUE &&value, void *usr_data, redisCallbackFn *fn)
@@ -171,7 +171,7 @@ public:
             }
             return false;
         }
-        return sendFormatRawCommand(std::move(command2send), usr_data, fn);
+        return sendFormatRawCommand(std::move(command2send), usr_data, fn, REDIS_COMMAND_TYPE::TASK_REDIS_GET);
     }
 
     template <typename COMMAND_KEY, typename COMMAND_VALUE>
@@ -195,7 +195,7 @@ public:
             }
             return false;
         }
-        return sendFormatRawCommand(std::move(command2send), usr_data, fn);
+        return sendFormatRawCommand(std::move(command2send), usr_data, fn, REDIS_COMMAND_TYPE::TASK_REDIS_DEL);
     }
 
     template <typename COMMAND_KEY, typename COMMAND_VALUE>
@@ -219,7 +219,7 @@ public:
             }
             return false;
         }
-        return sendFormatRawCommand(std::move(command2send), usr_data, fn);
+        return sendFormatRawCommand(std::move(command2send), usr_data, fn, REDIS_COMMAND_TYPE::TASK_REDIS_PUB);
     }
     template <typename COMMAND_KEY>
     bool sub(COMMAND_KEY &&key, void *usr_data, redisCallbackFn *fn)
@@ -242,7 +242,7 @@ public:
             }
             return false;
         }
-        return sendFormatRawCommand(std::move(command2send), usr_data, fn, true);
+        return sendFormatRawCommand(std::move(command2send), usr_data, fn, REDIS_COMMAND_TYPE::TASK_REDIS_SUB);
     }
 
     template <typename COMMAND_KEY>
@@ -266,13 +266,13 @@ public:
             }
             return false;
         }
-        return sendFormatRawCommand(std::move(command2send), usr_data, fn, true);
+        return sendFormatRawCommand(std::move(command2send), usr_data, fn, REDIS_COMMAND_TYPE::TASK_REDIS_UNSUB);
     }
 
-    bool sendFormatRawCommand(std::string &&command, void *usr_data, redisCallbackFn *fn, bool pubSub = false)
+    bool sendFormatRawCommand(std::string &&command, void *usr_data, redisCallbackFn *fn, REDIS_COMMAND_TYPE cmdType)
     {
         std::shared_ptr<task::TASK_REDIS_FORMAT_RAW_MSG_BODY> msg = std::make_shared<task::TASK_REDIS_FORMAT_RAW_MSG_BODY>();
-        msg->isPubSub = pubSub;
+        msg->cmdType = cmdType;
         msg->fn = fn;
         msg->body = command;
         msg->usr_data = usr_data;

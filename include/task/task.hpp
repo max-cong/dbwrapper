@@ -35,12 +35,15 @@
 #include "gene/gene.hpp"
 #include "loop/loop.hpp"
 #include "util/nonCopyable.hpp"
+#include "task/subscribeSet.hpp"
 
 #include "hiredis/async.h"
 #include "hiredis/hiredis.h"
+#include <boost/algorithm/string.hpp>
 #include <string>
 #include <memory>
 #include <list>
+#include <set>
 #include <tuple>
 #include <unistd.h>
 #include <sys/eventfd.h>
@@ -49,6 +52,7 @@
 
 namespace task
 {
+
 struct redisContext
 {
     int _priority;
@@ -58,7 +62,6 @@ struct redisContext
     std::shared_ptr<heartBeat::heartBeat> _hb;
     std::shared_ptr<lbStrategy::lbStrategy<redisAsyncContext *>> _lbs;
     std::shared_ptr<timer::timerManager> _retryTimerManager;
-    std::shared_ptr<std::list<std::shared_ptr<taskMsg>>> _subList;
 };
 static thread_local std::shared_ptr<medis::contextSaver<void *, std::shared_ptr<redisContext>>> tls_ctxSaver;
 
@@ -94,7 +97,7 @@ public:
         {
             __LOG(debug, "init task with gene : " << (void *)getGeneticGene());
         }
-        _subList = std::make_shared<std::list<std::shared_ptr<taskMsg>>>();
+
         _evfd = eventfd(0, EFD_NONBLOCK | EFD_CLOEXEC);
         if (_evfd < 0)
         {
@@ -387,7 +390,7 @@ public:
         connectCallback(c, status, true);
     }
 
-    static void connectCallback(const redisAsyncContext *c, int status, bool isPubSub = false)
+    static void connectCallback(const redisAsyncContext *c, int status, bool isSubscribe = false)
     {
         bool connected = false;
         if (status != REDIS_OK || c->err != REDIS_OK)
@@ -422,7 +425,7 @@ public:
                 {
                     __LOG(warn, "connect return fail, call disconnect callback and disconnect callback will connect again");
                 }
-                if (isPubSub)
+                if (isSubscribe)
                 {
                     taskImp::disconnectCallbackPubSub(_aCtx, REDIS_OK);
                 }
@@ -448,7 +451,7 @@ public:
     {
         disconnectCallback(c, status, true);
     }
-    static void disconnectCallback(const redisAsyncContext *c, int status, bool isPubSub = false)
+    static void disconnectCallback(const redisAsyncContext *c, int status, bool isSubscribe = false)
     {
         if (status != REDIS_OK)
         {
@@ -478,13 +481,12 @@ public:
             std::weak_ptr<redisContext> ctxWptr(rdsCtx);
 
             // give sub list back to glob sub list
-            if (isPubSub)
+            if (isSubscribe)
             {
                 auto task_sptr = medis::taskSaver<void *, std::shared_ptr<task::taskImp>>::instance()->getTask(gene).value_or(nullptr);
                 if (task_sptr)
                 {
-                    task_sptr->_subList->insert((task_sptr->_subList)->end(), (rdsCtx->_subList)->begin(), (rdsCtx->_subList)->end());
-                    rdsCtx->_subList->clear();
+                    task_sptr->_subsSet.update(_aCtx);
                     // send a TASK_REDIS_RE_SUB,  other connection will take the sub info
                     // if there is no connection, this  will covered by on_avaliable
                     task_sptr->sendMsg(task::taskMsgType::TASK_REDIS_RE_SUB, nullptr);
@@ -594,13 +596,11 @@ public:
     }
     bool processReSend()
     {
-        if (!_subList)
+        auto toSub = _subsSet.getToSub();
+
+        for (auto it : toSub)
         {
-            return false;
-        }
-        for (auto it : *_subList)
-        {
-            on_message(it);
+            on_message(it.first);
         }
         return true;
     }
@@ -642,21 +642,98 @@ public:
             __LOG(debug, "get command :\n"
                              << msg->body);
         }
-        redisAsyncContext *_context;
-        if (msg->isPubSub)
+        redisAsyncContext *_context = NULL;
+
+        switch (msg->cmdType)
         {
-            _context = (redisAsyncContext *)(_connManagerPubSub->get_conn()).value_or(nullptr);
-            auto rdxCtx = tls_ctxSaver->getCtx(_context).value_or(nullptr);
-            if (rdxCtx)
+        case REDIS_COMMAND_TYPE::TASK_REDIS_SUB:
+            // need to create relationship between redisAsyncContext and the related message.
             {
-                if(rdxCtx->_subList){
-                rdxCtx->_subList->push_back(task_msg);}
+                auto setPair = _subsSet.get(msg->body).value_or(std::make_pair(nullptr, (redisAsyncContext *)NULL));
+                if (setPair.second)
+                {
+                    if (CHECK_LOG_LEVEL(debug))
+                    {
+                        __LOG(debug, "had subscribe before, command is : " << msg->body);
+                    }
+                    // if you had sub before. then use the context
+                    // hiredis will use the new userdate and callback function
+                    _context = setPair.second;
+                }
+                else
+                {
+                    if (CHECK_LOG_LEVEL(debug))
+                    {
+                        __LOG(debug, "did not subscribe before, command is : " << msg->body);
+                    }
+                    // if not. get a new context. then get a new one
+                    _context = (redisAsyncContext *)(_connManagerPubSub->get_conn()).value_or(nullptr);
+                    _subsSet.update(task_msg, _context);
+                }
             }
-        }
-        else
-        {
+            break;
+        case REDIS_COMMAND_TYPE::TASK_REDIS_UNSUB:
+            // need to delete the record in the subscribe set.
+            {
+                std::string commandCmp = msg->body;
+
+                std::list<std::string> cmdList;
+                boost::algorithm::split(cmdList, commandCmp, boost::is_any_of("\r\n"));
+                cmdList.pop_back();
+                cmdList.pop_back();
+                auto unSubChannel = cmdList.back();
+
+                std::list<std::string> subStringList;
+                subStringList.push_back("subscribe");
+                subStringList.push_back(unSubChannel);
+
+                std::string subCommand = redis_formatCommand::toString(subStringList);
+
+                auto setPair = _subsSet.get(subCommand).value_or(std::make_pair(nullptr, (redisAsyncContext *)NULL));
+                if (setPair.second)
+                {
+                    if (setPair.second)
+                    {
+                        if (CHECK_LOG_LEVEL(debug))
+                        {
+                            __LOG(debug, "had subscribe before, command is : " << subCommand);
+                        }
+                        // if there is a record in the subscribe set, then delete it using the redisAsyncContext.
+                        _context = setPair.second;
+                    }
+                    else
+                    {
+                        // if there is a record in the subscribe set, but the redisAsyncContext is not valid. then do nothing(maybe rainyday case?)
+                        if (CHECK_LOG_LEVEL(debug))
+                        {
+                            __LOG(debug, "there is record, but there is no redisAsyncContext, command is " << subCommand);
+                        }
+                    }
+                }
+                else
+                {
+                    // if there is no record, then do nothing
+                    if (CHECK_LOG_LEVEL(debug))
+                    {
+                        __LOG(debug, "there is no record in the record set, command is : " << subCommand);
+                    }
+                }
+                _subsSet.del(msg->body);
+                if (!_context)
+                {
+                    if (CHECK_LOG_LEVEL(warn))
+                    {
+                        __LOG(warn, "did not get connection in the sub set. maybe not subscribe before! command is : " << msg->body);
+                    }
+                    return true;
+                }
+            }
+            break;
+        default:
             _context = (redisAsyncContext *)(_connManager->get_conn()).value_or(nullptr);
+            break;
         }
+
         if (!_context)
         {
             if (CHECK_LOG_LEVEL(warn))
@@ -720,7 +797,7 @@ public:
             return true;
         }
     }
-    bool processRedisAddConnection(std::shared_ptr<taskMsg> task_msg, bool isPubSub = false)
+    bool processRedisAddConnection(std::shared_ptr<taskMsg> task_msg, bool isSubscribe = false)
     {
         if (!task_msg)
         {
@@ -777,7 +854,7 @@ public:
             }
         });
 
-        rdsCtx->_hb->setHbLostCb([rdsCtx_wptr, isPubSub]() {
+        rdsCtx->_hb->setHbLostCb([rdsCtx_wptr, isSubscribe]() {
             if (!rdsCtx_wptr.expired())
             {
                 if (CHECK_LOG_LEVEL(warn))
@@ -785,7 +862,7 @@ public:
                     __LOG(warn, "heart beat lost, call disconnect callback");
                 }
                 auto rdsCtx = rdsCtx_wptr.lock();
-                if (isPubSub)
+                if (isSubscribe)
                 {
                     taskImp::disconnectCallbackPubSub(rdsCtx->_ctx, REDIS_OK);
                 }
@@ -814,14 +891,13 @@ public:
         });
         rdsCtx->_hb->init();
         rdsCtx->_retryTimerManager = std::make_shared<timer::timerManager>(getLoop());
-        if (!isPubSub)
+        if (!isSubscribe)
         {
             rdsCtx->_lbs = _connManager->getLbs();
         }
         else
         {
             rdsCtx->_lbs = _connManagerPubSub->getLbs();
-            rdsCtx->_subList = std::make_shared<std::list<std::shared_ptr<taskMsg>>>();
         }
 
         tls_ctxSaver->save(_context, rdsCtx);
@@ -837,7 +913,7 @@ public:
             }
             return false;
         }
-        if (isPubSub)
+        if (isSubscribe)
         {
             redisAsyncSetConnectCallback(_context, connectCallbackPubSub);
             redisAsyncSetDisconnectCallback(_context, disconnectCallbackPubSub);
@@ -851,7 +927,7 @@ public:
         return true;
     }
 
-    bool processRedisDelConnection(std::shared_ptr<taskMsg> task_msg, bool isPubSub = false)
+    bool processRedisDelConnection(std::shared_ptr<taskMsg> task_msg, bool isSubscribe = false)
     {
         if (!task_msg)
         {
@@ -874,11 +950,10 @@ public:
             {
                 // need to stop the hiredis connection here
                 redisAsyncDisconnect(it->_ctx);
-                if (isPubSub)
+                if (isSubscribe)
                 {
                     // if this is a pub/sub connection, should add the related pub msg into the golb to be publish list
-                    _subList->insert(_subList->end(), (it->_subList)->begin(), (it->_subList)->end());
-                    it->_subList->clear();
+                    _subsSet.update(it->_ctx);
                 }
             }
             else
@@ -1008,7 +1083,7 @@ public:
     std::shared_ptr<connManager::connManager<medis::CONN_INFO>> _connManager;
     std::shared_ptr<connManager::connManager<medis::CONN_INFO>> _connManagerPubSub;
     std::shared_ptr<timer::timerManager> _timerManager;
-    std::shared_ptr<std::list<std::shared_ptr<taskMsg>>> _subList;
+    subscribeSet _subsSet;
 };
 
 } // namespace task

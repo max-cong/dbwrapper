@@ -121,7 +121,6 @@ int main()
             aclient.del(std::string("hello"), nullptr, NULL, getCallback);
 
             aclient.sub(std::string("pub sub"), NULL, getCallbackPubSub);
-
             aclient.sub(std::string("pub sub 001"), NULL, getCallbackPubSub);
             std::this_thread::sleep_for(std::chrono::milliseconds(1000));
             aclient.pub(std::string("pub sub"), std::string("pub sub test"), NULL, getCallbackPubSub);
