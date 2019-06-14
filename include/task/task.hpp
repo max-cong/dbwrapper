@@ -39,6 +39,7 @@
 
 #include "hiredis/async.h"
 #include "hiredis/hiredis.h"
+#include <boost/algorithm/string.hpp>
 #include <string>
 #include <memory>
 #include <list>
@@ -648,15 +649,23 @@ public:
         case REDIS_COMMAND_TYPE::TASK_REDIS_SUB:
             // need to create relationship between redisAsyncContext and the related message.
             {
-                auto setPair = _subsSet.get(msg->body).value_or(std::make_pair(nullptr, (redisAsyncContext*)NULL));
+                auto setPair = _subsSet.get(msg->body).value_or(std::make_pair(nullptr, (redisAsyncContext *)NULL));
                 if (setPair.second)
                 {
+                    if (CHECK_LOG_LEVEL(debug))
+                    {
+                        __LOG(debug, "had subscribe before, command is : " << msg->body);
+                    }
                     // if you had sub before. then use the context
                     // hiredis will use the new userdate and callback function
                     _context = setPair.second;
                 }
                 else
                 {
+                    if (CHECK_LOG_LEVEL(debug))
+                    {
+                        __LOG(debug, "did not subscribe before, command is : " << msg->body);
+                    }
                     // if not. get a new context. then get a new one
                     _context = (redisAsyncContext *)(_connManagerPubSub->get_conn()).value_or(nullptr);
                     _subsSet.update(task_msg, _context);
@@ -666,12 +675,29 @@ public:
         case REDIS_COMMAND_TYPE::TASK_REDIS_UNSUB:
             // need to delete the record in the subscribe set.
             {
+                std::string commandCmp = msg->body;
 
-                auto setPair = _subsSet.get(msg->body).value_or(std::make_pair(nullptr, (redisAsyncContext*)NULL));
+                std::list<std::string> cmdList;
+                boost::algorithm::split(cmdList, commandCmp, boost::is_any_of("\r\n"));
+                cmdList.pop_back();
+                cmdList.pop_back();
+                auto unSubChannel = cmdList.back();
+
+                std::list<std::string> subStringList;
+                subStringList.push_back("subscribe");
+                subStringList.push_back(unSubChannel);
+
+                std::string subCommand = redis_formatCommand::toString(subStringList);
+
+                auto setPair = _subsSet.get(subCommand).value_or(std::make_pair(nullptr, (redisAsyncContext *)NULL));
                 if (setPair.second)
                 {
                     if (setPair.second)
                     {
+                        if (CHECK_LOG_LEVEL(debug))
+                        {
+                            __LOG(debug, "had subscribe before, command is : " << subCommand);
+                        }
                         // if there is a record in the subscribe set, then delete it using the redisAsyncContext.
                         _context = setPair.second;
                     }
@@ -680,7 +706,7 @@ public:
                         // if there is a record in the subscribe set, but the redisAsyncContext is not valid. then do nothing(maybe rainyday case?)
                         if (CHECK_LOG_LEVEL(debug))
                         {
-                            __LOG(debug, "there is record, but there is no redisAsyncContext, command is " << msg->body);
+                            __LOG(debug, "there is record, but there is no redisAsyncContext, command is " << subCommand);
                         }
                     }
                 }
@@ -689,7 +715,7 @@ public:
                     // if there is no record, then do nothing
                     if (CHECK_LOG_LEVEL(debug))
                     {
-                        __LOG(debug, "there is no record in the record set, command is : " << msg->body);
+                        __LOG(debug, "there is no record in the record set, command is : " << subCommand);
                     }
                 }
                 _subsSet.del(msg->body);
@@ -697,9 +723,9 @@ public:
                 {
                     if (CHECK_LOG_LEVEL(warn))
                     {
-                        __LOG(warn, "did not get connection in the sub set. maybe not subscribe before!");
+                        __LOG(warn, "did not get connection in the sub set. maybe not subscribe before! command is : " << msg->body);
                     }
-                    return false;
+                    return true;
                 }
             }
             break;
