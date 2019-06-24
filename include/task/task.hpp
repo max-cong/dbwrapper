@@ -55,14 +55,23 @@ namespace task
 
 struct redisContext
 {
+    // this is for load balancer.
     int _priority;
     std::string ip;
     unsigned short port;
+    // this is for hiredis
     redisAsyncContext *_ctx;
+    // heart beat on connection
     std::shared_ptr<heartBeat::heartBeat> _hb;
     std::shared_ptr<lbStrategy::lbStrategy<redisAsyncContext *>> _lbs;
+    // this is for re-try connect
     std::shared_ptr<timer::timerManager> _retryTimerManager;
 };
+// this is a little tricky, when considering there are multi medis client. we don't want each client share the same context saver.
+// and when one client exit. we do not want to cleanup the info of others. So we have this thread local variable.
+// and we make sure to access this variable only in the worker thread.  when the thread exit(which means the client is exiting), it will be destroyed on the thread exit.
+// in the C++ implement https://timsong-cpp.github.io/cppwp/n3337/basic.stc.thread#2
+// A variable with thread storage duration shall be initialized before its first odr-use ([basic.def.odr]) and, if constructed, shall be destroyed on thread exit.
 static thread_local std::shared_ptr<medis::contextSaver<void *, std::shared_ptr<redisContext>>> tls_ctxSaver;
 
 class taskImp : public gene::gene<void *>, public std::enable_shared_from_this<taskImp>, public nonCopyable
@@ -97,7 +106,7 @@ public:
         {
             __LOG(debug, "init task with gene : " << (void *)getGeneticGene());
         }
-
+        // get the event fd
         _evfd = eventfd(0, EFD_NONBLOCK | EFD_CLOEXEC);
         if (_evfd < 0)
         {
@@ -123,21 +132,23 @@ public:
         _evfdServer = std::make_shared<evfdServer>(getLoop(), _evfd, evfdCallback, (void *)this);
         if (!_evfdServer->init())
         {
+            if (CHECK_LOG_LEVEL(error))
+            {
+                __LOG(error, "start eventfd server return fail!");
+            }
             return false;
         }
-
         // start evfd client
-
         _evfdClient = std::make_shared<evfdClient>(_evfd);
 
-        // send one message to worker thread.
+        // send one message to worker thread to set the tls context in the worker thread.
         std::function<void()> tlsCtxFn = []() {
             tls_ctxSaver = std::make_shared<medis::contextSaver<void *, std::shared_ptr<redisContext>>>();
         };
         sendMsg(taskMsgType::TASK_TLS_CTX_SAVER_INIT, tlsCtxFn);
-
-        _connManagerPubSub = std::make_shared<connManager::connManager<medis::CONN_INFO>>(getLoop());
-        if (!_connManagerPubSub)
+        // subscribe connection manager
+        _connManagerSub = std::make_shared<connManager::connManager<medis::CONN_INFO>>(getLoop());
+        if (!_connManagerSub)
         {
             if (CHECK_LOG_LEVEL(error))
             {
@@ -145,22 +156,22 @@ public:
             }
             return false;
         }
-        _connManagerPubSub->setGeneticGene(getGeneticGene());
+        _connManagerSub->setGeneticGene(getGeneticGene());
         if (CHECK_LOG_LEVEL(debug))
         {
-            __LOG(debug, "create connection manager with gene : " << _connManagerPubSub->getGeneticGene());
+            __LOG(debug, "create connection manager with gene : " << _connManagerSub->getGeneticGene());
         }
 
         auto sef_wptr = getThisWptr();
-
-        _connManagerPubSub->setAddConnCb([sef_wptr](std::shared_ptr<medis::CONN_INFO> connInfo) {
+        // what we should do when we need to add connection
+        _connManagerSub->setAddConnCb([sef_wptr](std::shared_ptr<medis::CONN_INFO> connInfo) {
             if (!sef_wptr.expired())
             {
                 if (CHECK_LOG_LEVEL(debug))
                 {
                     __LOG(debug, "there is a new connection, send message to task with type TASK_REDIS_ADD_CONN");
                 }
-                return sef_wptr.lock()->sendMsg(task::taskMsgType::TASK_REDIS_ADD_CONN_PUB_SUB, connInfo);
+                return sef_wptr.lock()->sendMsg(task::taskMsgType::TASK_REDIS_ADD_CONN_SUB, connInfo);
             }
             else
             {
@@ -171,7 +182,8 @@ public:
                 return false;
             }
         });
-        _connManagerPubSub->setDecConnCb([sef_wptr](std::shared_ptr<medis::CONN_INFO> connInfo) {
+        // what we should do when we need to delete a connection
+        _connManagerSub->setDecConnCb([sef_wptr](std::shared_ptr<medis::CONN_INFO> connInfo) {
             if (!sef_wptr.expired())
             {
                 return sef_wptr.lock()->sendMsg(task::taskMsgType::TASK_REDIS_DEL_CONN_PUB_SUB, connInfo);
@@ -185,8 +197,8 @@ public:
                 return false;
             }
         });
-
-        _connManagerPubSub->setAvaliableCb([sef_wptr]() {
+        // what we should do when there is at least one connection(no connetion before).
+        _connManagerSub->setAvaliableCb([sef_wptr]() {
             if (!sef_wptr.expired())
             {
                 sef_wptr.lock()->setConnStatusPubSub(true);
@@ -201,7 +213,8 @@ public:
                 }
             }
         });
-        _connManagerPubSub->setUnavaliableCb([sef_wptr]() {
+        // what should we do when there is connection(there is connection before).
+        _connManagerSub->setUnavaliableCb([sef_wptr]() {
             if (!sef_wptr.expired())
             {
                 sef_wptr.lock()->setConnStatusPubSub(true);
@@ -216,8 +229,8 @@ public:
             }
         });
 
-        _connManagerPubSub->init();
-
+        _connManagerSub->init();
+        // connection manange for command
         _connManager = std::make_shared<connManager::connManager<medis::CONN_INFO>>(getLoop());
         if (!_connManager)
         {
@@ -294,10 +307,9 @@ public:
         });
 
         _connManager->init();
-
+        // timer manager init
         _timerManager.reset(new timer::timerManager(getLoop()));
         // start a 100ms timer to guard A-B-A issue.
-
         _timerManager->getTimer()->startForever(100, [sef_wptr]() {
             if (!sef_wptr.expired())
             {
@@ -317,6 +329,10 @@ public:
         });
         return true;
     }
+    // this is the callback function registered to the event fd. the arg is the task pointer.
+    // when the message comes. call the process_msg.
+    // to do: what about : if the task instance is exit. but this callback is come.
+    // consider tls.
     static void evfdCallback(int fd, short event, void *args)
     {
         uint64_t one;
@@ -385,7 +401,7 @@ public:
     {
         connectCallback(c, status);
     }
-    static void connectCallbackPubSub(const redisAsyncContext *c, int status)
+    static void connectCallbackSub(const redisAsyncContext *c, int status)
     {
         connectCallback(c, status, true);
     }
@@ -427,7 +443,7 @@ public:
                 }
                 if (isSubscribe)
                 {
-                    taskImp::disconnectCallbackPubSub(_aCtx, REDIS_OK);
+                    taskImp::disconnectCallbackSub(_aCtx, REDIS_OK);
                 }
                 else
                 {
@@ -447,7 +463,7 @@ public:
     {
         disconnectCallback(c, status);
     }
-    static void disconnectCallbackPubSub(const redisAsyncContext *c, int status)
+    static void disconnectCallbackSub(const redisAsyncContext *c, int status)
     {
         disconnectCallback(c, status, true);
     }
@@ -564,7 +580,7 @@ public:
         case taskMsgType::TASK_REDIS_ADD_CONN:
             ret = processRedisAddConnection(task_msg);
             break;
-        case taskMsgType::TASK_REDIS_ADD_CONN_PUB_SUB:
+        case taskMsgType::TASK_REDIS_ADD_CONN_SUB:
             ret = processRedisAddConnection(task_msg, true);
             break;
         case taskMsgType::TASK_REDIS_DEL_CONN:
@@ -582,7 +598,7 @@ public:
             break;
 
         case taskMsgType::TASK_REDIS_RE_SUB:
-            ret = processReSend();
+            ret = processReSub();
             break;
 
         default:
@@ -594,10 +610,10 @@ public:
         }
         return ret;
     }
-    bool processReSend()
+    // if send message fail(push to the spsc queue fail)
+    bool processReSub()
     {
         auto toSub = _subsSet.getToSub();
-
         for (auto it : toSub)
         {
             on_message(it.first);
@@ -618,7 +634,18 @@ public:
             __LOG(warn, "set tls context saver!");
         }
         std::function<void()> fn = DBW_ANY_CAST<std::function<void()>>(task_msg->body);
-        fn();
+        if (fn)
+        {
+            fn();
+        }
+        else
+        {
+            if (CHECK_LOG_LEVEL(error))
+            {
+                __LOG(error, "there is no valid function in the message body");
+            }
+            return false;
+        }
         return true;
     }
 
@@ -667,7 +694,7 @@ public:
                         __LOG(debug, "did not subscribe before, command is : " << msg->body);
                     }
                     // if not. get a new context. then get a new one
-                    _context = (redisAsyncContext *)(_connManagerPubSub->get_conn()).value_or(nullptr);
+                    _context = (redisAsyncContext *)(_connManagerSub->get_conn()).value_or(nullptr);
                     _subsSet.update(task_msg, _context);
                 }
             }
@@ -692,23 +719,12 @@ public:
                 auto setPair = _subsSet.get(subCommand).value_or(std::make_pair(nullptr, (redisAsyncContext *)NULL));
                 if (setPair.second)
                 {
-                    if (setPair.second)
+                    if (CHECK_LOG_LEVEL(debug))
                     {
-                        if (CHECK_LOG_LEVEL(debug))
-                        {
-                            __LOG(debug, "had subscribe before, command is : " << subCommand);
-                        }
-                        // if there is a record in the subscribe set, then delete it using the redisAsyncContext.
-                        _context = setPair.second;
+                        __LOG(debug, "had subscribe before, command is : " << subCommand);
                     }
-                    else
-                    {
-                        // if there is a record in the subscribe set, but the redisAsyncContext is not valid. then do nothing(maybe rainyday case?)
-                        if (CHECK_LOG_LEVEL(debug))
-                        {
-                            __LOG(debug, "there is record, but there is no redisAsyncContext, command is " << subCommand);
-                        }
-                    }
+                    // if there is a record in the subscribe set, then delete it using the redisAsyncContext.
+                    _context = setPair.second;
                 }
                 else
                 {
@@ -730,6 +746,8 @@ public:
             }
             break;
         default:
+            // other command.
+            // to do: consider get connection every 10 message.
             _context = (redisAsyncContext *)(_connManager->get_conn()).value_or(nullptr);
             break;
         }
@@ -757,6 +775,7 @@ public:
             return true;
         }
     }
+    // this is not used. leave for further usage
     bool processRedisRawCommand(std::shared_ptr<taskMsg> task_msg)
     {
         if (!task_msg)
@@ -864,7 +883,7 @@ public:
                 auto rdsCtx = rdsCtx_wptr.lock();
                 if (isSubscribe)
                 {
-                    taskImp::disconnectCallbackPubSub(rdsCtx->_ctx, REDIS_OK);
+                    taskImp::disconnectCallbackSub(rdsCtx->_ctx, REDIS_OK);
                 }
                 else
                 {
@@ -897,13 +916,11 @@ public:
         }
         else
         {
-            rdsCtx->_lbs = _connManagerPubSub->getLbs();
+            rdsCtx->_lbs = _connManagerSub->getLbs();
         }
-
         tls_ctxSaver->save(_context, rdsCtx);
 
         int ret = REDIS_ERR;
-
         ret = redisLibeventAttach(_context, getLoop()->ev());
         if (ret != REDIS_OK)
         {
@@ -915,15 +932,14 @@ public:
         }
         if (isSubscribe)
         {
-            redisAsyncSetConnectCallback(_context, connectCallbackPubSub);
-            redisAsyncSetDisconnectCallback(_context, disconnectCallbackPubSub);
+            redisAsyncSetConnectCallback(_context, connectCallbackSub);
+            redisAsyncSetDisconnectCallback(_context, disconnectCallbackSub);
         }
         else
         {
             redisAsyncSetConnectCallback(_context, connectCallbackSimple);
             redisAsyncSetDisconnectCallback(_context, disconnectCallbackSimple);
         }
-
         return true;
     }
 
@@ -971,22 +987,7 @@ public:
     void process_msg()
     {
         _task_q_empty = _taskQueue.read_available() > 0 ? false : true;
-        //auto self_wptr = getThisWptr();
-        //auto self_sptr = shared_from_this();
         _taskQueue.consume_all([this](std::shared_ptr<taskMsg> tmpTaskMsg) {
-            /*
-            std::shared_ptr<taskImp> self_sptr;
-            if (!self_wptr.expired())
-            {
-                self_sptr = self_wptr.lock();
-            }
-            else
-            {
-                if (CHECK_LOG_LEVEL(warn))
-		{__LOG(warn,"task process message, task weak ptr is expired");}
-                return;
-            }
-            */
             if (!on_message(tmpTaskMsg))
             {
                 if (CHECK_LOG_LEVEL(warn))
@@ -995,7 +996,6 @@ public:
                 }
                 // the message process return fail
                 // start a timer to send message to task again
-
                 auto self_wptr = getThisWptr();
                 _timerManager->getTimer()->startOnce(100, [self_wptr, tmpTaskMsg]() {
                     if (!self_wptr.expired())
@@ -1022,10 +1022,18 @@ public:
 
         while (!_taskQueue.push(msg))
         {
+            if (CHECK_LOG_LEVEL(warn))
+            {
+                __LOG(warn, "push message to the task queue fail. try again");
+            }
         }
 
         if (!_evfdClient)
         {
+            if (CHECK_LOG_LEVEL(warn))
+            {
+                __LOG(warn, "event fd client is not ready");
+            }
             return false;
         }
         else
@@ -1061,28 +1069,39 @@ public:
     }
     bool getConnStatusPubSub()
     {
-        return _connectedPubSub;
+        return _connectedSub;
     }
     void setConnStatusPubSub(bool medisState)
     {
-        _connectedPubSub = medisState;
+        _connectedSub = medisState;
     }
     std::weak_ptr<taskImp> getThisWptr()
     {
         std::weak_ptr<taskImp> self_wptr(shared_from_this());
         return self_wptr;
     }
+    // flag: if there is connection for command
     std::atomic<bool> _connected;
-    std::atomic<bool> _connectedPubSub;
+    // flag: if there is connection for sub
+    std::atomic<bool> _connectedSub;
+    // flag: if the task queue is empty
+    // note: we use lockless spsc queue, this flag marks if the queue is empty.
+    // in some rainy-day case. there maybe A-B-A issue. We have a timer to gard this.
+    // this flag may be access in both APP thread and worker thread
     std::atomic<bool> _task_q_empty;
+    // event fd for evfd client and server
     int _evfd;
+    // weak ptr for evfd client/server timer and so on.
     std::weak_ptr<loop::loop> _loop;
     std::shared_ptr<evfdClient> _evfdClient;
     std::shared_ptr<evfdServer> _evfdServer;
     TASK_QUEUE _taskQueue;
+    // connection manager for command connection
     std::shared_ptr<connManager::connManager<medis::CONN_INFO>> _connManager;
-    std::shared_ptr<connManager::connManager<medis::CONN_INFO>> _connManagerPubSub;
+    // connection manager for sub connection
+    std::shared_ptr<connManager::connManager<medis::CONN_INFO>> _connManagerSub;
     std::shared_ptr<timer::timerManager> _timerManager;
+    // the set record the channel that subed before
     subscribeSet _subsSet;
 };
 
