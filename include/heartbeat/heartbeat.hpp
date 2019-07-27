@@ -58,7 +58,6 @@ public:
         _interval = std::stoi(intervalStr, &sz) * 1000;
 
         std::string hbLostNum = configCenter::configCenter<void *>::instance()->getPropertiesField(this_sptr->getGeneticGene(), PROP_HB_LOST_NUM, DEFAULT_HB_LOST_NUM);
-        std::string::size_type sz; // alias of size_t
         int i_dec = std::stoi(hbLostNum, &sz);
         _retryNum = i_dec;
 
