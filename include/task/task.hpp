@@ -1013,13 +1013,15 @@ public:
             }
         });
         // to do A-B-A issue
+        // update: now there is timer to guard it
         _task_q_empty = true;
     }
 
     bool sendMsg(std::shared_ptr<taskMsg> msg)
     {
         // to do , now just make sure sent the message
-
+        // consider timeout
+        // to do, make the task queue mpmc? performance?
         while (!_taskQueue.push(msg))
         {
             if (CHECK_LOG_LEVEL(warn))
@@ -1104,5 +1106,4 @@ public:
     // the set record the channel that subed before
     subscribeSet _subsSet;
 };
-
 } // namespace task
