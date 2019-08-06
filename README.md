@@ -14,6 +14,12 @@ medis is a header only C++ client for redis.
 
 note: test in boost version 1.68, in some boost version, boost::log have some bug and may cause segV
 
+## dependancy
+
+1. libevent     
+2. hiredis    
+3. boost    
+4. google test(optional)
 
 
 ## project link 
