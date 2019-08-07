@@ -78,7 +78,8 @@ public:
             }
             for (auto it : _geneMap)
             {
-                redisAsyncDisconnect((redisAsyncContext *)it.first);
+                // if the connection is not established. then will cause SegV. this is bug of hiredis
+                //redisAsyncDisconnect((redisAsyncContext *)it.first);
             }
             _geneMap.clear();
     }
