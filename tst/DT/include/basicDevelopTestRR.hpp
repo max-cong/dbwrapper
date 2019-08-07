@@ -4,7 +4,6 @@ class basicDevelopTestRR : public testing::Test
 protected:
     virtual void SetUp() override
     {
-
         _aclient_sptr = std::make_shared<redisAsyncClient>();
 
         configCenter::cfgPropMap _config;
@@ -35,6 +34,5 @@ TEST_F(basicDevelopTestRR, get)
 TEST_F(basicDevelopTestRR, del)
 {
     bool ret = _aclient_sptr->del(std::string("hello"), nullptr, NULL, testGetCallback);
-    std::this_thread::sleep_for(std::chrono::milliseconds(5000));
     EXPECT_TRUE(ret);
 }

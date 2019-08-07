@@ -19,6 +19,7 @@ protected:
         _aclient_sptr->cleanUp();
         // ...
     }
+
     std::shared_ptr<redisAsyncClient> _aclient_sptr;
 };
 
