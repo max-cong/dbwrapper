@@ -78,7 +78,7 @@ public:
             }
             for (auto it : _geneMap)
             {
-                // if the connection is not established. then will cause SegV. this is bug of hiredis
+                // if the connection is not established. then will cause SegV. this is bug of hiredis(libevent)
                 //redisAsyncDisconnect((redisAsyncContext *)it.first);
             }
             _geneMap.clear();
