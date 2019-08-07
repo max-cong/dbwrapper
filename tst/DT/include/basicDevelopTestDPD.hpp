@@ -24,16 +24,16 @@ protected:
 
 TEST_F(basicDevelopTestDPD, put)
 {
-    bool ret = _aclient_sptr->put(std::string("hello"), std::string("world"), NULL, getCallback);
+    bool ret = _aclient_sptr->put(std::string("hello"), std::string("world"), NULL, testGetCallback);
     EXPECT_TRUE(ret);
 }
 TEST_F(basicDevelopTestDPD, get)
 {
-    bool ret = _aclient_sptr->get(std::string("hello"), nullptr, NULL, getCallback);
+    bool ret = _aclient_sptr->get(std::string("hello"), nullptr, NULL, testGetCallback);
     EXPECT_TRUE(ret);
 }
 TEST_F(basicDevelopTestDPD, del)
 {
-    bool ret = _aclient_sptr->del(std::string("hello"), nullptr, NULL, getCallback);
+    bool ret = _aclient_sptr->del(std::string("hello"), nullptr, NULL, testGetCallback);
     EXPECT_TRUE(ret);
 }

@@ -24,16 +24,17 @@ protected:
 
 TEST_F(basicDevelopTestRR, put)
 {
-    bool ret = _aclient_sptr->put(std::string("hello"), std::string("world"), NULL, getCallback);
+    bool ret = _aclient_sptr->put(std::string("hello"), std::string("world"), NULL, testGetCallback);
     EXPECT_TRUE(ret);
 }
 TEST_F(basicDevelopTestRR, get)
 {
-    bool ret = _aclient_sptr->get(std::string("hello"), nullptr, NULL, getCallback);
+    bool ret = _aclient_sptr->get(std::string("hello"), nullptr, NULL, testGetCallback);
     EXPECT_TRUE(ret);
 }
 TEST_F(basicDevelopTestRR, del)
 {
-    bool ret = _aclient_sptr->del(std::string("hello"), nullptr, NULL, getCallback);
+    bool ret = _aclient_sptr->del(std::string("hello"), nullptr, NULL, testGetCallback);
+    std::this_thread::sleep_for(std::chrono::milliseconds(5000));
     EXPECT_TRUE(ret);
 }

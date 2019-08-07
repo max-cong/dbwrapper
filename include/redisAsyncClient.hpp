@@ -131,6 +131,7 @@ public:
     {
         if (!getConnStatus())
         {
+            __LOG(warn, "connection is not established yet！");
             return false;
         }
         std::string command2send = std::move(buildRedisCommand::buildRedisCommand<COMMAND_KEY, COMMAND_VALUE>::get_format_command(REDIS_COMMAND_TYPE::TASK_REDIS_PUT, std::forward<COMMAND_KEY>(key), std::forward<COMMAND_VALUE>(value)));
@@ -154,6 +155,7 @@ public:
     {
         if (!getConnStatus())
         {
+            __LOG(warn, "connection is not established yet！");
             return false;
         }
         std::string command2send = std::move(buildRedisCommand::buildRedisCommand<COMMAND_KEY, COMMAND_VALUE>::get_format_command(REDIS_COMMAND_TYPE::TASK_REDIS_GET, std::forward<COMMAND_KEY>(key), std::forward<COMMAND_VALUE>(value)));
@@ -178,6 +180,7 @@ public:
     {
         if (!getConnStatus())
         {
+            __LOG(warn, "connection is not established yet！");
             return false;
         }
         std::string command2send = std::move(buildRedisCommand::buildRedisCommand<COMMAND_KEY, COMMAND_VALUE>::get_format_command(REDIS_COMMAND_TYPE::TASK_REDIS_DEL, std::forward<COMMAND_KEY>(key), std::forward<COMMAND_VALUE>(value)));
@@ -202,6 +205,7 @@ public:
     {
         if (!getConnStatusPubSub())
         {
+            __LOG(warn, "connection is not established yet！");
             return false;
         }
         std::string command2send = std::move(buildRedisCommand::buildRedisCommand<COMMAND_KEY, COMMAND_VALUE>::get_format_command(REDIS_COMMAND_TYPE::TASK_REDIS_PUB, std::forward<COMMAND_KEY>(key), std::forward<COMMAND_VALUE>(value)));
@@ -225,6 +229,7 @@ public:
     {
         if (!getConnStatusPubSub())
         {
+            __LOG(warn, "connection is not established yet！");
             return false;
         }
         std::string command2send = std::move(buildRedisCommand::buildRedisCommand<COMMAND_KEY, std::nullptr_t>::get_format_command(REDIS_COMMAND_TYPE::TASK_REDIS_SUB, std::forward<COMMAND_KEY>(key), nullptr));
@@ -249,6 +254,7 @@ public:
     {
         if (!getConnStatusPubSub())
         {
+            __LOG(warn, "connection is not established yet！");
             return false;
         }
         std::string command2send = std::move(buildRedisCommand::buildRedisCommand<COMMAND_KEY, std::nullptr_t>::get_format_command(REDIS_COMMAND_TYPE::TASK_REDIS_UNSUB, std::forward<COMMAND_KEY>(key), nullptr));

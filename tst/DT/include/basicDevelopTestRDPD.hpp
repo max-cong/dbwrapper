@@ -25,16 +25,16 @@ protected:
 
 TEST_F(basicDevelopTestRDPD, put)
 {
-    bool ret = _aclient_sptr->put(std::string("hello"), std::string("world"), NULL, getCallback);
+    bool ret = _aclient_sptr->put(std::string("hello"), std::string("world"), NULL, testGetCallback);
     EXPECT_TRUE(ret);
 }
 TEST_F(basicDevelopTestRDPD, get)
 {
-    bool ret = _aclient_sptr->get(std::string("hello"), nullptr, NULL, getCallback);
+    bool ret = _aclient_sptr->get(std::string("hello"), nullptr, NULL, testGetCallback);
     EXPECT_TRUE(ret);
 }
 TEST_F(basicDevelopTestRDPD, del)
 {
-    bool ret = _aclient_sptr->del(std::string("hello"), nullptr, NULL, getCallback);
+    bool ret = _aclient_sptr->del(std::string("hello"), nullptr, NULL, testGetCallback);
     EXPECT_TRUE(ret);
 }
