@@ -167,7 +167,6 @@ public:
 
     virtual void setConnInfoList(connList _list)
     {
-
         updateConnInfo(_list);
     }
     virtual connList getConnInfoList()
@@ -176,7 +175,6 @@ public:
     }
     virtual void deleteConnInfo(connList _list)
     {
-
         for (auto it : _list)
         {
             _conn_list.remove_if([&it, this](std::shared_ptr<connInfo> _info) {

@@ -94,7 +94,6 @@ public:
 	/** get status */
 	loopStatus status()
 	{
-
 		return _status;
 	}
 
@@ -105,7 +104,6 @@ public:
 	 */
 	bool start(bool newThread = true)
 	{
-
 		if (!_base_sptr)
 		{
 			return false;
@@ -195,7 +193,6 @@ protected:
 private:
 	void _run()
 	{
-
 		_status = loopStatus::statusRunning;
 
 		onBeforeLoop();

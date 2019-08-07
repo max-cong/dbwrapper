@@ -4,7 +4,6 @@ class basicDevelopTestDPD : public testing::Test
 protected:
     virtual void SetUp() override
     {
-
         _aclient_sptr = std::make_shared<redisAsyncClient>();
 
         configCenter::cfgPropMap _config;
@@ -17,6 +16,7 @@ protected:
     }
     virtual void TearDown() override
     {
+        _aclient_sptr->cleanUp();
         // ...
     }
     std::shared_ptr<redisAsyncClient> _aclient_sptr;

@@ -56,9 +56,15 @@ public:
         std::string intervalStr = configCenter::configCenter<void *>::instance()->getPropertiesField(getGeneticGene(), PROP_HB_INTERVAL, DEFAULT_HB_INTERVAL);
         std::string::size_type sz; // alias of size_t
         _interval = std::stoi(intervalStr, &sz) * 1000;
+
+        std::string hbLostNum = configCenter::configCenter<void *>::instance()->getPropertiesField(getGeneticGene(), PROP_HB_LOST_NUM, DEFAULT_HB_LOST_NUM);
+        int i_dec = std::stoi(hbLostNum, &sz);
+        _retryNum = i_dec;
+
         if (CHECK_LOG_LEVEL(debug))
         {
-            __LOG(debug, "start heartbeat with interval [" << _interval << "ms]");
+            __LOG(debug, "start heartbeat with interval [" << _interval << "ms], "
+                                                           << "retry " << _retryNum << " timrs.");
         }
         _tManager.reset(new timer::timerManager(_loop.lock()));
         start();

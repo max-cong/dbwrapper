@@ -40,10 +40,10 @@ enum class taskMsgType : std::uint32_t
     TASK_REDIS_RAW_PUB_SUB,
 
     TASK_REDIS_ADD_CONN,
-    TASK_REDIS_ADD_CONN_PUB_SUB,
+    TASK_REDIS_ADD_CONN_SUB,
 
     TASK_REDIS_DEL_CONN,
-        TASK_REDIS_DEL_CONN_PUB_SUB,
+    TASK_REDIS_DEL_CONN_PUB_SUB,
     // when the first connection avaliable, need to clean the message queueu.
     TASK_REDIS_CONN_AVALIABLE,
 

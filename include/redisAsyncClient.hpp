@@ -129,7 +129,6 @@ public:
     template <typename COMMAND_KEY, typename COMMAND_VALUE>
     bool put(COMMAND_KEY &&key, COMMAND_VALUE &&value, void *usr_data, redisCallbackFn *fn)
     {
-
         if (!getConnStatus())
         {
             return false;
