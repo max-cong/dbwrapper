@@ -91,7 +91,6 @@ void getCallbackPubSub(redisAsyncContext *c, void *r, void *privdata)
 int main()
 {
     {
-
         INIT_LOGGER(new simpleLogger());
         SET_LOG_LEVEL(debug);
 

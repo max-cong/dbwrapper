@@ -53,15 +53,15 @@ static const char normal[] = {0x1b, '[', '0', ';', '3', '9', 'm', 0};
 		if (ACTIVE_LOGGER_INSTANCE)                                               \
 			(ACTIVE_LOGGER_INSTANCE->set_log_level(log_level::logLevel##_level)); \
 	}
-#define DESTROY_LOGGER                      \
+#define DESTROY_LOGGER()                    \
 	{                                       \
 		if (ACTIVE_LOGGER_INSTANCE)         \
 		{                                   \
 			ACTIVE_LOGGER_INSTANCE->stop(); \
 			delete ACTIVE_LOGGER_INSTANCE;  \
+			ACTIVE_LOGGER_INSTANCE = NULL;  \
 		}                                   \
 	}
-
 
 enum log_level
 {

@@ -45,12 +45,15 @@
 #define MEDIS_GLOB_CLEAN_UP()                                                                     \
     {                                                                                             \
         auto task_ins_ptr = medis::taskSaver<void *, std::shared_ptr<task::taskImp>>::instance(); \
-        task_ins_ptr->distroy(task_ins_ptr);                                                      \
+        if (task_ins_ptr)                                                                         \
+            task_ins_ptr->distroy(task_ins_ptr);                                                  \
                                                                                                   \
         auto cfg_ins_sptr = configCenter::configCenter<void *>::instance();                       \
-        cfg_ins_sptr->distroy(std::move(cfg_ins_sptr));                                           \
-                                                                                                  \
-        DESTROY_LOGGER;                                                                         \
+        if (cfg_ins_sptr)                                                                         \
+        {                                                                                         \
+            cfg_ins_sptr->distroy(std::move(cfg_ins_sptr));                                       \
+        }                                                                                         \
+        DESTROY_LOGGER();                                                                         \
     }
 class redisAsyncClient : public nonCopyable
 {
