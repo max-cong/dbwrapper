@@ -4,8 +4,9 @@
 
 namespace task
 {
-struct taskMsgCmp
+class taskMsgCmp
 {
+public:
     bool operator()(const std::pair<std::shared_ptr<taskMsg>, redisAsyncContext *> &lhs, const std::pair<std::shared_ptr<taskMsg>, redisAsyncContext *> &rhs) const
     {
         std::shared_ptr<TASK_REDIS_FORMAT_RAW_MSG_BODY> lmsg = DBW_ANY_CAST<std::shared_ptr<TASK_REDIS_FORMAT_RAW_MSG_BODY>>((lhs.first)->body);

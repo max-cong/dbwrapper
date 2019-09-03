@@ -167,7 +167,7 @@ public:
         }
     }
 
-    void setAvaliableCb(std::function<void()> cb)
+    void setAvaliableCb(std::function<void()> const &cb)
     {
         _avaliable_cb = cb;
     }
@@ -175,7 +175,7 @@ public:
     {
         return _avaliable_cb;
     }
-    void setUnavaliableCb(std::function<void()> cb)
+    void setUnavaliableCb(std::function<void()> const &cb)
     {
         _unavaliable_cb = cb;
     }

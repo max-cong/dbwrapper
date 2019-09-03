@@ -55,30 +55,7 @@ static std::ostream &operator<<(std::ostream &os, loopStatus status)
 class loop : public gene::gene<void *>, public std::enable_shared_from_this<loop>
 {
 public:
-	loop() : _status(loopStatus::statusInit)
-	{
-		evthread_use_pthreads();
-		_base_sptr.reset(event_base_new(), [](event_base *innerBase) {
-			if (NULL != innerBase)
-			{
-				if (CHECK_LOG_LEVEL(warn))
-				{
-					__LOG(warn, "[loop] event base is exiting!");
-				}
-				event_base_free(innerBase);
-				innerBase = NULL;
-			}
-		});
-	}
-	~loop()
-	{
-		stop();
-		if (CHECK_LOG_LEVEL(warn))
-		{
-			__LOG(warn, "[loop] loop is exiting!");
-		}
-	}
-
+	loop() : _status(loopStatus::statusInit){}
 	/** convert to event_base * pointer*/
 	inline explicit operator event_base *() const
 	{
@@ -104,6 +81,20 @@ public:
 	 */
 	bool start(bool newThread = true)
 	{
+
+		evthread_use_pthreads();
+		_base_sptr.reset(event_base_new(), [](event_base *innerBase) {
+			if (NULL != innerBase)
+			{
+				if (CHECK_LOG_LEVEL(warn))
+				{
+					__LOG(warn, "[loop] event base is exiting!");
+				}
+				event_base_free(innerBase);
+				innerBase = NULL;
+			}
+		});
+
 		if (!_base_sptr)
 		{
 			return false;

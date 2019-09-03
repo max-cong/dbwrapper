@@ -81,9 +81,11 @@ public:
     {
     }
     taskImp() = delete;
-    virtual ~taskImp()
+ 
+
+    void stop()
     {
-        if (CHECK_LOG_LEVEL(warn))
+             if (CHECK_LOG_LEVEL(warn))
         {
             __LOG(warn, "[taskImp] taskImp is exiting!");
         }
@@ -94,10 +96,6 @@ public:
         }
 
         _taskQueue.reset();
-    }
-
-    void stop()
-    {
     }
 
     bool init()

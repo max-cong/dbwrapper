@@ -80,7 +80,6 @@ public:
 	logger_iface(const logger_iface &) = default;
 	logger_iface &operator=(const logger_iface &) = default;
 
-public:
 	virtual void init() = 0;
 	virtual void stop() = 0;
 	virtual void set_log_level(log_level level) = 0;
