@@ -37,20 +37,22 @@
 #include <memory>
 #include <thread>
 
-#define MEDIS_GLOB_SIPMLE_INIT()                                      \
-    {                                                                 \
-        std::unique_ptr<simpleLogger> loggerUptr(new simpleLogger()); \
-        INIT_LOGGER(loggerUptr);                                      \
-        SET_LOG_LEVEL(debug);                                         \
+#define MEDIS_GLOB_SIPMLE_INIT()         \
+    {                                    \
+        INIT_LOGGER(new simpleLogger()); \
+        SET_LOG_LEVEL(debug);            \
     }
 #define MEDIS_GLOB_CLEAN_UP()                                                                     \
     {                                                                                             \
         auto task_ins_ptr = medis::taskSaver<void *, std::shared_ptr<task::taskImp>>::instance(); \
-        task_ins_ptr->distroy(task_ins_ptr);                                                      \
+        if (task_ins_ptr)                                                                         \
+            task_ins_ptr->distroy(task_ins_ptr);                                                  \
                                                                                                   \
         auto cfg_ins_sptr = configCenter::configCenter<void *>::instance();                       \
-        cfg_ins_sptr->distroy(std::move(cfg_ins_sptr));                                           \
-                                                                                                  \
+        if (cfg_ins_sptr)                                                                         \
+        {                                                                                         \
+            cfg_ins_sptr->distroy(std::move(cfg_ins_sptr));                                       \
+        }                                                                                         \
         DESTROY_LOGGER();                                                                         \
     }
 class redisAsyncClient : public nonCopyable
@@ -131,6 +133,7 @@ public:
     {
         if (!getConnStatus())
         {
+            __LOG(warn, "connection is not established yet！");
             return false;
         }
         std::string command2send = std::move(buildRedisCommand::buildRedisCommand<COMMAND_KEY, COMMAND_VALUE>::get_format_command(REDIS_COMMAND_TYPE::TASK_REDIS_PUT, std::forward<COMMAND_KEY>(key), std::forward<COMMAND_VALUE>(value)));
@@ -154,6 +157,7 @@ public:
     {
         if (!getConnStatus())
         {
+            __LOG(warn, "connection is not established yet！");
             return false;
         }
         std::string command2send = std::move(buildRedisCommand::buildRedisCommand<COMMAND_KEY, COMMAND_VALUE>::get_format_command(REDIS_COMMAND_TYPE::TASK_REDIS_GET, std::forward<COMMAND_KEY>(key), std::forward<COMMAND_VALUE>(value)));
@@ -178,6 +182,7 @@ public:
     {
         if (!getConnStatus())
         {
+            __LOG(warn, "connection is not established yet！");
             return false;
         }
         std::string command2send = std::move(buildRedisCommand::buildRedisCommand<COMMAND_KEY, COMMAND_VALUE>::get_format_command(REDIS_COMMAND_TYPE::TASK_REDIS_DEL, std::forward<COMMAND_KEY>(key), std::forward<COMMAND_VALUE>(value)));
@@ -202,6 +207,7 @@ public:
     {
         if (!getConnStatusPubSub())
         {
+            __LOG(warn, "connection is not established yet！");
             return false;
         }
         std::string command2send = std::move(buildRedisCommand::buildRedisCommand<COMMAND_KEY, COMMAND_VALUE>::get_format_command(REDIS_COMMAND_TYPE::TASK_REDIS_PUB, std::forward<COMMAND_KEY>(key), std::forward<COMMAND_VALUE>(value)));
@@ -225,6 +231,7 @@ public:
     {
         if (!getConnStatusPubSub())
         {
+            __LOG(warn, "connection is not established yet！");
             return false;
         }
         std::string command2send = std::move(buildRedisCommand::buildRedisCommand<COMMAND_KEY, std::nullptr_t>::get_format_command(REDIS_COMMAND_TYPE::TASK_REDIS_SUB, std::forward<COMMAND_KEY>(key), nullptr));
@@ -249,6 +256,7 @@ public:
     {
         if (!getConnStatusPubSub())
         {
+            __LOG(warn, "connection is not established yet！");
             return false;
         }
         std::string command2send = std::move(buildRedisCommand::buildRedisCommand<COMMAND_KEY, std::nullptr_t>::get_format_command(REDIS_COMMAND_TYPE::TASK_REDIS_UNSUB, std::forward<COMMAND_KEY>(key), nullptr));

@@ -41,7 +41,7 @@ int main(int argc, char *argv[])
     ::testing::InitGoogleTest(&argc, argv);
     int ret = RUN_ALL_TESTS();
 
-    std::this_thread::sleep_for(std::chrono::milliseconds(5000));
+    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
     MEDIS_GLOB_CLEAN_UP();
     return ret;
 }

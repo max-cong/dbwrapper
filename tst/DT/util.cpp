@@ -1,5 +1,5 @@
 #include "util.hpp"
-void getCallback(redisAsyncContext *c, void *r, void *privdata)
+void testGetCallback(redisAsyncContext *c, void *r, void *privdata)
 {
     redisReply *reply = (redisReply *)r;
     if (reply == NULL)
@@ -13,8 +13,8 @@ void getCallback(redisAsyncContext *c, void *r, void *privdata)
         }
         return;
     }
-    if (CHECK_LOG_LEVEL(debug))
+    if (CHECK_LOG_LEVEL(error))
     {
-        __LOG(debug, "private data is : " << (void *)privdata << ", string is : " << reply->str);
+        __LOG(error, "private data is : " << (void *)privdata << ", string is : " << reply->str);
     }
 }
