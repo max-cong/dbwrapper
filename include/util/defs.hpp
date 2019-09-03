@@ -63,28 +63,6 @@ template <typename OBJ, typename RDS_CTX>
 class contextSaver
 {
 public:
-    contextSaver()
-    {
-        if (CHECK_LOG_LEVEL(debug))
-        {
-            __LOG(debug, "[contextSaver] constructure is called, this is : " << (void *)this);
-        }
-    }
-    ~contextSaver()
-    {
-            if (CHECK_LOG_LEVEL(warn))
-            {
-                __LOG(warn, "[contextSaver] item in the map : " << _geneMap.size());
-            }
-            for (auto it : _geneMap)
-            {
-                // if the connection is not established. then will cause SegV. this is bug of hiredis(libevent)
-                //redisAsyncDisconnect((redisAsyncContext *)it.first);
-            }
-            _geneMap.clear();
-    }
-
-   
     void save(OBJ obj, RDS_CTX gene)
     {
         if (CHECK_LOG_LEVEL(debug))
