@@ -81,11 +81,10 @@ public:
     {
     }
     taskImp() = delete;
- 
 
     void stop()
     {
-             if (CHECK_LOG_LEVEL(warn))
+        if (CHECK_LOG_LEVEL(warn))
         {
             __LOG(warn, "[taskImp] taskImp is exiting!");
         }

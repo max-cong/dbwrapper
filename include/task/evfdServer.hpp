@@ -64,7 +64,7 @@ public:
                 innerEvent = NULL;
             }
         });
-        if (!_event_sptr)
+        if (!_event_sptr || !_event_sptr.get())
         {
             if (CHECK_LOG_LEVEL(error))
             {
@@ -72,6 +72,7 @@ public:
             }
             return false;
         }
+
         if (0 != event_add(_event_sptr.get(), NULL))
         {
             if (CHECK_LOG_LEVEL(error))
@@ -80,7 +81,7 @@ public:
             }
             return false;
         }
-        
+
         return true;
     }
 

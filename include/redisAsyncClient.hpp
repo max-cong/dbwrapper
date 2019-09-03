@@ -58,7 +58,6 @@
 class redisAsyncClient : public nonCopyable
 {
 public:
-
     bool init()
     {
         _loop_sptr.reset(new loop::loop(), [](loop::loop *innerLoop) {
@@ -66,18 +65,20 @@ public:
             {
                 __LOG(warn, "[redisAsyncClient] loop is exiting");
             }
+
             if (innerLoop)
             {
-                innerLoop->stop(true);
+                // innerLoop->stop(true);
                 delete innerLoop;
                 innerLoop = NULL;
             }
         });
-        if (!_loop_sptr)
+
+        if (!_loop_sptr || !_loop_sptr->start())
         {
             if (CHECK_LOG_LEVEL(error))
             {
-                __LOG(error, "init loop fail");
+                __LOG(error, "loop start fail");
             }
             return false;
         }
@@ -98,7 +99,15 @@ public:
 
         medis::taskSaver<void *, std::shared_ptr<task::taskImp>>::instance()->save(getThis(), _task_sptr);
         _loop_sptr->setGeneticGene(getThis());
-        _loop_sptr->start(true);
+
+        if (!_loop_sptr->start(true))
+        {
+            if (CHECK_LOG_LEVEL(error))
+            {
+                __LOG(error, "start loop fail");
+            }
+            return false;
+        }
 
         return true;
     }

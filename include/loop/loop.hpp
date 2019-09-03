@@ -48,14 +48,18 @@ enum class loopStatus : std::uint32_t
 };
 static std::ostream &operator<<(std::ostream &os, loopStatus status)
 {
-	std::string statusString = ((status >= loopStatus::statusInit || status < loopStatus::statisMax) ? "UNDEFINED_STATUS" : (const std::string[]){"statusInit", "statusRunning", "statusFinished"}[(int)status]);
+	std::string statusString = ((status >= loopStatus::statusInit || status < loopStatus::statisMax) ? (const std::string[]){"statusInit", "statusRunning", "statusFinished"}[(int)status] : "UNDEFINED_STATUS");
 	os << statusString;
 	return os;
 }
 class loop : public gene::gene<void *>, public std::enable_shared_from_this<loop>
 {
 public:
-	loop() : _status(loopStatus::statusInit){}
+	loop() : _status(loopStatus::statusInit)
+	{
+		_status = loopStatus::statusInit;
+		__LOG(error, " in the loop constructor, status is :" << _status);
+	}
 	/** convert to event_base * pointer*/
 	inline explicit operator event_base *() const
 	{
@@ -81,7 +85,6 @@ public:
 	 */
 	bool start(bool newThread = true)
 	{
-
 		evthread_use_pthreads();
 		_base_sptr.reset(event_base_new(), [](event_base *innerBase) {
 			if (NULL != innerBase)
@@ -138,6 +141,10 @@ public:
 
 		if (loopStatus::statusFinished == _status)
 		{
+			if (CHECK_LOG_LEVEL(warn))
+			{
+				__LOG(warn, "now try to stop loop, but status is finished");
+			}
 			return;
 		}
 
@@ -148,10 +155,11 @@ public:
 		waiting ? event_base_loopexit(_base_sptr.get(), NULL) : event_base_loopbreak(this->ev());
 		onAfterStop();
 
-		if (_loopThread )//&& loopStatus::statusFinished != _status)
+		if (_loopThread) //&& loopStatus::statusFinished != _status)
 		{
 			_loopThread->join();
 		}
+		_loopThread.reset();
 	}
 
 protected:
