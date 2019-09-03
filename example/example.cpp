@@ -91,8 +91,8 @@ void getCallbackPubSub(redisAsyncContext *c, void *r, void *privdata)
 int main()
 {
     {
-        std::unique_ptr<simpleLogger> loggerUptr(new simpleLogger());
-        INIT_LOGGER(loggerUptr);
+
+        INIT_LOGGER(new simpleLogger());
         SET_LOG_LEVEL(debug);
 
         redisAsyncClient aclient;

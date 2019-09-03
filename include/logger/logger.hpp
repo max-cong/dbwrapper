@@ -1,3 +1,4 @@
+#pragma once
 /*
  * Copyright (c) 2016-20017 Max Cong <savagecm@qq.com>
  * this code can be found at https://github.com/maxcong001/logger
@@ -38,31 +39,33 @@ static const char red[] = {0x1b, '[', '1', ';', '3', '1', 'm', 0};
 static const char yellow[] = {0x1b, '[', '1', ';', '3', '3', 'm', 0};
 static const char blue[] = {0x1b, '[', '1', ';', '3', '4', 'm', 0};
 static const char normal[] = {0x1b, '[', '0', ';', '3', '9', 'm', 0};
+#define ACTIVE_LOGGER_INSTANCE (*activeLogger::getLoggerAddr())
+// note: this will replace the logger instace. If this is not the first time to set the logger instance.
+// Please make sure to delete/free the old instance.
+#define INIT_LOGGER(loggerImpPtr)              \
+	{                                          \
+		ACTIVE_LOGGER_INSTANCE = loggerImpPtr; \
+		ACTIVE_LOGGER_INSTANCE->init();        \
+	}
+#define CHECK_LOG_LEVEL(logLevel) (ACTIVE_LOGGER_INSTANCE ? ((ACTIVE_LOGGER_INSTANCE->get_log_level() <= log_level::logLevel##_level) ? true : false) : false)
+#define SET_LOG_LEVEL(logLevel)                                                   \
+	{                                                                             \
+		if (ACTIVE_LOGGER_INSTANCE)                                               \
+			(ACTIVE_LOGGER_INSTANCE->set_log_level(log_level::logLevel##_level)); \
+	}
+#define DESTROY_LOGGER                      \
+	{                                       \
+		if (ACTIVE_LOGGER_INSTANCE)         \
+		{                                   \
+			ACTIVE_LOGGER_INSTANCE->stop(); \
+			delete ACTIVE_LOGGER_INSTANCE;  \
+		}                                   \
+	}
 
-#define INIT_LOGGER(loggerImpUptr)                  \
-                                                    \
-	{                                               \
-		active_logger = (std::move(loggerImpUptr)); \
-		active_logger->init();                      \
-	}
-#define DESTROY_LOGGER()           \
-	{                              \
-		if (active_logger)         \
-		{                          \
-			active_logger->stop(); \
-			active_logger.reset(); \
-		}                          \
-	}
-#define CHECK_LOG_LEVEL(logLevel) (active_logger ? ((active_logger->get_log_level() <= log_level::logLevel##_level) ? true : false) : false)
-#define SET_LOG_LEVEL(logLevel)                                          \
-	{                                                                    \
-		if (active_logger)                                               \
-			(active_logger->set_log_level(log_level::logLevel##_level)); \
-	}
 
 enum log_level
 {
-	debug_level,
+	debug_level = 0,
 	info_level,
 	warn_level,
 	error_level,
@@ -88,7 +91,16 @@ public:
 	virtual void error_log(const std::string &msg) = 0;
 	virtual void critical_log(const std::string &msg) = 0;
 };
-static std::unique_ptr<logger_iface> active_logger;
+
+class activeLogger
+{
+public:
+	static logger_iface **getLoggerAddr()
+	{
+		static logger_iface *activeLogger;
+		return &activeLogger;
+	}
+};
 
 #define __LOGGING_ENABLED
 
@@ -99,8 +111,8 @@ static std::unique_ptr<logger_iface> active_logger;
 		tostringstream var;                                                    \
 		var << "[" << __FILE__ << ":" << __LINE__ << ":" << __func__ << "] \n" \
 			<< msg;                                                            \
-		if (active_logger)                                                     \
-			active_logger->level##_log(var.str());                             \
+		if (ACTIVE_LOGGER_INSTANCE)                                            \
+			ACTIVE_LOGGER_INSTANCE->level##_log(var.str());                    \
 	}
 #else
 #define __LOG(level, msg)

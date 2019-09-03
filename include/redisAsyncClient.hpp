@@ -37,11 +37,10 @@
 #include <memory>
 #include <thread>
 
-#define MEDIS_GLOB_SIPMLE_INIT()                                      \
-    {                                                                 \
-        std::unique_ptr<simpleLogger> loggerUptr(new simpleLogger()); \
-        INIT_LOGGER(loggerUptr);                                      \
-        SET_LOG_LEVEL(debug);                                         \
+#define MEDIS_GLOB_SIPMLE_INIT()         \
+    {                                    \
+        INIT_LOGGER(new simpleLogger()); \
+        SET_LOG_LEVEL(debug);            \
     }
 #define MEDIS_GLOB_CLEAN_UP()                                                                     \
     {                                                                                             \
@@ -51,7 +50,7 @@
         auto cfg_ins_sptr = configCenter::configCenter<void *>::instance();                       \
         cfg_ins_sptr->distroy(std::move(cfg_ins_sptr));                                           \
                                                                                                   \
-        DESTROY_LOGGER();                                                                         \
+        DESTROY_LOGGER;                                                                         \
     }
 class redisAsyncClient : public nonCopyable
 {
