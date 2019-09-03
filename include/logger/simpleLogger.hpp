@@ -37,9 +37,11 @@ public:
 	}
 	void init() override
 	{
+		std::cout << "simple logger init" << std::endl;
 	}
 	void stop() override
 	{
+		std::cout << "simple logger stop" << std::endl;
 	}
 	void set_log_level(log_level level) override
 	{

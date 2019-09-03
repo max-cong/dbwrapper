@@ -142,6 +142,10 @@ public:
     }
     void del(OBJ obj)
     {
+        if (_geneMap.find(obj) != _geneMap.end())
+        {
+            _geneMap[obj]->stop();
+        }
         _geneMap.erase(obj);
     }
     DBW_OPT<RDS_TASK_SPTR> getTask(const OBJ obj)

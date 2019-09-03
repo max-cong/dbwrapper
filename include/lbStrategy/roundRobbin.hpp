@@ -46,7 +46,7 @@ public:
         }
 
         _index++;
-        return std::get<0>((this->_obj_vector)[_index % (this->_max_index)]);
+        return std::get<0>(this->_obj_vector[_index % (this->_max_index)]);
     }
 
     // for round robbin, if the weight is 0, that mean we should delete the obj the default weight_ is 10

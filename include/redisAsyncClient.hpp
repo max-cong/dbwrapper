@@ -58,9 +58,7 @@
 class redisAsyncClient : public nonCopyable
 {
 public:
-    ~redisAsyncClient()
-    {
-    }
+
     bool init()
     {
         _loop_sptr.reset(new loop::loop(), [](loop::loop *innerLoop) {

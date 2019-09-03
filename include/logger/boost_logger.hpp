@@ -42,9 +42,10 @@ namespace attrs = boost::log::attributes;
 
 thread_local static boost::log::sources::severity_logger<log_level> lg;
 
-#define BOOST_LOG_Q_SIZE 1000
+constexpr std::size_t BOOST_LOG_Q_SIZE = 1000;
 
-typedef sinks::asynchronous_sink<sinks::text_ostream_backend, sinks::bounded_fifo_queue<BOOST_LOG_Q_SIZE, sinks::drop_on_overflow>> sink_t;
+typedef sinks::asynchronous_sink<sinks::text_ostream_backend, sinks::bounded_fifo_queue<BOOST_LOG_Q_SIZE, sinks::drop_on_overflow>>
+	sink_t;
 static std::ostream &operator<<(std::ostream &strm, log_level level)
 {
 	static const char *strings[] =
@@ -70,7 +71,7 @@ public:
 	}
 	~boost_logger()
 	{
-		}
+	}
 
 	void init() override
 	{
