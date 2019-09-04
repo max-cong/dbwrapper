@@ -99,8 +99,8 @@ public:
         _task_sptr->init();
 
         medis::taskSaver<void *, std::shared_ptr<task::taskImp>>::instance()->save(getThis(), _task_sptr);
-        
-/*
+
+        /*
         if (!_loop_sptr->start(true))
         {
             if (CHECK_LOG_LEVEL(error))

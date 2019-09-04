@@ -57,7 +57,6 @@ class loop : public gene::gene<void *>, public std::enable_shared_from_this<loop
 public:
 	loop() : _status(loopStatus::statusInit)
 	{
-		_status = loopStatus::statusInit;
 		__LOG(error, " in the loop constructor, status is :" << _status);
 	}
 	/** convert to event_base * pointer*/
@@ -159,7 +158,7 @@ public:
 		{
 			_loopThread->join();
 		}
-		_loopThread.reset();
+		_loopThread = nullptr;
 	}
 
 protected:
@@ -188,6 +187,13 @@ protected:
 			__LOG(debug, "onAfterStop");
 		}
 	}
+	static void eventHandler(evutil_socket_t fd, short events, void *ctx)
+	{
+		if (CHECK_LOG_LEVEL(debug))
+		{
+			__LOG(debug, "[Loop] I am running");
+		}
+	}
 
 private:
 	void _run()
@@ -199,6 +205,23 @@ private:
 		{
 			__LOG(debug, " start loop!! base event is : " << (void *)ev());
 		}
+		// add one timer to keep loop running
+		auto event_ptr = event_new(this->ev(), -1, EV_PERSIST, loop::eventHandler, NULL);
+
+		struct timeval tv = {};
+		evutil_timerclear(&tv);
+		uint32_t interval = 10000;
+		tv.tv_sec = interval / 1000;
+		tv.tv_usec = interval % 1000 * 1000;
+
+		if (0 != event_add(event_ptr, &tv))
+		{
+			if (CHECK_LOG_LEVEL(error))
+			{
+				__LOG(error, "event add return fail");
+			}
+		}
+
 		event_base_loop(this->ev(), 0);
 		if (CHECK_LOG_LEVEL(warn))
 		{

@@ -33,26 +33,30 @@
 
 #include "redisAsyncClient.hpp"
 #include "util.hpp"
+#include "logger/boost_logger.hpp"
 class basicDevelopTestRR : public testing::Test
 {
 protected:
     virtual void SetUp() override
     {
 
+        INIT_LOGGER(new simpleLogger());
+        SET_LOG_LEVEL(debug);
+
         _aclient_sptr = std::make_shared<redisAsyncClient>();
 
         configCenter::cfgPropMap _config;
         _config[PROP_HOST] = "127.0.0.1";
+        _config[PROP_PORT] = "6379";
         configCenter::configCenter<void *>::instance()->setProperties(_aclient_sptr->getThis(), _config);
 
         _aclient_sptr->init();
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        std::this_thread::sleep_for(std::chrono::milliseconds(500));
     }
     virtual void TearDown() override
     {
         // ...
         _aclient_sptr->cleanUp();
-        _aclient_sptr.reset();
     }
     std::shared_ptr<redisAsyncClient> _aclient_sptr;
 };
@@ -60,19 +64,19 @@ protected:
 TEST_F(basicDevelopTestRR, put)
 {
     bool ret = _aclient_sptr->put(std::string("hello"), std::string("world"), NULL, getCallback);
-    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
     EXPECT_TRUE(ret);
 }
 TEST_F(basicDevelopTestRR, get)
 {
     bool ret = _aclient_sptr->get(std::string("hello"), nullptr, NULL, getCallback);
-    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
     EXPECT_TRUE(ret);
 }
 TEST_F(basicDevelopTestRR, del)
 {
     bool ret = _aclient_sptr->del(std::string("hello"), nullptr, NULL, getCallback);
-    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
     EXPECT_TRUE(ret);
 }
 int main(int argc, char *argv[])
