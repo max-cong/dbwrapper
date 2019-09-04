@@ -74,14 +74,15 @@ public:
             }
         });
 
-        if (!_loop_sptr || !_loop_sptr->start())
+        if (!_loop_sptr || !_loop_sptr->start(true))
         {
             if (CHECK_LOG_LEVEL(error))
             {
-                __LOG(error, "loop start fail");
+                __LOG(error, "invalid loop sptr");
             }
             return false;
         }
+        _loop_sptr->setGeneticGene(getThis());
 
         // start task
         _task_sptr = std::make_shared<task::taskImp>(_loop_sptr);
@@ -98,8 +99,8 @@ public:
         _task_sptr->init();
 
         medis::taskSaver<void *, std::shared_ptr<task::taskImp>>::instance()->save(getThis(), _task_sptr);
-        _loop_sptr->setGeneticGene(getThis());
-
+        
+/*
         if (!_loop_sptr->start(true))
         {
             if (CHECK_LOG_LEVEL(error))
@@ -107,7 +108,7 @@ public:
                 __LOG(error, "start loop fail");
             }
             return false;
-        }
+        }*/
 
         return true;
     }
