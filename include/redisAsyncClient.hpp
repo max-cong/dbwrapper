@@ -127,8 +127,6 @@ public:
         }
         // stop loop first in case it will hit disconnect
         _loop_sptr->stop(true);
-        // stop task
-        _task_sptr.reset();
 
         auto task_ins_ptr = medis::taskSaver<void *, std::shared_ptr<task::taskImp>>::instance();
         task_ins_ptr->del((void *)this);
