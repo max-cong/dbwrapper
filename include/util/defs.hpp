@@ -144,6 +144,10 @@ public:
     {
         if (_geneMap.find(obj) != _geneMap.end())
         {
+            if (CHECK_LOG_LEVEL(warn))
+            {
+                __LOG(warn, "[taskSaver] now stop one task");
+            }
             _geneMap[obj]->stop();
         }
         _geneMap.erase(obj);
