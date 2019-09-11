@@ -221,7 +221,6 @@ public:
 
 private:
     uint32_t _interval;
-
     hbSuccCb _hbSuccCb;
     hbLostCb _hbLostCb;
     ping_f _pingCb;

@@ -39,14 +39,14 @@ public:
     // note: there is no lock here
     DBW_OPT<LB_OBJ> getObj() override
     {
-        if (this->_obj_vector.empty() || !_max_index)
+        if (this->getAvaliableObj().empty() || !_max_index)
         {
 
             return DBW_NONE_OPT;
         }
 
         _index++;
-        return std::get<0>(this->_obj_vector[_index % (this->_max_index)]);
+        return std::get<0>((this->getAvaliableObj())[_index % (this->_max_index)]);
     }
 
     // for round robbin, if the weight is 0, that mean we should delete the obj the default weight_ is 10
@@ -63,7 +63,7 @@ public:
 
     medis::retStatus update() override
     {
-        _max_index = this->_obj_vector.size();
+        _max_index = this->getAvaliableObj().size();
         return ((_max_index > 0) ? medis::retStatus::SUCCESS : medis::retStatus::NO_ENTRY);
     }
 

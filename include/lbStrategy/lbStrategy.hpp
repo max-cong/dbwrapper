@@ -235,6 +235,8 @@ public:
     {
         return _obj_vector;
     }
+
+private:
     std::vector<std::pair<LB_OBJ, unsigned int>> _obj_vector;
     std::vector<LB_OBJ> _inactive_obj_vector;
     std::recursive_mutex _mutex;
@@ -242,7 +244,6 @@ public:
     std::function<void()> _no_avaliable_cb;
     std::function<void()> _first_avaliable_cb;
 
-private:
     void updateObjZero(LB_OBJ obj)
     {
         // if the obj is in active list, remove it

@@ -39,6 +39,8 @@ public:
 	{
 		return _genetic_gen;
 	}
+
+private:
 	GENETIC_TYPE _genetic_gen;
 };
 } // namespace gene

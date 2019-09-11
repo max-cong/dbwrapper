@@ -44,7 +44,7 @@ public:
     DBW_OPT<DIST_OBJ> getObj() override
     {
 
-        if (this->_obj_vector.empty())
+        if (this->getAvaliableObj().empty())
         {
             if (CHECK_LOG_LEVEL(warn))
             {
@@ -55,7 +55,7 @@ public:
         DIST_OBJ obj;
         try
         {
-            obj = std::get<0>(this->_obj_vector.at(_dist(_gen)));
+            obj = std::get<0>(this->getAvaliableObj().at(_dist(_gen)));
         }
         catch (const std::out_of_range &oor)
         {
@@ -70,12 +70,12 @@ public:
 
     medis::retStatus update() override
     {
-        int vector_size = this->_obj_vector.size();
+        int vector_size = this->getAvaliableObj().size();
         if (!vector_size)
         {
             if (CHECK_LOG_LEVEL(debug))
             {
-                __LOG(debug, "this->_obj_vector is empty!");
+                __LOG(debug, "this->getAvaliableObj() is empty!");
             }
             return medis::retStatus::NO_ENTRY;
         }
@@ -86,10 +86,10 @@ public:
         }
         for (int i = 0; i < vector_size; i++)
         {
-            init_list.push_back(std::get<1>(this->_obj_vector[i]));
+            init_list.push_back(std::get<1>(this->getAvaliableObj()[i]));
             if (CHECK_LOG_LEVEL(debug))
             {
-                __LOG(debug, "--> " << std::get<1>(this->_obj_vector[i]));
+                __LOG(debug, "--> " << std::get<1>(this->getAvaliableObj()[i]));
             }
         }
         std::discrete_distribution<int> second_dist(init_list.begin(), init_list.end());
@@ -97,10 +97,10 @@ public:
         _dist.param(_param);
         _dist.reset();
 
-        int _max_index = this->_obj_vector.size();
+        int _max_index = this->getAvaliableObj().size();
         return ((_max_index > 0) ? medis::retStatus::SUCCESS : medis::retStatus::NO_ENTRY);
     }
-
+private:
     std::random_device _rd;
     std::mt19937 _gen;
     std::discrete_distribution<int> _dist;

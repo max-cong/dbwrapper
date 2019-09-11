@@ -107,6 +107,7 @@ public:
         return DBW_NONE_OPT;
     }
 
+private:
     std::map<OBJ, RDS_CTX> _geneMap;
 };
 // this is gene <->task
@@ -161,6 +162,7 @@ public:
         return DBW_NONE_OPT;
     }
 
+private:
     std::map<OBJ, RDS_TASK_SPTR> _geneMap;
 };
 

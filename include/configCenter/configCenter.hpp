@@ -171,6 +171,7 @@ public:
 		return true;
 	}
 
+private:
 	std::map<cfgKeyType_t, cfgPropMap> _propertiesMap;
 	std::mutex _mutex;
 };

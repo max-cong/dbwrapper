@@ -77,7 +77,7 @@ static thread_local std::shared_ptr<medis::contextSaver<void *, std::shared_ptr<
 class taskImp : public gene::gene<void *>, public std::enable_shared_from_this<taskImp>, public nonCopyable
 {
 public:
-    explicit taskImp(std::shared_ptr<loop::loop> loopIn) : _connected(false), _task_q_empty(true), _evfd(-1), _loop(loopIn)
+    explicit taskImp(std::shared_ptr<loop::loop> loopIn) : _connected(false), _connectedSub(false), _task_q_empty(true), _evfd(-1), _loop(loopIn)
     {
     }
     taskImp() = delete;
@@ -681,7 +681,7 @@ public:
                         __LOG(debug, "had subscribe before, command is : " << msg->body);
                     }
                     // if you had sub before. then use the context
-                    // hiredis will use the new userdate and callback function
+                    // hiredis will use the new userdata and callback function
                     _context = setPair.second;
                 }
                 else
@@ -693,6 +693,14 @@ public:
                     // if not. get a new context. then get a new one
                     _context = (redisAsyncContext *)(_connManagerSub->get_conn()).value_or(nullptr);
                     _subsSet.update(task_msg, _context);
+                }
+                if (!_context)
+                {
+                    if (CHECK_LOG_LEVEL(warn))
+                    {
+                        __LOG(warn, "did not get a context ");
+                    }
+                    return false;
                 }
             }
             break;
@@ -1079,6 +1087,8 @@ public:
         std::weak_ptr<taskImp> self_wptr(shared_from_this());
         return self_wptr;
     }
+
+private:
     // flag: if there is connection for command
     std::atomic<bool> _connected;
     // flag: if there is connection for sub

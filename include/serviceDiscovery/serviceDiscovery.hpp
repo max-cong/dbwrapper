@@ -261,7 +261,11 @@ public:
         std::weak_ptr<serviceDiscovery<connInfo>> self_wptr(this->shared_from_this());
         return self_wptr;
     }
-
+    std::shared_ptr<timer::timerManager> getTimerManager()
+    {
+        return _timerManager;
+    }
+private:
     connList _conn_list;
 
     timer::timer::ptr_p _retrigerTimer;

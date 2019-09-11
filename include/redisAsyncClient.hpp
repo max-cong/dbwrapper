@@ -312,6 +312,8 @@ public:
     {
         return _task_sptr->getConnStatusPubSub();
     }
+
+private:
     std::shared_ptr<loop::loop> _loop_sptr;
     std::shared_ptr<task::taskImp> _task_sptr;
 };
